@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quét Hàng">
+<title>Quét Hàng Về Kho</title>
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#0d0d0d;color:#fff;font-family:-apple-system,sans-serif;padding-bottom:60px}
+.top{background:#111;padding:16px 20px;border-bottom:1px solid #222;position:sticky;top:0;z-index:10}
+.top h1{font-size:20px;font-weight:700}
+.top p{font-size:12px;color:#555;margin-top:2px}
+.cam{margin:16px;border-radius:20px;overflow:hidden;background:#000;position:relative;aspect-ratio:1;display:none}
+.cam video{width:100%;height:100%;object-fit:cover;display:block}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.frame{width:55%;aspect-ratio:1;position:relative}
+.c{position:absolute;width:28px;height:28px;border-color:#00e676;border-style:solid}
+.c.tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:6px 0 0 0}
+.c.tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0}
+.c.bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 6px}
+.c.br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 6px 0}
+.sl{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,#00e676,transparent);top:50%;animation:scan 1.8s ease-in-out infinite}
+@keyframes scan{0%,100%{transform:translateY(-70px);opacity:0}15%,85%{opacity:1}50%{transform:translateY(70px)}}
+.btn{display:block;margin:16px;padding:17px;border:none;border-radius:16px;font-size:17px;font-weight:700;cursor:pointer;width:calc(100% - 32px);transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.green{background:#00e676;color:#000}
+.red{background:#ff3b30;color:#fff}
+.manual{margin:0 16px 16px;display:flex;gap:8px}
+.manual input{flex:1;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:14px;padding:13px 16px;color:#fff;font-size:15px;outline:none}
+.manual input:focus{border-color:#00e676}
+.manual button{background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:14px;padding:13px 18px;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.res{margin:0 16px 16px;border-radius:16px;padding:16px;border:1.5px solid;display:none}
+.res.show{display:block;animation:pop .2s ease}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.res.ok{background:#001a0a;border-color:#00e67655}
+.res.err{background:#1a0000;border-color:#ff3b3055}
+.res.warn{background:#1a1200;border-color:#ff980055}
+.rt{font-size:15px;font-weight:700;margin-bottom:6px}
+.res.ok .rt{color:#00e676}
+.res.err .rt{color:#ff3b30}
+.res.warn .rt{color:#ff9800}
+.rb{font-size:14px;color:#888;line-height:1.8}
+.rb b{color:#ddd}
+.hist{margin:0 16px}
+.ht{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;font-weight:600}
+.hi{background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.ok{background:#00e676}
+.dot.err{background:#ff3b30}
+.hin{flex:1;min-width:0}
+.htr{font-size:13px;color:#ccc;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hn{font-size:12px;color:#555;margin-top:2px}
+.htm{font-size:11px;color:#444;flex-shrink:0}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #333;border-top-color:#00e676;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="top"><h1>Quét Hàng Về Kho</h1><p>eb2 — T12 / 2026 / T4</p></div>
+<div class="cam" id="cam">
+  <video id="video" autoplay playsinline muted></video>
+  <div class="overlay">
+    <div class="frame">
+      <div class="c tl"></div><div class="c tr"></div>
+      <div class="c bl"></div><div class="c br"></div>
+      <div class="sl"></div>
+    </div>
+  </div>
+</div>
+<button class="btn green" id="btnScan" onclick="toggleScan()">Bắt đầu quét</button>
+<div class="manual">
+  <input type="text" id="inp" placeholder="Nhập tracking thủ công..." />
+  <button onclick="processManual()">OK</button>
+</div>
+<div class="res" id="res"><div class="rt" id="rt"></div><div class="rb" id="rb"></div></div>
+<div class="hist"><div class="ht">Lịch sử quét</div><div id="hl"><div style="font-size:13px;color:#333">Chưa có lịch sử</div></div></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDEHc3d_60G5CPQgjrc__mELQWageIsldVrii6xLcEKNT0b5LMZQlkL1AYH02XsERI/exec';
+let hist=[],scanning=false,reader=null;
+
+async function toggleScan(){
+  if(scanning){stopScan();return;}
+  try{
+    reader=new ZXing.BrowserMultiFormatReader();
+    const devices=await ZXing.BrowserCodeReader.listVideoInputDevices();
+    if(!devices||!devices.length){alert('Không tìm thấy camera!');return;}
+    const back=devices.find(d=>/back|sau|rear|environment/i.test(d.label))||devices[devices.length-1];
+    document.getElementById('cam').style.display='block';
+    document.getElementById('btnScan').textContent='Dừng quét';
+    document.getElementById('btnScan').className='btn red';
+    scanning=true;
+    await reader.decodeFromVideoDevice(back.deviceId,'video',(res)=>{
+      if(res){stopScan();process(res.getText().trim());}
+    });
+  }catch(ex){
+    show('err','Lỗi camera','Vào Cài đặt → Safari → Camera → Cho phép rồi thử lại.');
+    stopScan();
+  }
+}
+
+function stopScan(){
+  if(reader){reader.reset();reader=null;}
+  scanning=false;
+  document.getElementById('cam').style.display='none';
+  document.getElementById('btnScan').textContent='Bắt đầu quét';
+  document.getElementById('btnScan').className='btn green';
+}
+
+function processManual(){
+  const v=document.getElementById('inp').value.trim();
+  if(!v)return;
+  document.getElementById('inp').value='';
+  process(v);
+}
+document.getElementById('inp').addEventListener('keydown',e=>{if(e.key==='Enter')processManual();});
+
+async function process(t){
+  const now=new Date();
+  const ng=now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear()+' '+pad(now.getHours())+':'+pad(now.getMinutes());
+  show('warn','<span class="spin"></span>Đang xử lý...','Tracking: <b>'+t+'</b>');
+  try{
+    const url=SCRIPT_URL+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered='+encodeURIComponent('Đã về kho')+'&ngayGiao='+encodeURIComponent(ng);
+    const r=await fetch(url);
+    const d=await r.json();
+    if(d.found){
+      show('ok','✓ Cập nhật thành công!','Tracking: <b>'+t+'</b><br>Sheet: <b>'+d.sheet+'</b> — Dòng <b>'+d.row+'</b><br>Ngày về kho: <b>'+ng+'</b>');
+      addH('ok',t,d.sheet+' dòng '+d.row);
+      if(navigator.vibrate)navigator.vibrate([80,40,80]);
+    }else{
+      show('err','Không tìm thấy','<b>'+t+'</b> không có trong T12, 2026, T4.');
+      addH('err',t,'Không tìm thấy');
+    }
+  }catch(ex){
+    show('err','Lỗi kết nối','Thử lại sau vài giây.');
+    addH('err',t,'Lỗi kết nối');
+  }
+}
+
+function pad(n){return String(n).padStart(2,'0');}
+function show(type,title,body){
+  const el=document.getElementById('res');
+  el.className='res show '+type;
+  document.getElementById('rt').innerHTML=title;
+  document.getElementById('rb').innerHTML=body;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function addH(s,t,n){
+  const now=new Date();
+  hist.unshift({s,t,n,time:pad(now.getHours())+':'+pad(now.getMinutes())});
+  if(hist.length>30)hist.pop();
+  renderH();
+}
+function renderH(){
+  const el=document.getElementById('hl');
+  if(!hist.length){el.innerHTML='<div style="font-size:13px;color:#333">Chưa có lịch sử</div>';return;}
+  el.innerHTML=hist.map(h=>'<div class="hi"><div class="dot '+h.s+'"></div><div class="hin"><div class="htr">'+h.t+'</div><div class="hn">'+h.n+'</div></div><div class="htm">'+h.time+'</div></div>').join('');
+}
+</script>
+</body>
+</html>
