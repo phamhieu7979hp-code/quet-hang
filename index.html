@@ -1,560 +1,620 @@
-const CLAUDE_API_KEY = 'hieupham-7979';
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Quan ly Hang</title>
+<script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-bottom:20px}
+.top{background:linear-gradient(135deg,#2196F3,#64B5F6);padding:16px 20px;position:sticky;top:0;z-index:10;box-shadow:0 3px 15px rgba(33,150,243,.3)}
+.top h1{font-size:20px;font-weight:700;color:#fff}
+.top p{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
+.tabs{display:flex;margin:0;gap:0;background:#fff;border-bottom:2px solid #BBDEFB}
+.tab{flex:1;padding:10px 4px;border:none;background:none;color:#90b8d8;font-size:11px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab.active{color:#2196F3;border-bottom-color:#2196F3}
+.sec{display:none;padding:12px 0 0}.sec.active{display:block}
+.sbtn{display:block;margin:0 14px 10px;border-radius:16px;overflow:hidden;width:calc(100% - 28px)}
+.sbtn label{display:block;padding:15px;background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff;cursor:pointer;text-align:center;font-size:16px;font-weight:700}
+.row{margin:0 14px 10px;display:flex;gap:8px}
+.row input{flex:1;background:#fff;border:2px solid #BBDEFB;border-radius:12px;padding:12px 14px;color:#1a3a5c;font-size:15px;outline:none}
+.row input:focus{border-color:#2196F3}
+.row button{background:linear-gradient(135deg,#2196F3,#42A5F5);border:none;border-radius:12px;padding:12px 16px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.ship{margin:0 14px 10px;display:none}
+.ship label,.pi label{font-size:12px;color:#FF8F00;margin-bottom:5px;display:block;font-weight:600}
+.ship .row{margin:0}.ship .row input{border-color:#FFE082}
+.ship .row button{background:linear-gradient(135deg,#FFB300,#FFA000)}
+.pi{margin:0 14px 10px;display:none}
+.pi input{width:100%;background:#fff;border:2px solid #FFE082;border-radius:12px;padding:12px 14px;color:#1a3a5c;font-size:15px;outline:none}
+.bc{display:none;margin:0 14px 10px;padding:14px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;width:calc(100% - 28px)}
+.res{margin:0 14px 10px;border-radius:16px;padding:14px;display:none;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.res.show{display:block}
+.res.ok{background:#E3F2FD;border-left:4px solid #2196F3}
+.res.err{background:#FFEBEE;border-left:4px solid #F44336}
+.res.warn{background:#FFF8E1;border-left:4px solid #FFB300}
+.res.info{background:#E8F5E9;border-left:4px solid #4CAF50}
+.rt{font-size:14px;font-weight:700;margin-bottom:5px}
+.res.ok .rt{color:#1565C0}.res.err .rt{color:#C62828}.res.warn .rt{color:#E65100}.res.info .rt{color:#2E7D32}
+.rb{font-size:13px;color:#546E7A;line-height:1.8}.rb b{color:#1a3a5c}
+.prbtn{display:block;margin:8px 0 0;padding:12px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:10px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;width:100%}
+.divider{margin:0 14px 10px;border:none;border-top:1.5px dashed #BBDEFB}
+.sec-lbl{margin:0 14px 4px;font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+.hist{margin:0 14px}
+.ht{font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:700}
+.hi{background:#fff;border-radius:12px;padding:11px 13px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.ok{background:#2196F3}.dot.err{background:#F44336}
+.hin{flex:1;min-width:0}
+.htr{font-size:13px;color:#1a3a5c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hn{font-size:11px;color:#90b8d8;margin-top:1px}
+.htm{font-size:11px;color:#90b8d8;flex-shrink:0}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid #BBDEFB;border-top-color:#2196F3;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#camModal{display:none;position:fixed;inset:0;z-index:999;background:#000;flex-direction:column}
+#camModal.show{display:flex}
+.dce-video-container{flex:1;width:100%;position:relative}
+#camOverlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);width:75%;height:65px;border:3px solid #00e676;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.5);z-index:10;pointer-events:none}
+#camHint{position:absolute;top:calc(50% - 80px);width:100%;text-align:center;color:#fff;font-size:13px;z-index:10;pointer-events:none}
+#camClose{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.4);border-radius:50px;padding:13px 34px;font-size:15px;font-weight:700;cursor:pointer;z-index:10}
+/* Dashboard */
+.d-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 14px 10px}
+.d-card{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(33,150,243,.08)}
+.d-card.g{border-left:4px solid #4CAF50}
+.d-card.b{border-left:4px solid #2196F3}
+.d-card.o{border-left:4px solid #FF9800}
+.d-card.r{border-left:4px solid #F44336}
+.d-lbl{font-size:10px;color:#90b8d8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.d-val{font-size:17px;font-weight:700;color:#1a3a5c}
+.d-sub{font-size:10px;color:#90b8d8;margin-top:2px}
+.d-chart{background:#fff;border-radius:14px;padding:12px;margin:0 14px 10px;box-shadow:0 2px 8px rgba(33,150,243,.08)}
+.d-chart-title{font-size:12px;font-weight:700;color:#1a3a5c;margin-bottom:10px}
+.d-filter{display:flex;gap:6px;flex-wrap:wrap;margin:10px 14px}
+.d-ftab{padding:6px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#fff;color:#90b8d8}
+.d-ftab.active{background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff}
+.d-table{background:#fff;border-radius:14px;padding:12px;margin:0 14px 10px;box-shadow:0 2px 8px rgba(33,150,243,.08);overflow-x:auto}
+.d-table table{width:100%;border-collapse:collapse;font-size:11px}
+.d-table th{background:#e8f4fd;color:#2196F3;padding:7px 8px;text-align:left;font-size:10px;font-weight:700}
+.d-table td{padding:7px 8px;border-bottom:1px solid #f0f8ff;color:#1a3a5c}
+.d-ton{background:#fff;border-radius:14px;padding:12px;margin:0 14px 10px;box-shadow:0 2px 8px rgba(33,150,243,.08)}
+</style>
+</head>
+<body>
 
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('Claude AI')
-    .addItem('So sanh Tracking DA', 'compareTrackingDA')
-    .addSeparator()
-    .addItem('Phan tich theo Kho', 'analyzeByKho')
-    .addItem('Phan tich theo Buyer', 'analyzeByBuyer')
-    .addSeparator()
-    .addItem('Tinh lai tung don', 'tinhLai')
-    .addItem('Tao ma vach (Order ID)', 'taoMaVach')
-    .addItem('Bao cao ti trong', 'baoCaoTiTrong')
-    .addSeparator()
-    .addItem('Sync tracking DA', 'syncDATracking')
-    .addSeparator()
-    .addItem('Hoi Claude', 'askClaude')
-    .addToUi();
+<div class="top">
+  <h1>&#x1F4E6; Quan ly Hang</h1>
+  <p>eb2 · T12 / 2026 / T4</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('nhap')">Nhap kho</button>
+  <button class="tab" onclick="switchTab('ban')">Ban hang</button>
+  <button class="tab" onclick="switchTab('gia')">Kiem tra</button>
+  <button class="tab" onclick="switchTab('dash')">&#x1F4CA; Bao cao</button>
+</div>
+
+<!-- TAB NHAP KHO -->
+<div class="sec active" id="tab-nhap">
+  <div class="sbtn"><label onclick="openCam('nhap')">&#x1F4F7; Quet ma vach Tracking</label></div>
+  <div class="row">
+    <input type="text" id="inpNhap" placeholder="Nhap tracking...">
+    <button onclick="doNhap()">OK</button>
+  </div>
+  <div class="ship" id="shipWrap">
+    <label>Phi ship (VND)</label>
+    <div class="row">
+      <input type="text" id="phiShip" placeholder="0" oninput="fmt(this)" inputmode="numeric">
+      <button onclick="confirmNhap()">OK</button>
+    </div>
+  </div>
+  <div class="res" id="resNhap"><div class="rt" id="rtNhap"></div><div class="rb" id="rbNhap"></div></div>
+  <div id="temWrap" style="display:none;margin:0 14px 10px">
+    <button class="prbtn" onclick="inTem(curOid,curSp)">&#x1F5A8; In tem Order ID</button>
+  </div>
+  <hr class="divider">
+  <div class="sec-lbl">In tem theo Order ID</div>
+  <div class="row">
+    <input type="text" id="inpInTem" placeholder="Nhap Order ID de in tem...">
+    <button onclick="inTemManual()">In</button>
+  </div>
+</div>
+
+<!-- TAB BAN HANG -->
+<div class="sec" id="tab-ban">
+  <div class="sbtn"><label onclick="openCam('ban')">&#x1F4F7; Quet ma vach Order ID</label></div>
+  <div class="row">
+    <input type="text" id="inpBan" placeholder="Nhap Order ID...">
+    <button onclick="doBan()">Tim</button>
+  </div>
+  <div class="pi" id="pi">
+    <label>Gia ban (VND)</label>
+    <input type="text" id="giaBan" placeholder="0" oninput="fmt(this)" inputmode="numeric">
+    <div style="margin-top:8px">
+      <label style="font-size:12px;color:#FF8F00;margin-bottom:5px;display:block;font-weight:600">So luong ban (<span id="slTonHint" style="color:#2196F3">ton: ?</span>)</label>
+      <input type="number" id="slBan" value="1" min="1" style="width:100%;background:#fff;border:2px solid #FFE082;border-radius:12px;padding:12px 14px;color:#1a3a5c;font-size:15px;outline:none">
+    </div>
+  </div>
+  <button class="bc" id="bc" onclick="confirmBan()">Xac nhan ban</button>
+  <div class="res" id="resBan"><div class="rt" id="rtBan"></div><div class="rb" id="rbBan"></div></div>
+</div>
+
+<!-- TAB KIEM TRA GIA -->
+<div class="sec" id="tab-gia">
+  <div class="sbtn"><label onclick="openCam('gia')">&#x1F4F7; Quet ma vach Order ID</label></div>
+  <div class="row">
+    <input type="text" id="inpGia" placeholder="Nhap Order ID...">
+    <button onclick="doGia()">Kiem tra</button>
+  </div>
+  <div class="res" id="resGia"><div class="rt" id="rtGia"></div><div class="rb" id="rbGia"></div></div>
+</div>
+
+<!-- TAB BAO CAO -->
+<div class="sec" id="tab-dash">
+  <div class="d-filter" id="dFilter">
+    <button class="d-ftab active" onclick="setDFilter('all')">Tat ca</button>
+  </div>
+  <div style="text-align:center;padding:30px;color:#90b8d8;font-size:13px" id="dLoading">
+    <span class="spin"></span>Bam de tai du lieu...
+  </div>
+  <div id="dContent" style="display:none">
+    <div class="d-cards">
+      <div class="d-card g">
+        <div class="d-lbl">Tong lai</div>
+        <div class="d-val" id="dLai" style="color:#2E7D32">0</div>
+        <div class="d-sub" id="dLaiSub">0 don</div>
+      </div>
+      <div class="d-card b">
+        <div class="d-lbl">Doanh thu</div>
+        <div class="d-val" id="dDT">0</div>
+        <div class="d-sub">Tong gia ban</div>
+      </div>
+      <div class="d-card o">
+        <div class="d-lbl">Von nhap</div>
+        <div class="d-val" id="dVon">0</div>
+        <div class="d-sub">Tong gia nhap</div>
+      </div>
+      <div class="d-card r">
+        <div class="d-lbl">Ton kho</div>
+        <div class="d-val" id="dTon">0</div>
+        <div class="d-sub" id="dTonVon">Von ton: 0</div>
+      </div>
+    </div>
+    <div class="d-chart">
+      <div class="d-chart-title">Lai lo theo sheet (trieu dong)</div>
+      <canvas id="dChartLai" height="180"></canvas>
+    </div>
+    <div class="d-chart">
+      <div class="d-chart-title">Co cau san pham</div>
+      <canvas id="dChartLoai" height="180"></canvas>
+    </div>
+    <div class="d-table">
+      <div class="d-chart-title">Chi tiet theo sheet</div>
+      <table>
+        <thead><tr>
+          <th>Thang</th><th style="text-align:right">Don</th>
+          <th style="text-align:right">Doanh thu</th><th style="text-align:right">Lai</th>
+        </tr></thead>
+        <tbody id="dTable"></tbody>
+      </table>
+    </div>
+    <div class="d-ton">
+      <div class="d-chart-title">Ton kho chua ban</div>
+      <div id="dTonList"></div>
+    </div>
+    <div style="margin:0 14px 10px">
+      <button onclick="loadDash()" style="width:100%;padding:12px;background:linear-gradient(135deg,#2196F3,#42A5F5);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Tai lai du lieu</button>
+    </div>
+  </div>
+</div>
+
+<!-- LICH SU -->
+<div class="hist">
+  <div class="ht">Lich su</div>
+  <div id="hl"><div style="font-size:13px;color:#90b8d8">Chua co lich su</div></div>
+</div>
+
+<!-- CAMERA -->
+<div id="camModal">
+  <div class="dce-video-container"></div>
+  <div id="camOverlay"></div>
+  <div id="camHint">Huong ma vach vao khung xanh</div>
+  <button id="camClose" onclick="closeCam()">Dong</button>
+</div>
+
+<!-- POPUP IN TEM -->
+<div id="temPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:997;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:#fff;border-radius:20px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;width:82%;max-width:300px">
+    <div style="font-size:13px;font-weight:700;color:#1a3a5c">Xem truoc tem</div>
+    <img id="temPreview" style="width:100%;border:1px solid #eee;border-radius:8px">
+    <div id="temPopupOid" style="font-family:monospace;font-size:11px;color:#666;word-break:break-all;text-align:center"></div>
+    <button onclick="shareOrDownloadTem()" style="width:100%;padding:13px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer">Chia se / In</button>
+    <button onclick="document.getElementById('temPopup').style.display='none'" style="width:100%;padding:10px;background:#eee;border:none;border-radius:12px;font-size:14px;color:#555;cursor:pointer">Dong</button>
+  </div>
+</div>
+
+<script>
+Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
+Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
+
+var BASE = 'https://script.google.com/macros/s/AKfycbzBkixH45mcVPClX4PG0PYALecaFXd55qLAoAFwh5RxEY5ze4-UqqFwYZPfwhF61HCI/exec';
+var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
+var camTab = '', scanner = null;
+var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartLoai = null;
+
+// ===== TABS =====
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(function(el,i){
+    el.classList.toggle('active', ['nhap','ban','gia','dash'][i] === t);
+  });
+  document.querySelectorAll('.sec').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('tab-'+t).classList.add('active');
+  if (t === 'dash' && !dashLoaded) loadDash();
 }
 
-function doGet(e) {
-  if (e && e.parameter.action === 'updateTracking') return updateTrackingFromScan(e);
-  if (e && e.parameter.action === 'timMay') return timMay(e);
-  if (e && e.parameter.action === 'banHang') return banHangFromScan(e);
-  if (e && e.parameter.action === 'getDashboard') return getDashboard();
-  return HtmlService.createHtmlOutput(buildApp())
-    .setTitle('Quan ly Hang')
-    .addMetaTag('viewport', 'width=device-width,initial-scale=1');
+// ===== HELPERS =====
+function fmt(el){ var v=el.value.replace(/[^0-9]/g,''); el.value=v?Number(v).toLocaleString('vi-VN'):''; }
+function raw(id){ return parseFloat((document.getElementById(id).value||'0').replace(/[^0-9]/g,''))||0; }
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmtN(n){ return Math.round(n).toLocaleString('vi'); }
+function showRes(id,type,title,body){
+  var sfx=id.replace('res','');
+  document.getElementById(id).className='res show '+type;
+  document.getElementById('rt'+sfx).innerHTML=title;
+  document.getElementById('rb'+sfx).innerHTML=body;
 }
 
-function buildApp() {
-  var url = ScriptApp.getService().getUrl();
-  return '<!DOCTYPE html><html><head>' +
-    '<meta charset="UTF-8">' +
-    '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">' +
-    '<meta name="apple-mobile-web-app-capable" content="yes">' +
-    '<title>Quan ly Hang</title>' +
-    '<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"><\/script>' +
-    '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>' +
-    '<style>' + buildCSS() + '</style></head>' +
-    buildBody() +
-    '<script>' + buildJS(url) + '<\/script></body></html>';
+// ===== DYNAMSOFT =====
+async function initScanner() {
+  if (scanner) return;
+  try {
+    scanner = await Dynamsoft.DBR.BarcodeScanner.createInstance();
+    var s = await scanner.getRuntimeSettings();
+    s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 | Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39 | Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13;
+    s.expectedBarcodesCount = 1;
+    await scanner.updateRuntimeSettings(s);
+    await scanner.setUIElement(document.getElementById('camModal'));
+    scanner.onFrameRead = function() {};
+    scanner.onUnduplicatedRead = function(txt) { closeCam(); onScanned(txt.trim()); };
+  } catch(e) { scanner = null; }
+}
+initScanner();
+
+async function openCam(tab) {
+  camTab = tab;
+  if (!scanner) await initScanner();
+  if (!scanner) { alert('Khong khoi dong duoc scanner!'); return; }
+  document.getElementById('camModal').classList.add('show');
+  try { await scanner.open(); }
+  catch(e) { alert('Loi camera: ' + e.message); closeCam(); }
+}
+function closeCam() {
+  document.getElementById('camModal').classList.remove('show');
+  if (scanner) { try { scanner.close(); } catch(e) {} }
+}
+function onScanned(t) {
+  if (navigator.vibrate) navigator.vibrate(100);
+  if (camTab==='nhap') findTracking(t);
+  else if (camTab==='ban') findBan(t);
+  else if (camTab==='gia') findGia(t);
 }
 
-function buildCSS() {
-  return [
-    '*{margin:0;padding:0;box-sizing:border-box}',
-    'body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-bottom:60px}',
-    '.top{background:linear-gradient(135deg,#2196F3,#64B5F6);padding:18px 20px;position:sticky;top:0;z-index:10;box-shadow:0 3px 15px rgba(33,150,243,.3)}',
-    '.top h1{font-size:22px;font-weight:700;color:#fff}.top p{font-size:12px;color:rgba(255,255,255,.7);margin-top:2px}',
-    '.tabs{display:flex;margin:16px 16px 0;gap:6px}',
-    '.tab{flex:1;padding:11px 4px;border:none;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#90b8d8}',
-    '.tab.active{background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff}',
-    '.sec{display:none;padding:16px 0 0}.sec.active{display:block}',
-    '.sbtn{display:block;margin:0 16px 12px;border-radius:18px;overflow:hidden;position:relative;width:calc(100% - 32px)}',
-    '.sbtn label{display:block;padding:17px;background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff;cursor:pointer;text-align:center;font-size:17px;font-weight:700}',
-    '.sbtn input{position:absolute;opacity:0;width:0;height:0}',
-    '.row{margin:0 16px 12px;display:flex;gap:8px}',
-    '.row input{flex:1;background:#fff;border:2px solid #BBDEFB;border-radius:14px;padding:13px 16px;color:#1a3a5c;font-size:15px;outline:none}',
-    '.row input:focus{border-color:#2196F3}',
-    '.row button{background:linear-gradient(135deg,#2196F3,#42A5F5);border:none;border-radius:14px;padding:13px 18px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}',
-    '.ship{margin:0 16px 12px;display:none}.ship label,.pi label{font-size:12px;color:#FF8F00;margin-bottom:6px;display:block;font-weight:600}',
-    '.ship .row{margin:0}.ship .row input{border-color:#FFE082}.ship .row button{background:linear-gradient(135deg,#FFB300,#FFA000)}',
-    '.pi{margin:0 16px 12px;display:none}',
-    '.pi input{width:100%;background:#fff;border:2px solid #FFE082;border-radius:14px;padding:13px 16px;color:#1a3a5c;font-size:15px;outline:none}',
-    '.bc{display:none;margin:0 16px 12px;padding:15px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;width:calc(100% - 32px)}',
-    '.res{margin:0 16px 12px;border-radius:18px;padding:16px;display:none;box-shadow:0 4px 20px rgba(0,0,0,.08)}',
-    '.res.show{display:block}',
-    '.res.ok{background:#E3F2FD;border-left:4px solid #2196F3}',
-    '.res.err{background:#FFEBEE;border-left:4px solid #F44336}',
-    '.res.warn{background:#FFF8E1;border-left:4px solid #FFB300}',
-    '.res.info{background:#E8F5E9;border-left:4px solid #4CAF50}',
-    '.rt{font-size:15px;font-weight:700;margin-bottom:6px}',
-    '.res.ok .rt{color:#1565C0}.res.err .rt{color:#C62828}.res.warn .rt{color:#E65100}.res.info .rt{color:#2E7D32}',
-    '.rb{font-size:14px;color:#546E7A;line-height:1.8}.rb b{color:#1a3a5c}',
-    '.prbtn{display:block;margin:10px 0 0;padding:13px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;width:100%}',
-    '.divider{margin:0 16px 12px;border:none;border-top:1.5px dashed #BBDEFB}',
-    '.sec-lbl{margin:0 16px 6px;font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;font-weight:700}',
-    '.hist{margin:0 16px}.ht{font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;font-weight:700}',
-    '.hi{background:#fff;border-radius:14px;padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px}',
-    '.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}.dot.ok{background:#2196F3}.dot.err{background:#F44336}',
-    '.hin{flex:1;min-width:0}.htr{font-size:13px;color:#1a3a5c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-    '.hn{font-size:12px;color:#90b8d8;margin-top:2px}.htm{font-size:11px;color:#90b8d8;flex-shrink:0}',
-    '.spin{display:inline-block;width:14px;height:14px;border:2px solid #BBDEFB;border-top-color:#2196F3;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:8px}',
-    '@keyframes spin{to{transform:rotate(360deg)}}'
-  ].join('');
-}
+// ===== IN TEM =====
+function inTemManual(){ var v=document.getElementById('inpInTem').value.trim(); if(v) inTem(v,''); }
+document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.key==='Enter')inTemManual();});
 
-function buildBody() {
-  return '<body>' +
-    '<div class="top"><h1>&#x1F4E6; Quan ly Hang</h1><p>eb2 &middot; T12 / 2026 / T4</p></div>' +
-    '<div class="tabs">' +
-    '<button class="tab active" onclick="switchTab(\'nhap\')">Nhap kho</button>' +
-    '<button class="tab" onclick="switchTab(\'ban\')">Ban hang</button>' +
-    '<button class="tab" onclick="switchTab(\'gia\')">Kiem tra gia</button>' +
-    '</div>' +
-    '<div class="sec active" id="tab-nhap">' +
-    '<div class="sbtn"><label for="camNhap">&#x1F4F7; Chup ma vach Tracking</label>' +
-    '<input type="file" id="camNhap" accept="image/*" capture="environment" onchange="handleScan(this,\'nhap\')"></div>' +
-    '<div class="row"><input type="text" id="inpNhap" placeholder="Nhap tracking..."><button onclick="doNhap()">OK</button></div>' +
-    '<div class="ship" id="shipWrap"><label>Phi ship (VND)</label>' +
-    '<div class="row"><input type="text" id="phiShip" placeholder="0" oninput="fmt(this)" inputmode="numeric"><button onclick="confirmNhap()">OK</button></div></div>' +
-    '<div class="res" id="resNhap"><div class="rt" id="rtNhap"></div><div class="rb" id="rbNhap"></div></div>' +
-    '<div id="temWrap" style="display:none;margin:0 16px 12px"><button class="prbtn" id="btnTem">&#x1F5A8; In tem Order ID</button></div>' +
-    '<hr class="divider"><div class="sec-lbl">In tem theo Order ID</div>' +
-    '<div class="sbtn"><label for="camInTem">&#x1F4F7; Chup Order ID de in tem</label>' +
-    '<input type="file" id="camInTem" accept="image/*" capture="environment" onchange="handleScan(this,\'intem\')"></div>' +
-    '<div class="row"><input type="text" id="inpInTem" placeholder="Nhap Order ID de in tem..."><button onclick="doInTem()">In</button></div>' +
-    '</div>' +
-    '<div class="sec" id="tab-ban">' +
-    '<div class="sbtn"><label for="camBan">&#x1F4F7; Chup ma vach Order ID</label>' +
-    '<input type="file" id="camBan" accept="image/*" capture="environment" onchange="handleScan(this,\'ban\')"></div>' +
-    '<div class="row"><input type="text" id="inpBan" placeholder="Nhap Order ID..."><button onclick="doBan()">Tim</button></div>' +
-    '<div class="pi" id="pi"><label>Gia ban (VND)</label><input type="text" id="giaBan" placeholder="0" oninput="fmt(this)" inputmode="numeric"></div>' +
-    '<button class="bc" id="bc" onclick="confirmBan()">Xac nhan ban</button>' +
-    '<div class="res" id="resBan"><div class="rt" id="rtBan"></div><div class="rb" id="rbBan"></div></div>' +
-    '</div>' +
-    '<div class="sec" id="tab-gia">' +
-    '<div class="sbtn"><label for="camGia">&#x1F4F7; Chup ma vach Order ID</label>' +
-    '<input type="file" id="camGia" accept="image/*" capture="environment" onchange="handleScan(this,\'gia\')"></div>' +
-    '<div class="row"><input type="text" id="inpGia" placeholder="Nhap Order ID..."><button onclick="doGia()">Kiem tra</button></div>' +
-    '<div class="res" id="resGia"><div class="rt" id="rtGia"></div><div class="rb" id="rbGia"></div></div>' +
-    '</div>' +
-    '<div class="hist"><div class="ht">Lich su</div>' +
-    '<div id="hl"><div style="font-size:13px;color:#90b8d8">Chua co lich su</div></div></div>';
-}
-
-function buildJS(url) {
-  return 'var BASE="' + url + '",hist=[],cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid="";' +
-
-  'document.getElementById("btnTem").onclick=function(){inTem(curOid);};' +
-
-  'function switchTab(t){' +
-  'document.querySelectorAll(".tab").forEach(function(el,i){el.classList.toggle("active",["nhap","ban","gia"][i]===t);});' +
-  'document.querySelectorAll(".sec").forEach(function(s){s.classList.remove("active");});' +
-  'document.getElementById("tab-"+t).classList.add("active");}' +
-
-  'function fmt(el){var v=el.value.replace(/[^0-9]/g,"");el.value=v?Number(v).toLocaleString("vi-VN"):"";}' +
-  'function raw(id){return parseFloat((document.getElementById(id).value||"0").replace(/[^0-9]/g,""))||0;}' +
-
-  'function showRes(id,type,title,body){' +
-  'var sfx=id.replace("res","");' +
-  'document.getElementById(id).className="res show "+type;' +
-  'document.getElementById("rt"+sfx).innerHTML=title;' +
-  'document.getElementById("rb"+sfx).innerHTML=body;}' +
-
-  // Ham scan chinh - dung ZXing decodeFromCanvas
-  'async function handleScan(input,tab){' +
-  'if(!input.files||!input.files[0])return;' +
-  'var file=input.files[0];' +
-  'input.value="";' +
-  'var img=new Image();' +
-  'var objectUrl=URL.createObjectURL(file);' +
-  'img.src=objectUrl;' +
-  'await new Promise(function(r){img.onload=r;});' +
-  'URL.revokeObjectURL(objectUrl);' +
-  // Scale anh ve 1200px - toi uu nhat cho ma vach
-  'var MAX=1200,scale=Math.min(1,MAX/Math.max(img.width,img.height));' +
-  'var c=document.createElement("canvas");' +
-  'c.width=Math.round(img.width*scale);' +
-  'c.height=Math.round(img.height*scale);' +
-  'c.getContext("2d").drawImage(img,0,0,c.width,c.height);' +
-  'try{' +
-  'var reader=new ZXing.BrowserMultiFormatReader();' +
-  'var result=await reader.decodeFromCanvas(c);' +
-  'var t=result.getText().trim();' +
-  'if(tab==="nhap")findTracking(t);' +
-  'else if(tab==="ban")findBan(t);' +
-  'else if(tab==="gia")findGia(t);' +
-  'else if(tab==="intem"){document.getElementById("inpInTem").value=t;inTem(t);}' +
-  '}catch(ex){' +
-  'alert("Khong doc duoc ma vach!\\nMeo: chup gan, thang goc, du anh sang, tranh bong.");' +
-  '}}' +
-
-  'function doNhap(){var v=document.getElementById("inpNhap").value.trim();if(v){document.getElementById("inpNhap").value="";findTracking(v);}}' +
-  'function doInTem(){var v=document.getElementById("inpInTem").value.trim();if(v)inTem(v);}' +
-  'function doBan(){var v=document.getElementById("inpBan").value.trim();if(v)findBan(v);}' +
-  'function doGia(){var v=document.getElementById("inpGia").value.trim();if(v)findGia(v);}' +
-
-  'document.getElementById("inpNhap").addEventListener("keydown",function(e){if(e.key==="Enter")doNhap();});' +
-  'document.getElementById("phiShip").addEventListener("keydown",function(e){if(e.key==="Enter")confirmNhap();});' +
-  'document.getElementById("inpInTem").addEventListener("keydown",function(e){if(e.key==="Enter")doInTem();});' +
-  'document.getElementById("inpBan").addEventListener("keydown",function(e){if(e.key==="Enter")doBan();});' +
-  'document.getElementById("giaBan").addEventListener("keydown",function(e){if(e.key==="Enter")confirmBan();});' +
-  'document.getElementById("inpGia").addEventListener("keydown",function(e){if(e.key==="Enter")doGia();});' +
-
-  'async function findTracking(t){' +
-  'var now=new Date(),ng=now.getDate()+"/"+(now.getMonth()+1)+"/"+now.getFullYear();' +
-  'showRes("resNhap","warn","<span class=\'spin\'></span>Dang tim...","Tracking: <b>"+t+"</b>");' +
-  'try{var r=await fetch(BASE+"?action=updateTracking&tracking="+encodeURIComponent(t)+"&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao="+encodeURIComponent(ng)+"&checkOnly=1");' +
-  'var d=await r.json();' +
-  'if(d.found){nT=t;nInfo=d;nNg=ng;curOid=d.orderId||"";' +
-  'showRes("resNhap","info","Tim thay! Nhap phi ship","Tracking: <b>"+t+"</b><br>Sheet: <b>"+d.sheet+"</b> dong <b>"+d.row+"</b>");' +
-  'document.getElementById("shipWrap").style.display="block";document.getElementById("phiShip").focus();}' +
-  'else{showRes("resNhap","err","Khong tim thay","<b>"+t+"</b> khong co.");addH("err",t,"Khong tim thay");}' +
-  '}catch(ex){showRes("resNhap","err","Loi ket noi","Thu lai sau.");}}' +
-
-  'async function confirmNhap(){' +
-  'if(!nT)return;var ps=raw("phiShip");' +
-  'document.getElementById("shipWrap").style.display="none";document.getElementById("phiShip").value="";' +
-  'var t=nT,d=nInfo,ng=nNg;nT=null;nInfo=null;nNg=null;' +
-  'try{var r=await fetch(BASE+"?action=updateTracking&tracking="+encodeURIComponent(t)+"&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao="+encodeURIComponent(ng)+"&phiShip="+ps);' +
-  'var res=await r.json();' +
-  'if(res.found){curOid=res.orderId||t;' +
-  'var psStr=ps>0?"<br>Phi ship: <b>"+ps.toLocaleString("vi")+" d</b>":"";' +
-  'showRes("resNhap","ok","Cap nhat thanh cong!","Tracking: <b>"+t+"</b><br>Sheet: <b>"+d.sheet+"</b> dong <b>"+d.row+"</b><br>Ngay ve: <b>"+ng+"</b>"+psStr);' +
-  'document.getElementById("temWrap").style.display="block";' +
-  'addH("ok",t,"Nhap kho"+(ps>0?" | "+ps.toLocaleString("vi")+" d":""));' +
-  'if(navigator.vibrate)navigator.vibrate([80,40,80]);}' +
-  'else showRes("resNhap","err","Loi","Khong cap nhat duoc.");}' +
-  'catch(ex){showRes("resNhap","err","Loi ket noi","Thu lai sau.");}}' +
-
-  'function inTem(oid){' +
-  'if(!oid)oid=curOid||"N/A";' +
-  'var w=window.open("","_blank","width=300,height=200");' +
-  'var s=["<!DOCTYPE html><html><head><meta charset=\'UTF-8\'>",'+
-  '"<script src=\'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js\'><\\/script>",'+
-  '"<style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:35mm;height:22mm;overflow:hidden;background:#fff}",'+
-  '".w{width:35mm;height:22mm;display:flex;flex-direction:column;align-items:center;justify-content:center}",'+
-  '"svg{width:33mm!important;height:13mm!important}",'+
-  '".n{font-family:monospace;font-size:5.5pt;margin-top:.5mm;text-align:center;width:33mm;word-break:break-all}",'+
-  '".b{position:fixed;bottom:4px;right:4px;background:#2196F3;border:none;padding:4px 10px;border-radius:4px;font-size:11px;color:#fff;cursor:pointer}",'+
-  '"@media print{@page{size:35mm 22mm;margin:0}.b{display:none}}</style></head><body>",'+
-  '"<div class=\'w\'><svg id=\'bc\'></svg><div class=\'n\'>"+oid+"</div></div>",'+
-  '"<button class=\'b\' onclick=\'window.print()\'>In</button>",'+
-  '"<script>JsBarcode(document.getElementById(\'bc\'),\'"+oid+"\',{format:\'CODE128\',width:1.5,height:38,displayValue:false,margin:1});<\\/script>",'+
-  '"</body></html>"].join("");' +
-  'w.document.write(s);w.document.close();}' +
-
-  'async function findBan(orderId){' +
-  'showRes("resBan","warn","<span class=\'spin\'></span>Dang tim may...","Order ID: <b>"+orderId+"</b>");' +
-  'try{var r=await fetch(BASE+"?action=timMay&orderId="+encodeURIComponent(orderId));' +
-  'var d=await r.json();' +
-  'if(d.found){if(d.daBan){showRes("resBan","err","Da ban roi!","Order ID: <b>"+orderId+"</b> da ban truoc do!");addH("err",orderId,"Da ban roi");return;}' +
-  'cT=orderId;cInfo=d;' +
-  'showRes("resBan","info","Tim thay!","SP: <b>"+d.sp+"</b><br>Sheet: <b>"+d.sheet+"</b>");' +
-  'document.getElementById("pi").style.display="block";document.getElementById("bc").style.display="block";document.getElementById("giaBan").focus();}' +
-  'else{showRes("resBan","err","Khong tim thay","Order ID: <b>"+orderId+"</b> khong co.");cT=null;cInfo=null;}' +
-  '}catch(ex){showRes("resBan","err","Loi ket noi","Thu lai sau.");}}' +
-
-  'async function confirmBan(){' +
-  'if(!cT||!cInfo)return;var gb=raw("giaBan");if(!gb){alert("Chua nhap gia ban!");return;}' +
-  'showRes("resBan","warn","<span class=\'spin\'></span>Dang cap nhat...","");' +
-  'try{var r=await fetch(BASE+"?action=banHang&orderId="+encodeURIComponent(cT)+"&giaBan="+gb+"&sheet="+encodeURIComponent(cInfo.sheet)+"&row="+cInfo.row);' +
-  'var d=await r.json();' +
-  'if(d.success){showRes("resBan","ok","Ban thanh cong!","Order ID: <b>"+cT+"</b><br>Gia ban: <b>"+gb.toLocaleString("vi")+" d</b>");' +
-  'addH("ok",cT,"Ban "+gb.toLocaleString("vi")+" d");if(navigator.vibrate)navigator.vibrate([80,40,80]);' +
-  'document.getElementById("pi").style.display="none";document.getElementById("bc").style.display="none";' +
-  'document.getElementById("giaBan").value="";document.getElementById("inpBan").value="";cT=null;cInfo=null;}' +
-  'else if(d.daBan)showRes("resBan","err","Da ban roi!","Order ID nay da ban truoc do!");' +
-  'else showRes("resBan","err","Loi","Khong cap nhat duoc.");}' +
-  'catch(ex){showRes("resBan","err","Loi ket noi","Thu lai sau.");}}' +
-
-  'async function findGia(orderId){' +
-  'showRes("resGia","warn","<span class=\'spin\'></span>Dang tim...","Order ID: <b>"+orderId+"</b>");' +
-  'try{var r=await fetch(BASE+"?action=timMay&orderId="+encodeURIComponent(orderId));' +
-  'var d=await r.json();' +
-  'if(d.found){var tt=d.daBan?"<b style=\'color:#C62828\'>Da ban roi</b>":"<b style=\'color:#2E7D32\'>Chua ban</b>";' +
-  'showRes("resGia","info","Tim thay!","Order ID: <b>"+orderId+"</b><br>SP: <b>"+d.sp+"</b><br>Gia nhap: <b>"+Number(d.giaNhap).toLocaleString("vi")+" d</b><br>Trang thai: "+tt);}' +
-  'else showRes("resGia","err","Khong tim thay","<b>"+orderId+"</b> khong co.");}' +
-  'catch(ex){showRes("resGia","err","Loi ket noi","Thu lai sau.");}}' +
-
-  'function addH(s,t,n){var now=new Date();hist.unshift({s:s,t:t,n:n,time:pad(now.getHours())+":"+pad(now.getMinutes())});if(hist.length>30)hist.pop();renderH();}' +
-  'function renderH(){var el=document.getElementById("hl");if(!hist.length){el.innerHTML="<div style=\'font-size:13px;color:#90b8d8\'>Chua co lich su</div>";return;}' +
-  'el.innerHTML=hist.map(function(h){return "<div class=\'hi\'><div class=\'dot "+h.s+"\'></div><div class=\'hin\'><div class=\'htr\'>"+h.t+"</div><div class=\'hn\'>"+h.n+"</div></div><div class=\'htm\'>"+h.time+"</div></div>";}).join("");}' +
-  'function pad(n){return String(n).padStart(2,"0");}';
-}
-
-function jsonOut(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
-
-function updateTrackingFromScan(e) {
-  var tracking = e.parameter.tracking, checkOnly = e.parameter.checkOnly === '1';
-  var sheets = (e.parameter.sheets || 'T12,2026,T4').split(',');
-  var ngayGiao = e.parameter.ngayGiao || '', phiShip = parseFloat(e.parameter.phiShip) || 0;
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  for (var s = 0; s < sheets.length; s++) {
-    var sheet = ss.getSheetByName(sheets[s].trim()); if (!sheet) continue;
-    var data = sheet.getDataRange().getValues(), hr = -1, cols = {};
-    for (var i = 0; i < data.length; i++) {
-      for (var j = 0; j < data[i].length; j++) {
-        var v = String(data[i][j]).trim();
-        if (v === 'Tracking') { hr = i; cols.tracking = j; }
-        if (v === 'Delivered') cols.delivered = j;
-        if (v === 'Ngay giao' || v === 'Ngày giao') cols.ngayGiao = j;
-        if (v === 'Phi ship' || v === 'Phí ship') cols.phiShip = j;
-        if (v === 'Oder ID' || v === 'Order ID') cols.orderId = j;
-        if (v === 'Link sản phẩm' || v === 'Link san pham') cols.sp = j;
-      }
-      if (hr >= 0) break;
+function inTem(oid,sp) {
+  if (!oid) { alert('Chua co Order ID!'); return; }
+  var W=330, H=208;
+  var canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  if (sp) {
+    ctx.fillStyle='#000'; ctx.font='bold 15px Arial'; ctx.textAlign='center';
+    var words=sp.split(' '), line='', lines=[];
+    for (var i=0;i<words.length;i++) {
+      var test=line+(line?' ':'')+words[i];
+      if (ctx.measureText(test).width>W-16){ if(line)lines.push(line); line=words[i]; }
+      else line=test;
     }
-    if (hr < 0) continue;
-    for (var i = hr + 1; i < data.length; i++) {
-      if (String(data[i][cols.tracking]).trim() !== tracking.trim()) continue;
-      var orderId = cols.orderId !== undefined ? String(data[i][cols.orderId] || '') : '';
-      if (!checkOnly) {
-        if (cols.delivered !== undefined) sheet.getRange(i+1, cols.delivered+1).setValue('Da ve kho');
-        if (cols.ngayGiao !== undefined && ngayGiao) sheet.getRange(i+1, cols.ngayGiao+1).setValue(ngayGiao);
-        if (phiShip > 0 && cols.phiShip !== undefined) sheet.getRange(i+1, cols.phiShip+1).setValue(phiShip);
-      }
-      var sp = cols.sp !== undefined ? String(data[i][cols.sp] || '') : '';
-      return jsonOut({found:true, sheet:sheets[s].trim(), row:i+1, orderId:orderId, sp:sp});
-    }
+    if (line) lines.push(line);
+    lines=lines.slice(0,2);
+    lines.forEach(function(l,i){ ctx.fillText(l,W/2,18+i*17); });
   }
-  return jsonOut({found:false});
+  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.style.position='absolute'; svg.style.left='-9999px';
+  document.body.appendChild(svg);
+  try { JsBarcode(svg,oid,{format:'CODE128',width:1.8,height:90,displayValue:false,margin:3}); }
+  catch(e) { document.body.removeChild(svg); alert('Loi barcode!'); return; }
+  var svgData=new XMLSerializer().serializeToString(svg);
+  document.body.removeChild(svg);
+  var img=new Image();
+  var blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
+  var svgUrl=URL.createObjectURL(blob);
+  img.src=svgUrl;
+  img.onload=function(){
+    var top=sp?38:6;
+    ctx.drawImage(img,10,top,W-20,120);
+    URL.revokeObjectURL(svgUrl);
+    ctx.fillStyle='#000'; ctx.font='14px monospace'; ctx.textAlign='center';
+    ctx.fillText(oid.length>32?oid.substring(0,32)+'...':oid, W/2, top+130);
+    var dataUrl=canvas.toDataURL('image/png');
+    document.getElementById('temPreview').src=dataUrl;
+    document.getElementById('temPopupOid').textContent=oid;
+    document.getElementById('temPopup').style.display='flex';
+    canvas.toBlob(function(pngBlob){ window._temBlob=pngBlob; window._temOid=oid; },'image/png');
+  };
 }
 
-function timMay(e) {
-  var orderId = e.parameter.orderId, ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetNames = ['T12', '2026', 'T4'];
-  for (var s = 0; s < sheetNames.length; s++) {
-    var sheet = ss.getSheetByName(sheetNames[s]); if (!sheet) continue;
-    var data = sheet.getDataRange().getValues(), hr = -1, cols = {};
-    for (var i = 0; i < data.length; i++) {
-      for (var j = 0; j < data[i].length; j++) {
-        var v = String(data[i][j]).trim();
-        if (v === 'Oder ID' || v === 'Order ID') { hr = i; cols.orderId = j; }
-        if (v === 'Note') cols.note = j;
-        if (v === 'Link san pham' || v === 'Link sản phẩm') cols.sp = j;
-        if (v === 'Gia ban' || v === 'Giá bán') cols.giaBan = j;
-        if (v === 'Số lượng' || v === 'So luong') cols.sl = j;
-        if (v === 'SL da ban' || v === 'SL đã bán') cols.slDaBan = j;
-      }
-      if (hr >= 0) break;
-    }
-    if (hr < 0) continue;
-    for (var i = hr + 1; i < data.length; i++) {
-      if (String(data[i][cols.orderId]).trim() !== orderId.trim()) continue;
-      var sl = cols.sl !== undefined ? parseInt(data[i][cols.sl]) || 1 : 1;
-      var slDaBan = cols.slDaBan !== undefined ? parseInt(data[i][cols.slDaBan]) || 0 : 0;
-      var slTon = sl - slDaBan;
-      var daBan = slTon <= 0;
-      return jsonOut({found:true, sheet:sheetNames[s], row:i+1,
-        sp: String(data[i][cols.sp]||'').substring(0,50),
-        giaNhap: parseFloat(data[i][cols.note])||0,
-        sl: sl, slDaBan: slDaBan, slTon: slTon,
-        daBan: daBan});
-    }
+function shareOrDownloadTem() {
+  var pngBlob=window._temBlob, oid=window._temOid;
+  if (!pngBlob) return;
+  var file=new File([pngBlob],'tem_'+oid+'.png',{type:'image/png'});
+  if (navigator.share && navigator.canShare({files:[file]})) {
+    navigator.share({files:[file],title:'Tem '+oid}).catch(function(e){ if(e.name!=='AbortError') alert('Loi: '+e.message); });
+  } else {
+    var a=document.createElement('a'); a.href=URL.createObjectURL(pngBlob); a.download='tem_'+oid+'.png'; a.click();
   }
-  return jsonOut({found:false});
+  document.getElementById('temPopup').style.display='none';
 }
 
-function banHangFromScan(e) {
-  var giaBan = parseFloat(e.parameter.giaBan)||0, row = parseInt(e.parameter.row);
-  var slBan = parseInt(e.parameter.slBan)||1;
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(e.parameter.sheet);
-  if (!sheet) return jsonOut({success:false});
-  var data = sheet.getDataRange().getValues(), hr = -1, cols = {};
-  for (var i = 0; i < data.length; i++) {
-    for (var j = 0; j < data[i].length; j++) {
-      var v = String(data[i][j]).trim();
-      if (v === 'Oder ID' || v === 'Order ID') hr = i;
-      if (v === 'Note') cols.note = j;
-      if (v === 'Gia ban' || v === 'Giá bán') cols.giaBan = j;
-      if (v === 'Lai' || v === 'Lãi') cols.lai = j;
-      if (v === 'Số lượng' || v === 'So luong') cols.sl = j;
-      if (v === 'SL da ban' || v === 'SL đã bán') cols.slDaBan = j;
-    }
-    if (hr >= 0) break;
+// ===== NHAP KHO =====
+function doNhap(){ var v=document.getElementById('inpNhap').value.trim(); if(v){document.getElementById('inpNhap').value='';findTracking(v);} }
+document.getElementById('inpNhap').addEventListener('keydown',function(e){if(e.key==='Enter')doNhap();});
+document.getElementById('phiShip').addEventListener('keydown',function(e){if(e.key==='Enter')confirmNhap();});
+
+async function findTracking(t) {
+  var now=new Date(), ng=now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
+  showRes('resNhap','warn','<span class="spin"></span>Dang tim...','Tracking: <b>'+t+'</b>');
+  try {
+    var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&checkOnly=1');
+    var d=await r.json();
+    if (d.found) {
+      nT=t; nInfo=d; nNg=ng; curOid=d.orderId||''; curSp=d.sp||'';
+      var spTxt=d.sp?'<br>SP: <b>'+d.sp+'</b>':'';
+      showRes('resNhap','info','Tim thay! Nhap phi ship','Tracking: <b>'+t+'</b>'+spTxt+'<br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b>');
+      document.getElementById('shipWrap').style.display='block';
+      document.getElementById('phiShip').focus();
+    } else { showRes('resNhap','err','Khong tim thay','<b>'+t+'</b> khong co.'); addH('err',t,'Khong tim thay'); }
+  } catch(ex) { showRes('resNhap','err','Loi ket noi','Thu lai sau.'); }
+}
+
+async function confirmNhap() {
+  if (!nT) return;
+  var ps=raw('phiShip');
+  document.getElementById('shipWrap').style.display='none';
+  document.getElementById('phiShip').value='';
+  var t=nT,d=nInfo,ng=nNg; nT=null;nInfo=null;nNg=null;
+  try {
+    var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps);
+    var res=await r.json();
+    if (res.found) {
+      curOid=res.orderId||t; curSp=res.sp||'';
+      var psStr=ps>0?'<br>Phi ship: <b>'+ps.toLocaleString('vi')+' d</b>':'';
+      showRes('resNhap','ok','Cap nhat thanh cong!','Tracking: <b>'+t+'</b><br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b><br>Ngay ve: <b>'+ng+'</b>'+psStr);
+      document.getElementById('temWrap').style.display='block';
+      addH('ok',t,'Nhap kho'+(ps>0?' | '+ps.toLocaleString('vi')+' d':''));
+      if (navigator.vibrate) navigator.vibrate([80,40,80]);
+    } else showRes('resNhap','err','Loi','Khong cap nhat duoc.');
+  } catch(ex) { showRes('resNhap','err','Loi ket noi','Thu lai sau.'); }
+}
+
+// ===== BAN HANG =====
+function doBan(){ var v=document.getElementById('inpBan').value.trim(); if(v) findBan(v); }
+document.getElementById('inpBan').addEventListener('keydown',function(e){if(e.key==='Enter')doBan();});
+document.getElementById('giaBan').addEventListener('keydown',function(e){if(e.key==='Enter')confirmBan();});
+
+async function findBan(orderId) {
+  showRes('resBan','warn','<span class="spin"></span>Dang tim may...','Order ID: <b>'+orderId+'</b>');
+  try {
+    var r=await fetch(BASE+'?action=timMay&orderId='+encodeURIComponent(orderId));
+    var d=await r.json();
+    if (d.found) {
+      if (d.daBan) { showRes('resBan','err','Da ban roi!','Order ID: <b>'+orderId+'</b> da ban truoc do!'); addH('err',orderId,'Da ban roi'); return; }
+      cT=orderId; cInfo=d;
+      var slInfo = d.sl>1 ? '<br>SL: <b>'+d.sl+'</b> | Da ban: <b>'+d.slDaBan+'</b> | <span style="color:#2E7D32">Ton: <b>'+d.slTon+'</b></span>' : '';
+      showRes('resBan','info','Tim thay!','SP: <b>'+d.sp+'</b><br>Sheet: <b>'+d.sheet+'</b>'+slInfo);
+      document.getElementById('slTonHint').textContent = 'ton: '+(d.slTon !== undefined ? d.slTon : d.sl || 1);
+      document.getElementById('slBan').max = d.slTon !== undefined ? d.slTon : (d.sl || 1);
+      document.getElementById('slBan').value = 1;
+      document.getElementById('pi').style.display='block';
+      document.getElementById('bc').style.display='block';
+      document.getElementById('giaBan').focus();
+    } else { showRes('resBan','err','Khong tim thay','Order ID: <b>'+orderId+'</b> khong co.'); cT=null;cInfo=null; }
+  } catch(ex) { showRes('resBan','err','Loi ket noi','Thu lai sau.'); }
+}
+
+async function confirmBan() {
+  if (!cT||!cInfo) return;
+  var gb=raw('giaBan');
+  if (!gb) { alert('Chua nhap gia ban!'); return; }
+  showRes('resBan','warn','<span class="spin"></span>Dang cap nhat...','');
+  try {
+    var slBan = parseInt(document.getElementById('slBan').value)||1;
+    var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(cT)+'&giaBan='+gb+'&slBan='+slBan+'&sheet='+encodeURIComponent(cInfo.sheet)+'&row='+cInfo.row);
+    var d=await r.json();
+    if (d.success) {
+      var slConLai = d.slTon !== undefined ? '<br>Con lai: <b>'+d.slTon+' may</b>' : '';
+      showRes('resBan','ok','Ban thanh cong!','Order ID: <b>'+cT+'</b><br>Gia ban: <b>'+gb.toLocaleString('vi')+' d</b>'+slConLai);
+      addH('ok',cT,'Ban '+gb.toLocaleString('vi')+' d');
+      if (navigator.vibrate) navigator.vibrate([80,40,80]);
+      document.getElementById('pi').style.display='none';
+      document.getElementById('bc').style.display='none';
+      document.getElementById('giaBan').value=''; document.getElementById('inpBan').value='';
+      cT=null; cInfo=null;
+    } else if (d.daBan) showRes('resBan','err','Da ban roi!','Order ID nay da ban truoc do!');
+    else showRes('resBan','err','Loi',d.error||'Khong cap nhat duoc.');
+  } catch(ex) { showRes('resBan','err','Loi ket noi','Thu lai sau.'); }
+}
+
+// ===== KIEM TRA GIA =====
+function doGia(){ var v=document.getElementById('inpGia').value.trim(); if(v) findGia(v); }
+document.getElementById('inpGia').addEventListener('keydown',function(e){if(e.key==='Enter')doGia();});
+
+async function findGia(orderId) {
+  showRes('resGia','warn','<span class="spin"></span>Dang tim...','Order ID: <b>'+orderId+'</b>');
+  try {
+    var r=await fetch(BASE+'?action=timMay&orderId='+encodeURIComponent(orderId));
+    var d=await r.json();
+    if (d.found) {
+      var tt=d.daBan?"<b style='color:#C62828'>Da ban roi</b>":"<b style='color:#2E7D32'>Chua ban</b>";
+      showRes('resGia','info','Tim thay!','Order ID: <b>'+orderId+'</b><br>SP: <b>'+d.sp+'</b><br>Gia nhap: <b>'+Number(d.giaNhap).toLocaleString('vi')+' d</b><br>Trang thai: '+tt);
+    } else showRes('resGia','err','Khong tim thay','<b>'+orderId+'</b> khong co.');
+  } catch(ex) { showRes('resGia','err','Loi ket noi','Thu lai sau.'); }
+}
+
+// ===== DASHBOARD =====
+async function loadDash() {
+  document.getElementById('dLoading').style.display='block';
+  document.getElementById('dContent').style.display='none';
+  document.getElementById('dLoading').innerHTML='<span class="spin"></span>Dang tai du lieu...';
+  try {
+    var r=await fetch(BASE+'?action=getDashboard');
+    var d=await r.json();
+    if (!d.ok) throw new Error(d.error||'Loi');
+    dAllData=d.data; dashLoaded=true;
+    buildDFilter();
+    renderDash();
+    document.getElementById('dLoading').style.display='none';
+    document.getElementById('dContent').style.display='block';
+  } catch(e) {
+    document.getElementById('dLoading').innerHTML='<div style="color:#C62828">Loi: '+e.message+'</div>';
   }
-  // Kiem tra SL ton
-  var sl = cols.sl !== undefined ? parseInt(data[row-1][cols.sl])||1 : 1;
-  var slDaBan = cols.slDaBan !== undefined ? parseInt(data[row-1][cols.slDaBan])||0 : 0;
-  var slTon = sl - slDaBan;
-  if (slTon <= 0) return jsonOut({success:false, daBan:true});
-  if (slBan > slTon) return jsonOut({success:false, error:'SL ban (' + slBan + ') vuot qua SL ton (' + slTon + ')'});
-
-  var lc = data[hr].length;
-  // Tao cot Gia ban neu chua co
-  if (cols.giaBan === undefined) { sheet.getRange(hr+1,lc+1).setValue('Gia ban').setBackground('#F39C12').setFontColor('#fff').setFontWeight('bold'); cols.giaBan=lc++; }
-  // Tao cot Lai neu chua co
-  if (cols.lai === undefined) { sheet.getRange(hr+1,lc+1).setValue('Lai').setBackground('#1F4E79').setFontColor('#fff').setFontWeight('bold'); cols.lai=lc++; }
-  // Tao cot SL da ban neu chua co - canh cot Lai
-  if (cols.slDaBan === undefined) { sheet.getRange(hr+1,lc+1).setValue('SL da ban').setBackground('#6C3483').setFontColor('#fff').setFontWeight('bold'); cols.slDaBan=lc; }
-
-  // Cap nhat SL da ban
-  var newSlDaBan = slDaBan + slBan;
-  var newSlTon = sl - newSlDaBan;
-  sheet.getRange(row, cols.slDaBan+1).setValue(newSlDaBan).setNumberFormat('0');
-
-  // Ghi gia ban va tinh lai
-  var giaNhap = parseFloat(data[row-1][cols.note])||0;
-  var lai = (giaBan - giaNhap) * slBan;
-  sheet.getRange(row, cols.giaBan+1).setValue(giaBan).setNumberFormat('#,##0');
-  sheet.getRange(row, cols.lai+1).setValue(lai).setBackground(lai>=0?'#D5F5E3':'#FADBD8').setNumberFormat('#,##0');
-
-  return jsonOut({success:true, slTon: newSlTon, slDaBan: newSlDaBan});
 }
 
-function getDashboard() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetNames = ['2026', 'T4'];
-  var rows = [];
-  sheetNames.forEach(function(sn) {
-    var sheet = ss.getSheetByName(sn); if (!sheet) return;
-    var data = sheet.getDataRange().getValues();
-    var hr = -1, cols = {};
-    for (var i = 0; i < data.length; i++) {
-      for (var j = 0; j < data[i].length; j++) {
-        var v = String(data[i][j]).trim();
-        if (v === 'Ngày' || v === 'Ngay') { hr = i; cols.ngay = j; }
-        if (v === 'Note') cols.note = j;
-        if (v === 'Link sản phẩm' || v === 'Link san pham') cols.sp = j;
-        if (v === 'Gia ban' || v === 'Giá bán') cols.giaBan = j;
-        if (v === 'Oder ID' || v === 'Order ID') cols.orderId = j;
-      }
-      if (hr >= 0) break;
-    }
-    if (hr < 0) return;
-    for (var i = hr + 1; i < data.length; i++) {
-      var giaNhap = parseFloat(data[i][cols.note]) || 0;
-      if (!giaNhap) continue;
-      var sp = cols.sp !== undefined ? String(data[i][cols.sp] || '') : '';
-      var giaBan = cols.giaBan !== undefined ? parseFloat(data[i][cols.giaBan]) || 0 : 0;
-      var daBan = giaBan > 0;
-      var ngay = cols.ngay !== undefined ? data[i][cols.ngay] : '';
-      var thang = '';
-      if (ngay instanceof Date) {
-        thang = (ngay.getMonth()+1) + '/' + ngay.getFullYear();
-      } else if (ngay) {
-        var parts = String(ngay).split('/');
-        if (parts.length >= 2) thang = parts[parts.length-2] + '/' + parts[parts.length-1];
-        else thang = sn;
-      } else thang = sn;
-      rows.push({
-        sheet: sn,
-        sp: sp.substring(0, 60),
-        giaNhap: giaNhap,
-        giaBan: giaBan,
-        daBan: daBan,
-        thang: thang
-      });
-    }
+function buildDFilter() {
+  var months=[...new Set(dAllData.map(function(r){return r.thang;}))].sort();
+  var wrap=document.getElementById('dFilter');
+  wrap.innerHTML='<button class="d-ftab'+(dFilter==='all'?' active':'')+'" onclick="setDFilter(\'all\')">Tat ca</button>';
+  months.forEach(function(m){
+    var btn=document.createElement('button');
+    btn.className='d-ftab'+(dFilter===m?' active':'');
+    btn.textContent=m;
+    btn.onclick=function(){setDFilter(m);};
+    wrap.appendChild(btn);
   });
-  return jsonOut({ok: true, data: rows});
 }
 
-function tinhLai() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  ['T12','2026','T4'].forEach(function(sn) {
-    var sheet = ss.getSheetByName(sn); if (!sheet) return;
-    var data = sheet.getDataRange().getValues(), hr=-1, cols={};
-    for(var i=0;i<data.length;i++){for(var j=0;j<data[i].length;j++){var v=String(data[i][j]).trim();if(v==='VND'){hr=i;cols.vnd=j;}if(v==='Note')cols.note=j;if(v==='Lai'||v==='Lãi')cols.lai=j;}if(hr>=0)break;}
-    if(hr<0)return;
-    if(cols.lai===undefined){sheet.getRange(hr+1,data[hr].length+1).setValue('Lai').setBackground('#1F4E79').setFontColor('#fff').setFontWeight('bold');cols.lai=data[hr].length;}
-    for(var i=hr+1;i<data.length;i++){var vnd=parseFloat(data[i][cols.vnd])||0,note=parseFloat(data[i][cols.note])||0;if(!vnd&&!note)continue;var lai=vnd-note;sheet.getRange(i+1,cols.lai+1).setValue(lai).setBackground(lai>=0?'#D5F5E3':'#FADBD8').setNumberFormat('#,##0');}
+function setDFilter(f) {
+  dFilter=f;
+  buildDFilter();
+  renderDash();
+}
+
+function renderDash() {
+  var data=dFilter==='all'?dAllData:dAllData.filter(function(r){return r.sheet===dFilter;});
+  var daBan=data.filter(function(r){return r.daBan;});
+  var tonKho=data.filter(function(r){return !r.daBan;});
+  var lai=daBan.reduce(function(s,r){return s+(r.giaBan-r.giaNhap);},0);
+  var dt=daBan.reduce(function(s,r){return s+r.giaBan;},0);
+  var von=daBan.reduce(function(s,r){return s+r.giaNhap;},0);
+  var vonTon=tonKho.reduce(function(s,r){return s+r.giaNhap;},0);
+
+  document.getElementById('dLai').textContent=(lai>=0?'+':'')+fmtN(lai)+' d';
+  document.getElementById('dLai').style.color=lai>=0?'#2E7D32':'#C62828';
+  document.getElementById('dLaiSub').textContent=daBan.length+' don da ban';
+  document.getElementById('dDT').textContent=fmtN(dt)+' d';
+  document.getElementById('dVon').textContent=fmtN(von)+' d';
+  document.getElementById('dTon').textContent=tonKho.length+' may';
+  document.getElementById('dTonVon').textContent='Von ton: '+fmtN(vonTon)+' d';
+
+  // Chart lai theo sheet
+  var mLai={};
+  data.forEach(function(r){
+    if(!mLai[r.sheet])mLai[r.sheet]=0;
+    if(r.daBan)mLai[r.sheet]+=(r.giaBan-r.giaNhap);
   });
-  SpreadsheetApp.getUi().alert('Xong!');
-}
-
-function taoMaVach() {
-  var ss=SpreadsheetApp.getActiveSpreadsheet(),bS=ss.getSheetByName('Ma Vach');
-  if(bS)ss.deleteSheet(bS);bS=ss.insertSheet('Ma Vach');
-  bS.getRange(1,1,1,4).setValues([['Sheet','Order ID','San pham','Gia nhap']]).setBackground('#1F4E79').setFontColor('#fff').setFontWeight('bold');
-  var row=2,allData=[];
-  ['T12','2026','T4'].forEach(function(sn){
-    var sheet=ss.getSheetByName(sn);if(!sheet)return;
-    var data=sheet.getDataRange().getValues(),hr=-1,cols={};
-    for(var i=0;i<data.length;i++){for(var j=0;j<data[i].length;j++){var v=String(data[i][j]).trim();if(v==='Oder ID'||v==='Order ID'){hr=i;cols.orderId=j;}if(v==='Note')cols.note=j;if(v==='Link san pham'||v==='Link sản phẩm')cols.sp=j;}if(hr>=0)break;}
-    if(hr<0)return;
-    for(var i=hr+1;i<data.length;i++){var oid=String(data[i][cols.orderId]||'').trim();if(!oid||oid==='undefined')continue;var n=parseFloat(data[i][cols.note])||0;var sp=String(data[i][cols.sp]||'').substring(0,50);bS.getRange(row,1).setValue(sn);bS.getRange(row,2).setValue(oid);bS.getRange(row,3).setValue(sp);bS.getRange(row,4).setValue(n).setNumberFormat('#,##0');allData.push({oid:oid,sp:sp,note:n});row++;}
+  var mKeys=Object.keys(mLai).sort();
+  var mVals=mKeys.map(function(k){return Math.round(mLai[k]/1000000*10)/10;});
+  if(dChartLai)dChartLai.destroy();
+  dChartLai=new Chart(document.getElementById('dChartLai'),{
+    type:'bar',
+    data:{labels:mKeys,datasets:[{data:mVals,backgroundColor:mVals.map(function(v){return v>=0?'rgba(33,150,243,.8)':'rgba(244,67,54,.8)';}),borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return v+'M';}}}}}
   });
-  bS.autoResizeColumns(1,4);bS.setFrozenRows(1);
-  var ph='<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script><style>body{margin:0;padding:16px;font-family:Arial}.cont{display:flex;flex-wrap:wrap;gap:12px}.lbl{border:1.5px solid #333;border-radius:8px;padding:12px;width:260px;text-align:center}.sp{font-size:10px;color:#666;margin-bottom:6px;height:24px;overflow:hidden}svg{max-width:240px;height:55px}.num{font-family:monospace;font-size:11px;color:#333;margin-top:4px}.gia{font-size:12px;font-weight:bold;color:#1F4E79;margin-top:2px}.btn{position:fixed;top:10px;right:10px;background:#2196F3;border:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:bold;color:#fff;cursor:pointer}@media print{.btn{display:none}}<\/style><\/head><body><button class="btn" onclick="window.print()">In tem<\/button><div class="cont" id="c"><\/div><script>var items='+JSON.stringify(allData)+';document.getElementById("c").innerHTML=items.map(function(it,i){return "<div class=\'lbl\'><div class=\'sp\'>"+it.sp.substring(0,35)+"<\/div><svg id=\'b"+i+"\'><\/svg><div class=\'num\'>"+it.oid+"<\/div><div class=\'gia\'>"+Number(it.note).toLocaleString("vi")+" d<\/div><\/div>";}).join("");items.forEach(function(it,i){try{JsBarcode(document.getElementById("b"+i),it.oid,{format:"CODE128",width:1.5,height:50,displayValue:false,margin:2});}catch(e){}});<\/script><\/body><\/html>';
-  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(ph).setWidth(1100).setHeight(700),'In tem - '+(row-2)+' may');
-}
 
-function baoCaoTiTrong() {
-  var ss=SpreadsheetApp.getActiveSpreadsheet(),ui=SpreadsheetApp.getUi();
-  var rs=ss.getSheetByName('Bao cao ti trong');if(rs)ss.deleteSheet(rs);rs=ss.insertSheet('Bao cao ti trong');
-  rs.getRange(1,1,1,5).setValues([['Thang','Loai hang','So don','Tong VND','Ti trong (%)']]).setBackground('#1F4E79').setFontColor('#fff').setFontWeight('bold');
-  var allRows=[];
-  ['T12','2026','T4'].forEach(function(sn){
-    var sheet=ss.getSheetByName(sn);if(!sheet)return;
-    var data=sheet.getDataRange().getValues(),hr=-1,cols={};
-    for(var i=0;i<data.length;i++){for(var j=0;j<data[i].length;j++){var v=String(data[i][j]).trim();if(v==='Link sản phẩm'||v==='Link san pham'){hr=i;cols.link=j;}if(v==='VND')cols.vnd=j;if(v==='Số lượng'||v==='So luong')cols.sl=j;}if(hr>=0)break;}
-    if(hr<0)return;
-    var sum={MacBook:{don:0,vnd:0},iPad:{don:0,vnd:0},iPhone:{don:0,vnd:0},Khac:{don:0,vnd:0}};
-    for(var i=hr+1;i<data.length;i++){var link=String(data[i][cols.link]||'').toLowerCase(),vnd=parseFloat(data[i][cols.vnd])||0,sl=parseFloat(data[i][cols.sl])||1;if(!link&&!vnd)continue;var loai=link.indexOf('ipad')>=0?'iPad':link.indexOf('iphone')>=0?'iPhone':(link.indexOf('macbook')>=0||link.indexOf('mac')>=0)?'MacBook':'Khac';sum[loai].don+=sl;sum[loai].vnd+=vnd;}
-    var tD=0,tV=0;Object.keys(sum).forEach(function(k){tD+=sum[k].don;tV+=sum[k].vnd;});
-    var colors={MacBook:'#D6E4F0',iPad:'#D5F5E3',iPhone:'#FFF2CC',Khac:'#F5F5F5'};
-    Object.keys(sum).forEach(function(loai){var s=sum[loai];if(!s.don)return;allRows.push({sn:sn,loai:loai,don:s.don,vnd:s.vnd,tt:tD?(s.don/tD*100).toFixed(1)+'%':'0%',color:colors[loai]});});
-    allRows.push({sn:sn,loai:'TONG',don:tD,vnd:tV,tt:'100%',color:'#1F4E79',bold:true,fc:'#fff'});
-    allRows.push({});
+  // Chart co cau
+  var loai={MacBook:0,iPad:0,iPhone:0,Khac:0};
+  data.forEach(function(r){
+    var sp=(r.sp||'').toLowerCase();
+    if(sp.indexOf('macbook')>=0||sp.indexOf('mac ')>=0)loai.MacBook++;
+    else if(sp.indexOf('ipad')>=0)loai.iPad++;
+    else if(sp.indexOf('iphone')>=0)loai.iPhone++;
+    else loai.Khac++;
   });
-  var row=2;
-  allRows.forEach(function(r){rs.getRange(row,1).setValue(r.sn||'');rs.getRange(row,2).setValue(r.loai||'');rs.getRange(row,3).setValue(r.don||'');rs.getRange(row,4).setValue(r.vnd||'').setNumberFormat('#,##0');rs.getRange(row,5).setValue(r.tt||'');var rng=rs.getRange(row,1,1,5).setBackground(r.color||'#fff');if(r.bold)rng.setFontWeight('bold').setFontColor(r.fc||'#000');row++;});
-  rs.autoResizeColumns(1,5);rs.setFrozenRows(1);ui.alert('Xong!');
-}
+  var lKeys=Object.keys(loai).filter(function(k){return loai[k]>0;});
+  if(dChartLoai)dChartLoai.destroy();
+  dChartLoai=new Chart(document.getElementById('dChartLoai'),{
+    type:'doughnut',
+    data:{labels:lKeys,datasets:[{data:lKeys.map(function(k){return loai[k];}),backgroundColor:['#2196F3','#4CAF50','#FF9800','#9E9E9E'],borderWidth:0}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom'}}}
+  });
 
-function compareTrackingDA() {
-  var ss=SpreadsheetApp.getActiveSpreadsheet(),ui=SpreadsheetApp.getUi(),dT={};
-  ['2026','T4','T12'].forEach(function(name){var sheet=ss.getSheetByName(name);if(!sheet)return;var data=sheet.getDataRange().getValues(),hr=-1,kc=-1,tc=-1;for(var i=0;i<data.length;i++){for(var j=0;j<data[i].length;j++){if(String(data[i][j]).trim()==='Kho'){hr=i;kc=j;}if(String(data[i][j]).trim()==='Tracking')tc=j;}if(hr>=0&&tc>=0)break;}if(hr<0)return;for(var i=hr+1;i<data.length;i++){var k=String(data[i][kc]).trim(),t=String(data[i][tc]).trim();if(k==='DA'&&t&&t!=='undefined'){if(!dT[t])dT[t]=[];dT[t].push(name);}}});
-  var rs=ss.getSheetByName('So sanh DA');if(rs)ss.deleteSheet(rs);rs=ss.insertSheet('So sanh DA');
-  rs.getRange(1,1,1,4).setValues([['Tracking','Co trong sheet','So lan','Trang thai']]).setBackground('#1F4E79').setFontColor('#fff').setFontWeight('bold');
-  Object.keys(dT).forEach(function(t){var s=dT[t];rs.appendRow([t,s.join(', '),s.length,s.length>1?'Trung':'OK']);});
-  rs.autoResizeColumns(1,4);rs.setFrozenRows(1);ui.alert('Xong!');
-}
+  // Table theo sheet
+  var mData={};
+  data.forEach(function(r){
+    if(!mData[r.sheet])mData[r.sheet]={don:0,dt:0,lai:0};
+    if(r.daBan){mData[r.sheet].don++;mData[r.sheet].dt+=r.giaBan;mData[r.sheet].lai+=r.giaBan-r.giaNhap;}
+  });
+  var html='';
+  Object.keys(mData).sort().forEach(function(m){
+    var v=mData[m];
+    var c=v.lai>=0?'#2E7D32':'#C62828';
+    html+='<tr><td style="font-weight:700">'+m+'</td><td style="text-align:right">'+v.don+'</td><td style="text-align:right">'+fmtN(v.dt)+'</td><td style="text-align:right;color:'+c+';font-weight:700">'+(v.lai>=0?'+':'')+fmtN(v.lai)+'</td></tr>';
+  });
+  document.getElementById('dTable').innerHTML=html||'<tr><td colspan="4" style="text-align:center;color:#90b8d8;padding:12px">Khong co du lieu</td></tr>';
 
-function analyzeByKho() {
-  var ss=SpreadsheetApp.getActiveSpreadsheet(),ui=SpreadsheetApp.getUi(),sum={};
-  ['T12','2026','T4'].forEach(function(sn){var sheet=ss.getSheetByName(sn);if(!sheet)return;var data=sheet.getDataRange().getValues(),hr=-1,cols={};for(var i=0;i<data.length;i++){for(var j=0;j<data[i].length;j++){var v=String(data[i][j]).trim();if(v==='Kho'){hr=i;cols.kho=j;}if(v==='Số lượng'||v==='So luong')cols.sl=j;if(v==='VND')cols.vnd=j;}if(hr>=0)break;}if(hr<0)return;if(!sum[sn])sum[sn]={};for(var i=hr+1;i<data.length;i++){var kho=String(data[i][cols.kho]||'').trim();if(!kho||kho==='undefined')continue;if(!sum[sn][kho])sum[sn][kho]={don:0,sl:0,vnd:0};sum[sn][kho].don++;sum[sn][kho].sl+=parseFloat(data[i][cols.sl])||0;sum[sn][kho].vnd+=parseFloat(data[i][cols.vnd])||0;}});
-  var rs=ss.getSheetByName('Phan tich Kho');if(rs)ss.deleteSheet(rs);rs=ss.insertSheet('Phan tich Kho');
-  rs.getRange(1,1,1,5).setValues([['Thang','Kho','So don','So luong','Tong VND']]).setBackground('#1F4E79').setFontColor('#fff').setFontWeight('bold');
-  var colors={DC:'#D6E4F0',DA:'#D5F5E3',VTE:'#FFF2CC'};
-  Object.keys(sum).forEach(function(m){Object.keys(sum[m]).forEach(function(k){var s=sum[m][k];rs.appendRow([m,k,s.don,s.sl,s.vnd]);rs.getRange(rs.getLastRow(),1,1,5).setBackground(colors[k]||'#F5F5F5');});});
-  rs.getRange(2,5,rs.getLastRow()-1,1).setNumberFormat('#,##0');rs.autoResizeColumns(1,5);rs.setFrozenRows(1);ui.alert('Xong!');
-}
-
-function analyzeByBuyer() {
-  var ss=SpreadsheetApp.getActiveSpreadsheet(),ui=SpreadsheetApp.getUi(),sum={};
-  ['T12','2026','T4'].forEach(function(sn){var sheet=ss.getSheetByName(sn);if(!sheet)return;var data=sheet.getDataRange().getValues(),hr=-1,cols={};for(var i=0;i<data.length;i++){for(var j=0;j<data[i].length;j++){var v=String(data[i][j]).trim();if(v==='Buyer'){hr=i;cols.buyer=j;}if(v==='Số lượng'||v==='So luong')cols.sl=j;if(v==='VND')cols.vnd=j;}if(hr>=0)break;}if(hr<0)return;for(var i=hr+1;i<data.length;i++){var b=String(data[i][cols.buyer]||'').trim();if(!b||b==='undefined')continue;if(!sum[b])sum[b]={don:0,sl:0,vnd:0};sum[b].don++;sum[b].sl+=parseFloat(data[i][cols.sl])||0;sum[b].vnd+=parseFloat(data[i][cols.vnd])||0;}});
-  var rs=ss.getSheetByName('Phan tich Buyer');if(rs)ss.deleteSheet(rs);rs=ss.insertSheet('Phan tich Buyer');
-  rs.getRange(1,1,1,4).setValues([['Buyer','So don','So luong','Tong VND']]).setBackground('#1F4E79').setFontColor('#fff').setFontWeight('bold');
-  Object.keys(sum).sort(function(a,b){return sum[b].vnd-sum[a].vnd;}).forEach(function(b){var s=sum[b];rs.appendRow([b,s.don,s.sl,s.vnd]);});
-  rs.getRange(2,4,rs.getLastRow()-1,1).setNumberFormat('#,##0');rs.autoResizeColumns(1,4);rs.setFrozenRows(1);ui.alert('Xong!');
-}
-
-function syncDATracking() {
-  var ui=SpreadsheetApp.getUi(),eb2=SpreadsheetApp.getActiveSpreadsheet();
-  var todayStr=new Date().getDate()+'/'+(new Date().getMonth()+1);
-  try{
-    var tdSheet=SpreadsheetApp.openById('1EwUsr5R7WtAL84QW8nF8J_G8489ohvM7ZwJ67MA-btw').getSheetByName('2026');
-    var tdData=tdSheet.getDataRange().getValues(),existing={};
-    tdData.forEach(function(row){var t=String(row[2]||'').trim();if(t&&t.length>5)existing[t]=true;});
-    var lastRealRow=1;
-    for(var r=tdData.length-1;r>=0;r--){var t=String(tdData[r][2]||'').trim();if(t&&t.length>5){lastRealRow=r+1;break;}}
-    var newItems=[];
-    ['T12','2026','T4'].forEach(function(sn){
-      var sheet=eb2.getSheetByName(sn);if(!sheet)return;
-      var data=sheet.getDataRange().getValues(),hr=-1,cols={};
-      for(var i=0;i<data.length;i++){for(var j=0;j<data[i].length;j++){var v=String(data[i][j]).trim();if(v==='Kho'){hr=i;cols.kho=j;}if(v==='Tracking')cols.tracking=j;if(v==='Link san pham'||v==='Link sản phẩm')cols.link=j;if(v==='Số lượng'||v==='So luong')cols.sl=j;}if(hr>=0)break;}
-      if(hr<0)return;
-      for(var i=hr+1;i<data.length;i++){var kho=String(data[i][cols.kho]||'').trim(),tracking=String(data[i][cols.tracking]||'').trim();if(kho==='DA'&&tracking&&!existing[tracking]){newItems.push({tracking:tracking,sp:String(data[i][cols.link]||'').toLowerCase(),sl:data[i][cols.sl]||1});existing[tracking]=true;}}
+  // Ton kho - chia theo sheet
+  if(!tonKho.length){
+    document.getElementById('dTonList').innerHTML='<div style="text-align:center;padding:16px;color:#90b8d8;font-size:13px">Khong co hang ton kho</div>';
+  } else {
+    tonKho.sort(function(a,b){return b.giaNhap-a.giaNhap;});
+    // Nhom theo sheet
+    var bySheet = {};
+    tonKho.forEach(function(r){
+      if(!bySheet[r.sheet]) bySheet[r.sheet] = [];
+      bySheet[r.sheet].push(r);
     });
-    if(!newItems.length){ui.alert('Khong co tracking DA moi!');return;}
-    var startRow=lastRealRow+1;
-    newItems.forEach(function(item){tdSheet.getRange(startRow,1).setValue(todayStr);tdSheet.getRange(startRow,3).setValue(item.tracking);tdSheet.getRange(startRow,4).setValue(item.sl+(item.sp.indexOf('ipad')>=0?' iPad':item.sp.indexOf('iphone')>=0?' iPhone':' Mac'));startRow++;});
-    ui.alert('Xong! Da them '+newItems.length+' tracking DA!');
-  }catch(e){ui.alert('Loi: '+e.message);}
+    var html = '';
+    Object.keys(bySheet).sort().forEach(function(sh){
+      var items = bySheet[sh];
+      var vonSheet = items.reduce(function(s,r){return s+r.giaNhap;},0);
+      html += '<div style="background:#e8f4fd;border-radius:8px;padding:7px 10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+        +'<span style="font-size:12px;font-weight:700;color:#2196F3">Sheet: '+sh+' ('+items.length+' may)</span>'
+        +'<span style="font-size:11px;font-weight:700;color:#1565C0">Von: '+fmtN(vonSheet)+' d</span>'
+        +'</div>';
+      items.forEach(function(r){
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 8px 8px;border-bottom:1px solid #f0f8ff">'
+          +'<div style="flex:1;min-width:0;margin-right:8px">'
+          +'<div style="font-size:12px;font-weight:600;color:#1a3a5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.sp||'Khong ro')+'</div>'
+
+          +'</div>'
+          +'<div style="font-size:12px;font-weight:700;color:#1565C0;flex-shrink:0">'+fmtN(r.giaNhap)+' d</div>'
+          +'</div>';
+      });
+      html += '<div style="height:8px"></div>';
+    });
+    document.getElementById('dTonList').innerHTML = html;
+  }
 }
 
-function askClaude() {
-  var ui=SpreadsheetApp.getUi(),res=ui.prompt('Hoi Claude AI','Nhap cau hoi:',ui.ButtonSet.OK_CANCEL);
-  if(res.getSelectedButton()!==ui.Button.OK)return;
-  var q=res.getResponseText().trim();if(!q)return;
-  var sheet=SpreadsheetApp.getActiveSheet();
-  var preview=sheet.getDataRange().getValues().slice(0,20).map(function(r){return r.join('\t');}).join('\n');
-  try{ui.alert('Claude AI:',callClaudeAPI('Du lieu sheet "'+sheet.getName()+'":\n\n'+preview+'\n\nCau hoi: '+q+'\n\nTra loi tieng Viet, ngan gon.'),ui.ButtonSet.OK);}
-  catch(e){ui.alert('Loi: '+e.message);}
+// ===== LICH SU =====
+function addH(s,t,n){
+  var now=new Date();
+  hist.unshift({s:s,t:t,n:n,time:pad(now.getHours())+':'+pad(now.getMinutes())});
+  if(hist.length>30)hist.pop();
+  renderH();
 }
-
-function callClaudeAPI(prompt) {
-  var opts={method:'post',contentType:'application/json',headers:{'x-api-key':CLAUDE_API_KEY,'anthropic-version':'2023-06-01'},payload:JSON.stringify({model:CLAUDE_MODEL,max_tokens:1000,messages:[{role:'user',content:prompt}]}),muteHttpExceptions:true};
-  var json=JSON.parse(UrlFetchApp.fetch('https://api.anthropic.com/v1/messages',opts).getContentText());
-  if(json.error)throw new Error(json.error.message);
-  return json.content[0].text;
+function renderH(){
+  var el=document.getElementById('hl');
+  if(!hist.length){el.innerHTML='<div style="font-size:13px;color:#90b8d8">Chua co lich su</div>';return;}
+  el.innerHTML=hist.map(function(h){
+    return '<div class="hi"><div class="dot '+h.s+'"></div><div class="hin"><div class="htr">'+h.t+'</div><div class="hn">'+h.n+'</div></div><div class="htm">'+h.time+'</div></div>';
+  }).join('');
 }
+</script>
+</body>
+</html>
