@@ -179,7 +179,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
       </div>
     </div>
     <div class="d-chart">
-      <div class="d-chart-title">Lai lo theo thang (trieu dong)</div>
+      <div class="d-chart-title">Lai lo theo sheet (trieu dong)</div>
       <canvas id="dChartLai" height="180"></canvas>
     </div>
     <div class="d-chart">
@@ -187,7 +187,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
       <canvas id="dChartLoai" height="180"></canvas>
     </div>
     <div class="d-table">
-      <div class="d-chart-title">Chi tiet theo thang</div>
+      <div class="d-chart-title">Chi tiet theo sheet</div>
       <table>
         <thead><tr>
           <th>Thang</th><th style="text-align:right">Don</th>
@@ -511,11 +511,11 @@ function renderDash() {
   document.getElementById('dTon').textContent=tonKho.length+' may';
   document.getElementById('dTonVon').textContent='Von ton: '+fmtN(vonTon)+' d';
 
-  // Chart lai theo thang
+  // Chart lai theo sheet
   var mLai={};
   data.forEach(function(r){
-    if(!mLai[r.thang])mLai[r.thang]=0;
-    if(r.daBan)mLai[r.thang]+=(r.giaBan-r.giaNhap);
+    if(!mLai[r.sheet])mLai[r.sheet]=0;
+    if(r.daBan)mLai[r.sheet]+=(r.giaBan-r.giaNhap);
   });
   var mKeys=Object.keys(mLai).sort();
   var mVals=mKeys.map(function(k){return Math.round(mLai[k]/1000000*10)/10;});
@@ -543,11 +543,11 @@ function renderDash() {
     options:{responsive:true,plugins:{legend:{position:'bottom'}}}
   });
 
-  // Table theo thang
+  // Table theo sheet
   var mData={};
   data.forEach(function(r){
-    if(!mData[r.thang])mData[r.thang]={don:0,dt:0,lai:0};
-    if(r.daBan){mData[r.thang].don++;mData[r.thang].dt+=r.giaBan;mData[r.thang].lai+=r.giaBan-r.giaNhap;}
+    if(!mData[r.sheet])mData[r.sheet]={don:0,dt:0,lai:0};
+    if(r.daBan){mData[r.sheet].don++;mData[r.sheet].dt+=r.giaBan;mData[r.sheet].lai+=r.giaBan-r.giaNhap;}
   });
   var html='';
   Object.keys(mData).sort().forEach(function(m){
