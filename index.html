@@ -495,7 +495,7 @@ function setDFilter(f) {
 }
 
 function renderDash() {
-  var data=dFilter==='all'?dAllData:dAllData.filter(function(r){return r.thang===dFilter;});
+  var data=dFilter==='all'?dAllData:dAllData.filter(function(r){return r.sheet===dFilter;});
   var daBan=data.filter(function(r){return r.daBan;});
   var tonKho=data.filter(function(r){return !r.daBan;});
   var lai=daBan.reduce(function(s,r){return s+(r.giaBan-r.giaNhap);},0);
