@@ -543,7 +543,7 @@ function renderDash() {
   document.getElementById('dChuaVe').textContent=chuaVe.length+' may';
   document.getElementById('dChuaVeVon').textContent='Von: '+fmtN(vonChuaVe)+' d';
   // Chart ton kho
-  if(dChartTon)dChartTon.destroy();
+  if(dChartTon && typeof dChartTon.destroy === 'function')dChartTon.destroy();
   dChartTon=new Chart(document.getElementById('dChartTon'),{
     type:'doughnut',
     data:{
