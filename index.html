@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Quan ly Hang</title>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-bottom:70px}
+.top{background:linear-gradient(135deg,#2196F3,#64B5F6);padding:18px 20px 14px;position:sticky;top:0;z-index:10;box-shadow:0 3px 15px rgba(33,150,243,.3)}
+.top h1{font-size:21px;font-weight:700;color:#fff}
+.top p{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
+.tabs{display:flex;margin:14px 14px 0;gap:6px}
+.tab{flex:1;padding:11px 4px;border:none;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#90b8d8}
+.tab.active{background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff}
+.sec{display:none;padding:14px 0 0}.sec.active{display:block}
+.sbtn{display:block;margin:0 14px 12px;border-radius:18px;overflow:hidden;width:calc(100% - 28px)}
+.sbtn label{display:block;padding:16px;background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff;cursor:pointer;text-align:center;font-size:16px;font-weight:700}
+.sbtn input{position:absolute;opacity:0;width:0;height:0}
+.row{margin:0 14px 12px;display:flex;gap:8px}
+.row input{flex:1;background:#fff;border:2px solid #BBDEFB;border-radius:14px;padding:13px 14px;color:#1a3a5c;font-size:15px;outline:none}
+.row input:focus{border-color:#2196F3}
+.row button{background:linear-gradient(135deg,#2196F3,#42A5F5);border:none;border-radius:14px;padding:13px 16px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.ship{margin:0 14px 12px;display:none}
+.ship label,.pi label{font-size:12px;color:#FF8F00;margin-bottom:5px;display:block;font-weight:600}
+.ship .row{margin:0}.ship .row input{border-color:#FFE082}
+.ship .row button,.pi-btn{background:linear-gradient(135deg,#FFB300,#FFA000)}
+.pi{margin:0 14px 12px;display:none}
+.pi input{width:100%;background:#fff;border:2px solid #FFE082;border-radius:14px;padding:13px 14px;color:#1a3a5c;font-size:15px;outline:none}
+.bc{display:none;margin:0 14px 12px;padding:15px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;width:calc(100% - 28px)}
+.res{margin:0 14px 12px;border-radius:18px;padding:15px;display:none;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.res.show{display:block}
+.res.ok{background:#E3F2FD;border-left:4px solid #2196F3}
+.res.err{background:#FFEBEE;border-left:4px solid #F44336}
+.res.warn{background:#FFF8E1;border-left:4px solid #FFB300}
+.res.info{background:#E8F5E9;border-left:4px solid #4CAF50}
+.rt{font-size:15px;font-weight:700;margin-bottom:5px}
+.res.ok .rt{color:#1565C0}.res.err .rt{color:#C62828}.res.warn .rt{color:#E65100}.res.info .rt{color:#2E7D32}
+.rb{font-size:14px;color:#546E7A;line-height:1.8}.rb b{color:#1a3a5c}
+.prbtn{display:block;margin:10px 0 0;padding:13px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;width:100%}
+.divider{margin:0 14px 12px;border:none;border-top:1.5px dashed #BBDEFB}
+.sec-lbl{margin:0 14px 5px;font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+.hist{margin:0 14px}
+.ht{font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:700}
+.hi{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(33,150,243,.08)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.ok{background:#2196F3}.dot.err{background:#F44336}
+.hin{flex:1;min-width:0}
+.htr{font-size:13px;color:#1a3a5c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hn{font-size:12px;color:#90b8d8;margin-top:1px}
+.htm{font-size:11px;color:#90b8d8;flex-shrink:0}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #BBDEFB;border-top-color:#2196F3;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Camera modal */
+#camModal{display:none;position:fixed;inset:0;background:#000;z-index:999;flex-direction:column}
+#camModal.show{display:flex}
+#camVideo{width:100%;flex:1;object-fit:cover}
+#camFrame{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);width:75%;height:70px;border:3px solid #00e676;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.55)}
+#camClose{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.15);backdrop-filter:blur(10px);color:#fff;border:2px solid rgba(255,255,255,.4);border-radius:50px;padding:14px 36px;font-size:16px;font-weight:700;cursor:pointer}
+#camHint{position:absolute;top:calc(50% - 80px);left:0;right:0;text-align:center;color:#fff;font-size:13px;opacity:.8}
+
+/* URL config */
+#urlBar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #BBDEFB;padding:8px 14px;display:flex;gap:8px;z-index:100}
+#urlBar input{flex:1;border:1.5px solid #BBDEFB;border-radius:10px;padding:8px 12px;font-size:12px;color:#1a3a5c;outline:none}
+#urlBar button{background:linear-gradient(135deg,#2196F3,#42A5F5);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>📦 Quan ly Hang</h1>
+  <p id="urlStatus">Chua co URL — nhap phia duoi</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('nhap')">Nhap kho</button>
+  <button class="tab" onclick="switchTab('ban')">Ban hang</button>
+  <button class="tab" onclick="switchTab('gia')">Kiem tra gia</button>
+</div>
+
+<!-- TAB NHAP KHO -->
+<div class="sec active" id="tab-nhap">
+  <div class="sbtn">
+    <label onclick="openCam('nhap')">📷 Quet ma vach Tracking</label>
+    <input type="hidden">
+  </div>
+  <div class="row">
+    <input type="text" id="inpNhap" placeholder="Nhap tracking...">
+    <button onclick="doNhap()">OK</button>
+  </div>
+  <div class="ship" id="shipWrap">
+    <label>Phi ship (VND)</label>
+    <div class="row">
+      <input type="text" id="phiShip" placeholder="0" oninput="fmt(this)" inputmode="numeric">
+      <button onclick="confirmNhap()">OK</button>
+    </div>
+  </div>
+  <div class="res" id="resNhap"><div class="rt" id="rtNhap"></div><div class="rb" id="rbNhap"></div></div>
+  <div id="temWrap" style="display:none;margin:0 14px 12px">
+    <button class="prbtn" id="btnTem">🖨 In tem Order ID</button>
+  </div>
+  <hr class="divider">
+  <div class="sec-lbl">In tem theo Order ID</div>
+  <div class="sbtn">
+    <label onclick="openCam('intem')">📷 Quet Order ID de in tem</label>
+    <input type="hidden">
+  </div>
+  <div class="row">
+    <input type="text" id="inpInTem" placeholder="Nhap Order ID de in tem...">
+    <button onclick="doInTem()">In</button>
+  </div>
+</div>
+
+<!-- TAB BAN HANG -->
+<div class="sec" id="tab-ban">
+  <div class="sbtn">
+    <label onclick="openCam('ban')">📷 Quet ma vach Order ID</label>
+    <input type="hidden">
+  </div>
+  <div class="row">
+    <input type="text" id="inpBan" placeholder="Nhap Order ID...">
+    <button onclick="doBan()">Tim</button>
+  </div>
+  <div class="pi" id="pi">
+    <label>Gia ban (VND)</label>
+    <input type="text" id="giaBan" placeholder="0" oninput="fmt(this)" inputmode="numeric">
+  </div>
+  <button class="bc" id="bc" onclick="confirmBan()">Xac nhan ban</button>
+  <div class="res" id="resBan"><div class="rt" id="rtBan"></div><div class="rb" id="rbBan"></div></div>
+</div>
+
+<!-- TAB KIEM TRA GIA -->
+<div class="sec" id="tab-gia">
+  <div class="sbtn">
+    <label onclick="openCam('gia')">📷 Quet ma vach Order ID</label>
+    <input type="hidden">
+  </div>
+  <div class="row">
+    <input type="text" id="inpGia" placeholder="Nhap Order ID...">
+    <button onclick="doGia()">Kiem tra</button>
+  </div>
+  <div class="res" id="resGia"><div class="rt" id="rtGia"></div><div class="rb" id="rbGia"></div></div>
+</div>
+
+<!-- LICH SU -->
+<div class="hist">
+  <div class="ht">Lich su</div>
+  <div id="hl"><div style="font-size:13px;color:#90b8d8">Chua co lich su</div></div>
+</div>
+
+<!-- CAMERA MODAL -->
+<div id="camModal">
+  <video id="camVideo" autoplay muted playsinline></video>
+  <div id="camFrame"></div>
+  <div id="camHint">Huong ma vach vao khung xanh</div>
+  <button id="camClose" onclick="closeCam()">Dong camera</button>
+</div>
+
+<!-- URL BAR -->
+<div id="urlBar">
+  <input type="text" id="urlInput" placeholder="Paste Apps Script URL vao day...">
+  <button onclick="saveUrl()">Luu</button>
+</div>
+
+<script>
+// ===== CONFIG =====
+var BASE = localStorage.getItem('khoUrl') || '';
+var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '';
+var camTab = '', camStream = null, camReader = null;
+
+// Init URL
+document.getElementById('urlInput').value = BASE;
+updateUrlStatus();
+
+function saveUrl() {
+  BASE = document.getElementById('urlInput').value.trim();
+  localStorage.setItem('khoUrl', BASE);
+  updateUrlStatus();
+  alert('Da luu URL!');
+}
+
+function updateUrlStatus() {
+  document.getElementById('urlStatus').textContent = BASE ? 'eb2 · T12 / 2026 / T4' : 'Chua co URL — nhap phia duoi';
+}
+
+document.getElementById('btnTem').onclick = function() { inTem(curOid); };
+
+// ===== TABS =====
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(function(el, i) {
+    el.classList.toggle('active', ['nhap','ban','gia'][i] === t);
+  });
+  document.querySelectorAll('.sec').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('tab-' + t).classList.add('active');
+}
+
+// ===== HELPERS =====
+function fmt(el) { var v = el.value.replace(/[^0-9]/g, ''); el.value = v ? Number(v).toLocaleString('vi-VN') : ''; }
+function raw(id) { return parseFloat((document.getElementById(id).value || '0').replace(/[^0-9]/g, '')) || 0; }
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function showRes(id, type, title, body) {
+  var sfx = id.replace('res', '');
+  document.getElementById(id).className = 'res show ' + type;
+  document.getElementById('rt' + sfx).innerHTML = title;
+  document.getElementById('rb' + sfx).innerHTML = body;
+}
+
+// ===== CAMERA =====
+function openCam(tab) {
+  if (!BASE) { alert('Chua co URL! Nhap URL Apps Script phia duoi truoc.'); return; }
+  camTab = tab;
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+  }).then(function(stream) {
+    camStream = stream;
+    var video = document.getElementById('camVideo');
+    video.srcObject = stream;
+    video.play();
+    document.getElementById('camModal').classList.add('show');
+    camReader = new ZXing.BrowserMultiFormatReader();
+    camReader.decodeFromVideoElement(video, function(result, err) {
+      if (result) {
+        var t = result.getText().trim();
+        closeCam();
+        onScanned(t);
+      }
+    });
+  }).catch(function(err) {
+    alert('Khong mo duoc camera!\nVui long cho phep truy cap camera trong Settings > Safari > Camera.');
+  });
+}
+
+function closeCam() {
+  document.getElementById('camModal').classList.remove('show');
+  if (camReader) { try { camReader.reset(); } catch(e) {} camReader = null; }
+  if (camStream) { camStream.getTracks().forEach(function(t) { t.stop(); }); camStream = null; }
+}
+
+function onScanned(t) {
+  if (navigator.vibrate) navigator.vibrate(100);
+  if (camTab === 'nhap') findTracking(t);
+  else if (camTab === 'ban') findBan(t);
+  else if (camTab === 'gia') findGia(t);
+  else if (camTab === 'intem') { document.getElementById('inpInTem').value = t; inTem(t); }
+}
+
+// ===== NHAP KHO =====
+function doNhap() { var v = document.getElementById('inpNhap').value.trim(); if (v) { document.getElementById('inpNhap').value = ''; findTracking(v); } }
+document.getElementById('inpNhap').addEventListener('keydown', function(e) { if (e.key === 'Enter') doNhap(); });
+document.getElementById('phiShip').addEventListener('keydown', function(e) { if (e.key === 'Enter') confirmNhap(); });
+
+async function findTracking(t) {
+  var now = new Date(), ng = now.getDate() + '/' + (now.getMonth()+1) + '/' + now.getFullYear();
+  showRes('resNhap', 'warn', '<span class="spin"></span>Dang tim...', 'Tracking: <b>' + t + '</b>');
+  try {
+    var r = await fetch(BASE + '?action=updateTracking&tracking=' + encodeURIComponent(t) + '&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao=' + encodeURIComponent(ng) + '&checkOnly=1');
+    var d = await r.json();
+    if (d.found) {
+      nT = t; nInfo = d; nNg = ng; curOid = d.orderId || '';
+      showRes('resNhap', 'info', 'Tim thay! Nhap phi ship', 'Tracking: <b>' + t + '</b><br>Sheet: <b>' + d.sheet + '</b> dong <b>' + d.row + '</b>');
+      document.getElementById('shipWrap').style.display = 'block';
+      document.getElementById('phiShip').focus();
+    } else {
+      showRes('resNhap', 'err', 'Khong tim thay', '<b>' + t + '</b> khong co.');
+      addH('err', t, 'Khong tim thay');
+    }
+  } catch(ex) { showRes('resNhap', 'err', 'Loi ket noi', 'Thu lai sau.'); }
+}
+
+async function confirmNhap() {
+  if (!nT) return;
+  var ps = raw('phiShip');
+  document.getElementById('shipWrap').style.display = 'none';
+  document.getElementById('phiShip').value = '';
+  var t = nT, d = nInfo, ng = nNg;
+  nT = null; nInfo = null; nNg = null;
+  try {
+    var r = await fetch(BASE + '?action=updateTracking&tracking=' + encodeURIComponent(t) + '&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao=' + encodeURIComponent(ng) + '&phiShip=' + ps);
+    var res = await r.json();
+    if (res.found) {
+      curOid = res.orderId || t;
+      var psStr = ps > 0 ? '<br>Phi ship: <b>' + ps.toLocaleString('vi') + ' d</b>' : '';
+      showRes('resNhap', 'ok', 'Cap nhat thanh cong!', 'Tracking: <b>' + t + '</b><br>Sheet: <b>' + d.sheet + '</b> dong <b>' + d.row + '</b><br>Ngay ve: <b>' + ng + '</b>' + psStr);
+      document.getElementById('temWrap').style.display = 'block';
+      addH('ok', t, 'Nhap kho' + (ps > 0 ? ' | ' + ps.toLocaleString('vi') + ' d' : ''));
+      if (navigator.vibrate) navigator.vibrate([80,40,80]);
+    } else showRes('resNhap', 'err', 'Loi', 'Khong cap nhat duoc.');
+  } catch(ex) { showRes('resNhap', 'err', 'Loi ket noi', 'Thu lai sau.'); }
+}
+
+// ===== IN TEM =====
+function doInTem() { var v = document.getElementById('inpInTem').value.trim(); if (v) inTem(v); }
+document.getElementById('inpInTem').addEventListener('keydown', function(e) { if (e.key === 'Enter') doInTem(); });
+
+function inTem(oid) {
+  if (!oid) oid = curOid || 'N/A';
+  var w = window.open('', '_blank', 'width=300,height=200');
+  var s = [
+    "<!DOCTYPE html><html><head><meta charset='UTF-8'>",
+    "<script src='https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js'><\/script>",
+    "<style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:35mm;height:22mm;overflow:hidden;background:#fff}",
+    ".w{width:35mm;height:22mm;display:flex;flex-direction:column;align-items:center;justify-content:center}",
+    "svg{width:33mm!important;height:13mm!important}",
+    ".n{font-family:monospace;font-size:5.5pt;margin-top:.5mm;text-align:center;width:33mm;word-break:break-all}",
+    ".b{position:fixed;bottom:4px;right:4px;background:#2196F3;border:none;padding:4px 10px;border-radius:4px;font-size:11px;color:#fff;cursor:pointer}",
+    "@media print{@page{size:35mm 22mm;margin:0}.b{display:none}}</style></head><body>",
+    "<div class='w'><svg id='bc'></svg><div class='n'>" + oid + "</div></div>",
+    "<button class='b' onclick='window.print()'>In</button>",
+    "<script>JsBarcode(document.getElementById('bc'),'" + oid + "',{format:'CODE128',width:1.5,height:38,displayValue:false,margin:1});<\/script>",
+    "</body></html>"
+  ].join('');
+  w.document.write(s);
+  w.document.close();
+}
+
+// ===== BAN HANG =====
+function doBan() { var v = document.getElementById('inpBan').value.trim(); if (v) findBan(v); }
+document.getElementById('inpBan').addEventListener('keydown', function(e) { if (e.key === 'Enter') doBan(); });
+document.getElementById('giaBan').addEventListener('keydown', function(e) { if (e.key === 'Enter') confirmBan(); });
+
+async function findBan(orderId) {
+  showRes('resBan', 'warn', '<span class="spin"></span>Dang tim may...', 'Order ID: <b>' + orderId + '</b>');
+  try {
+    var r = await fetch(BASE + '?action=timMay&orderId=' + encodeURIComponent(orderId));
+    var d = await r.json();
+    if (d.found) {
+      if (d.daBan) { showRes('resBan', 'err', 'Da ban roi!', 'Order ID: <b>' + orderId + '</b> da ban truoc do!'); addH('err', orderId, 'Da ban roi'); return; }
+      cT = orderId; cInfo = d;
+      showRes('resBan', 'info', 'Tim thay!', 'SP: <b>' + d.sp + '</b><br>Sheet: <b>' + d.sheet + '</b>');
+      document.getElementById('pi').style.display = 'block';
+      document.getElementById('bc').style.display = 'block';
+      document.getElementById('giaBan').focus();
+    } else {
+      showRes('resBan', 'err', 'Khong tim thay', 'Order ID: <b>' + orderId + '</b> khong co.');
+      cT = null; cInfo = null;
+    }
+  } catch(ex) { showRes('resBan', 'err', 'Loi ket noi', 'Thu lai sau.'); }
+}
+
+async function confirmBan() {
+  if (!cT || !cInfo) return;
+  var gb = raw('giaBan');
+  if (!gb) { alert('Chua nhap gia ban!'); return; }
+  showRes('resBan', 'warn', '<span class="spin"></span>Dang cap nhat...', '');
+  try {
+    var r = await fetch(BASE + '?action=banHang&orderId=' + encodeURIComponent(cT) + '&giaBan=' + gb + '&sheet=' + encodeURIComponent(cInfo.sheet) + '&row=' + cInfo.row);
+    var d = await r.json();
+    if (d.success) {
+      showRes('resBan', 'ok', 'Ban thanh cong!', 'Order ID: <b>' + cT + '</b><br>Gia ban: <b>' + gb.toLocaleString('vi') + ' d</b>');
+      addH('ok', cT, 'Ban ' + gb.toLocaleString('vi') + ' d');
+      if (navigator.vibrate) navigator.vibrate([80,40,80]);
+      document.getElementById('pi').style.display = 'none';
+      document.getElementById('bc').style.display = 'none';
+      document.getElementById('giaBan').value = '';
+      document.getElementById('inpBan').value = '';
+      cT = null; cInfo = null;
+    } else if (d.daBan) {
+      showRes('resBan', 'err', 'Da ban roi!', 'Order ID nay da ban truoc do!');
+    } else showRes('resBan', 'err', 'Loi', 'Khong cap nhat duoc.');
+  } catch(ex) { showRes('resBan', 'err', 'Loi ket noi', 'Thu lai sau.'); }
+}
+
+// ===== KIEM TRA GIA =====
+function doGia() { var v = document.getElementById('inpGia').value.trim(); if (v) findGia(v); }
+document.getElementById('inpGia').addEventListener('keydown', function(e) { if (e.key === 'Enter') doGia(); });
+
+async function findGia(orderId) {
+  showRes('resGia', 'warn', '<span class="spin"></span>Dang tim...', 'Order ID: <b>' + orderId + '</b>');
+  try {
+    var r = await fetch(BASE + '?action=timMay&orderId=' + encodeURIComponent(orderId));
+    var d = await r.json();
+    if (d.found) {
+      var tt = d.daBan ? "<b style='color:#C62828'>Da ban roi</b>" : "<b style='color:#2E7D32'>Chua ban</b>";
+      showRes('resGia', 'info', 'Tim thay!', 'Order ID: <b>' + orderId + '</b><br>SP: <b>' + d.sp + '</b><br>Gia nhap: <b>' + Number(d.giaNhap).toLocaleString('vi') + ' d</b><br>Trang thai: ' + tt);
+    } else showRes('resGia', 'err', 'Khong tim thay', '<b>' + orderId + '</b> khong co.');
+  } catch(ex) { showRes('resGia', 'err', 'Loi ket noi', 'Thu lai sau.'); }
+}
+
+// ===== LICH SU =====
+function addH(s, t, n) {
+  var now = new Date();
+  hist.unshift({ s:s, t:t, n:n, time:pad(now.getHours())+':'+pad(now.getMinutes()) });
+  if (hist.length > 30) hist.pop();
+  renderH();
+}
+function renderH() {
+  var el = document.getElementById('hl');
+  if (!hist.length) { el.innerHTML = '<div style="font-size:13px;color:#90b8d8">Chua co lich su</div>'; return; }
+  el.innerHTML = hist.map(function(h) {
+    return '<div class="hi"><div class="dot ' + h.s + '"></div><div class="hin"><div class="htr">' + h.t + '</div><div class="hn">' + h.n + '</div></div><div class="htm">' + h.time + '</div></div>';
+  }).join('');
+}
+</script>
+</body>
+</html>
