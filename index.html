@@ -239,7 +239,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
 Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
 
-var BASE = 'https://script.google.com/macros/s/AKfycbwwRhxWjUuY50VrIsLt7mnubnPFHaAVufw2KQvdil4SqQi1irpi2D8ylbkEg3QPiCJ5/exec';
+var BASE = 'https://script.google.com/macros/s/AKfycbzHcxOXuUJfad65NJKZBUstYZzUOz3BnLJeNTiGHH5NEBdm7dWsdcWFq5tx2vAce0HU/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
 var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartLoai = null;
@@ -508,7 +508,7 @@ function renderDash() {
   var data=dFilter==='all'?dAllData:dAllData.filter(function(r){return r.sheet===dFilter;});
   var daBan=data.filter(function(r){return r.daBan;});
   var tonKho=data.filter(function(r){return !r.daBan;});
-  var lai=daBan.reduce(function(s,r){return s+(r.giaBan-r.giaNhap);},0);
+  var lai=daBan.reduce(function(s,r){return s+(r.lai||0);},0);
   var dt=daBan.reduce(function(s,r){return s+r.giaBan;},0);
   var von=daBan.reduce(function(s,r){return s+r.giaNhap;},0);
   var vonTon=tonKho.reduce(function(s,r){return s+r.giaNhap;},0);
