@@ -197,17 +197,14 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
     </div>
     <!-- Bieu do -->
     <div class="d-chart">
-      <div class="d-chart-title">Lai lo theo sheet (trieu dong)</div>
+      <div class="d-chart-title">Lai lo & % Lai/Von theo sheet</div>
       <canvas id="dChartLai" height="180"></canvas>
     </div>
     <div class="d-chart">
       <div class="d-chart-title">Ton kho: Da ve vs Chua ve (trieu dong)</div>
       <canvas id="dChartTon" height="180"></canvas>
     </div>
-    <div class="d-chart">
-      <div class="d-chart-title">% Lai / Gia von (theo sheet)</div>
-      <canvas id="dChartPct" height="180"></canvas>
-    </div>
+
     <!-- Bang -->
     <div class="d-table">
       <div class="d-chart-title">Chi tiet theo sheet</div>
@@ -258,7 +255,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 var BASE = 'https://script.google.com/macros/s/AKfycbxeZYFT2ImTdgqOYxvRYWNzP81Ps8O3EQkcwzFUNh8EzEoNQaPgKA8tvQ71ikfT-BSN/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
-var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartTon = null, dChartPct = null;
+var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartTon = null;
 
 // Init Dynamsoft
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
@@ -551,11 +548,26 @@ function renderDash() {
   data.forEach(function(r){if(!mLai[r.sheet])mLai[r.sheet]=0;if(r.daBan)mLai[r.sheet]+=(r.lai||0);});
   var mKeys=Object.keys(mLai).sort();
   var mVals=mKeys.map(function(k){return Math.round(mLai[k]/1000000*10)/10;});
+  // Tinh % lai/von
+  var pctVals=mKeys.map(function(k){
+    var von=0;
+    data.forEach(function(r){if(r.sheet===k&&r.daBan)von+=r.giaNhap;});
+    return von>0?Math.round(mLai[k]/von*1000)/10:0;
+  });
   dChartLai=destroyChart(dChartLai);
   dChartLai=new Chart(document.getElementById('dChartLai'),{
     type:'bar',
-    data:{labels:mKeys,datasets:[{data:mVals,backgroundColor:mVals.map(function(v){return v>=0?'rgba(33,150,243,.8)':'rgba(244,67,54,.8)';}),borderRadius:6}]},
-    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return v+'M';}}}}}
+    data:{labels:mKeys,datasets:[
+      {label:'Lai (trieu dong)',data:mVals,backgroundColor:mVals.map(function(v){return v>=0?'rgba(33,150,243,.8)':'rgba(244,67,54,.8)';}),borderRadius:6,yAxisID:'y'},
+      {label:'% Lai/Von',data:pctVals,type:'line',borderColor:'#FF9800',backgroundColor:'rgba(255,152,0,.15)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#FF9800',yAxisID:'y1'}
+    ]},
+    options:{responsive:true,
+      plugins:{legend:{position:'bottom'}},
+      scales:{
+        y:{ticks:{callback:function(v){return v+'M';}}},
+        y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:function(v){return v+'%';}}}
+      }
+    }
   });
 
   // Chart ton kho
@@ -567,29 +579,6 @@ function renderDash() {
       datasets:[{data:[Math.round(vonDaVe/1000000*10)/10,Math.round(vonChuaVe/1000000*10)/10],backgroundColor:['#00897B','#FB8C00'],borderWidth:0}]
     },
     options:{responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'M';}}}}}
-  });
-
-  // Chart % lai/von
-  dChartPct=destroyChart(dChartPct);
-  var pctData={};
-  data.forEach(function(r){
-    if(!pctData[r.sheet])pctData[r.sheet]={lai:0,von:0};
-    if(r.daBan){pctData[r.sheet].lai+=(r.lai||0);pctData[r.sheet].von+=r.giaNhap;}
-  });
-  var pctKeys=Object.keys(pctData).sort();
-  var pctVals=pctKeys.map(function(k){
-    return pctData[k].von>0?Math.round(pctData[k].lai/pctData[k].von*1000)/10:0;
-  });
-  dChartPct=new Chart(document.getElementById('dChartPct'),{
-    type:'bar',
-    data:{labels:pctKeys,datasets:[{
-      label:'% Lai/Von',
-      data:pctVals,
-      backgroundColor:pctVals.map(function(v){return v>=0?'rgba(76,175,80,.8)':'rgba(244,67,54,.8)';}),
-      borderRadius:6
-    }]},
-    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.raw+'%';}}}},
-      scales:{y:{ticks:{callback:function(v){return v+'%';}}}}}
   });
 
   // Bang
