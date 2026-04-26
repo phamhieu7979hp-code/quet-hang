@@ -90,7 +90,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
   </div>
   <div class="res" id="resNhap"><div class="rt" id="rtNhap"></div><div class="rb" id="rbNhap"></div></div>
   <div id="temWrap" style="display:none;margin:0 14px 10px">
-    <button class="prbtn" onclick="inTem(curOid)">&#x1F5A8; In tem Order ID</button>
+    <button class="prbtn" onclick="inTem(curOid, window._curSp)">&#x1F5A8; In tem Order ID</button>
   </div>
   <hr class="divider">
   <div class="sec-lbl">In tem theo Order ID</div>
@@ -150,7 +150,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
 Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
 
-var BASE = 'https://script.google.com/macros/s/AKfycbxKzmkwxzgiOAakluFROAc0xWD1guCKRh9UQ5N3w_NZJYisNEmwjCPihLTrMiVF8JI/exec';
+var BASE = 'https://script.google.com/macros/s/AKfycbzzYg6xvLx7cgh0TMfYMYqD6VGHaBC5GDl1MlYLwranrfTl1B4Kk7q0C_ft5yTKZJEU/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '';
 var camTab = '', scanner = null;
 
@@ -213,44 +213,56 @@ function onScanned(t) {
   else if (camTab==='gia') findGia(t);
 }
 
-function inTem(oid) {
+function inTem(oid, sp) {
   if (!oid) { alert('Chua co Order ID!'); return; }
-  // Tao canvas
   var W = 330, H = 208;
   var canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   var ctx = canvas.getContext('2d');
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, W, H);
-  // Tao barcode SVG
+  // Ten san pham
+  if (sp) {
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 15px Arial';
+    ctx.textAlign = 'center';
+    // Wrap text neu qua dai
+    var words = sp.split(' '), line = '', lines = [];
+    for (var i = 0; i < words.length; i++) {
+      var test = line + (line ? ' ' : '') + words[i];
+      if (ctx.measureText(test).width > W - 16) { if (line) lines.push(line); line = words[i]; }
+      else line = test;
+    }
+    if (line) lines.push(line);
+    lines = lines.slice(0, 2); // toi da 2 dong
+    lines.forEach(function(l, i) { ctx.fillText(l, W/2, 18 + i*17); });
+  }
+  // Barcode SVG - nho hon
   var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.style.position = 'absolute';
-  svg.style.left = '-9999px';
+  svg.style.position = 'absolute'; svg.style.left = '-9999px';
   document.body.appendChild(svg);
   try {
-    JsBarcode(svg, oid, {format:'CODE128', width:2.2, height:120, displayValue:false, margin:4});
+    JsBarcode(svg, oid, {format:'CODE128', width:1.8, height:90, displayValue:false, margin:3});
   } catch(e) { document.body.removeChild(svg); alert('Loi tao barcode!'); return; }
   var svgData = new XMLSerializer().serializeToString(svg);
   document.body.removeChild(svg);
-  // Ve SVG len canvas
   var img = new Image();
   var blob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
   var svgUrl = URL.createObjectURL(blob);
   img.src = svgUrl;
   img.onload = function() {
-    ctx.drawImage(img, 10, 4, W-20, 155);
+    var topOffset = sp ? 38 : 6;
+    ctx.drawImage(img, 10, topOffset, W-20, 120);
     URL.revokeObjectURL(svgUrl);
     ctx.fillStyle = '#000';
-    ctx.font = 'bold 18px monospace';
+    ctx.font = '14px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(oid.length > 30 ? oid.substring(0,30) : oid, W/2, 190);
-    // Hien popup xem truoc + nut share
+    var shortOid = oid.length > 32 ? oid.substring(0,32)+'...' : oid;
+    ctx.fillText(shortOid, W/2, topOffset + 130);
     var dataUrl = canvas.toDataURL('image/png');
-    var popup = document.getElementById('temPopup');
     document.getElementById('temPreview').src = dataUrl;
     document.getElementById('temPopupOid').textContent = oid;
-    popup.style.display = 'flex';
-    // Luu blob de share sau
+    document.getElementById('temPopup').style.display = 'flex';
     canvas.toBlob(function(pngBlob) {
       window._temBlob = pngBlob;
       window._temOid = oid;
@@ -305,10 +317,10 @@ async function confirmNhap() {
     var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps);
     var res=await r.json();
     if(res.found){
-      curOid=res.orderId||t;
+      curOid=res.orderId||t; window._curSp=res.sp||'';
       var psStr=ps>0?'<br>Phi ship: <b>'+ps.toLocaleString('vi')+' d</b>':'';
       showRes('resNhap','ok','Cap nhat thanh cong!','Tracking: <b>'+t+'</b><br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b><br>Ngay ve: <b>'+ng+'</b>'+psStr);
-      document.getElementById('temWrap').style.display='block';
+      document.getElementById('temWrap').style.display='block'; window._curSp = res.sp||'';
       addH('ok',t,'Nhap kho'+(ps>0?' | '+ps.toLocaleString('vi')+' d':''));
       if(navigator.vibrate)navigator.vibrate([80,40,80]);
     }else showRes('resNhap','err','Loi','Khong cap nhat duoc.');
