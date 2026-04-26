@@ -300,7 +300,7 @@ async function findTracking(t) {
     var d=await r.json();
     if(d.found){
       nT=t;nInfo=d;nNg=ng;curOid=d.orderId||'';
-      showRes('resNhap','info','Tim thay! Nhap phi ship','Tracking: <b>'+t+'</b><br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b>');
+      var spTxt = d.sp ? '<br>SP: <b>'+d.sp+'</b>' : ''; showRes('resNhap','info','Tim thay! Nhap phi ship','Tracking: <b>'+t+'</b>'+spTxt+'<br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b>');
       document.getElementById('shipWrap').style.display='block';
       document.getElementById('phiShip').focus();
     }else{ showRes('resNhap','err','Khong tim thay','<b>'+t+'</b> khong co.'); addH('err',t,'Khong tim thay'); }
