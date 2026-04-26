@@ -557,17 +557,37 @@ function renderDash() {
   });
   document.getElementById('dTable').innerHTML=html||'<tr><td colspan="4" style="text-align:center;color:#90b8d8;padding:12px">Khong co du lieu</td></tr>';
 
-  // Ton kho
+  // Ton kho - chia theo sheet
   if(!tonKho.length){
     document.getElementById('dTonList').innerHTML='<div style="text-align:center;padding:16px;color:#90b8d8;font-size:13px">Khong co hang ton kho</div>';
   } else {
     tonKho.sort(function(a,b){return b.giaNhap-a.giaNhap;});
-    document.getElementById('dTonList').innerHTML=tonKho.slice(0,30).map(function(r){
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f8ff">'
-        +'<div style="flex:1;min-width:0;margin-right:8px"><div style="font-size:12px;font-weight:600;color:#1a3a5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.sp||'Khong ro')+'</div>'
-        +'<div style="font-size:10px;color:#90b8d8;margin-top:2px">'+r.thang+' · '+r.sheet+'</div></div>'
-        +'<div style="font-size:12px;font-weight:700;color:#1565C0;flex-shrink:0">'+fmtN(r.giaNhap)+' d</div></div>';
-    }).join('');
+    // Nhom theo sheet
+    var bySheet = {};
+    tonKho.forEach(function(r){
+      if(!bySheet[r.sheet]) bySheet[r.sheet] = [];
+      bySheet[r.sheet].push(r);
+    });
+    var html = '';
+    Object.keys(bySheet).sort().forEach(function(sh){
+      var items = bySheet[sh];
+      var vonSheet = items.reduce(function(s,r){return s+r.giaNhap;},0);
+      html += '<div style="background:#e8f4fd;border-radius:8px;padding:7px 10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+        +'<span style="font-size:12px;font-weight:700;color:#2196F3">Sheet: '+sh+' ('+items.length+' may)</span>'
+        +'<span style="font-size:11px;font-weight:700;color:#1565C0">Von: '+fmtN(vonSheet)+' d</span>'
+        +'</div>';
+      items.forEach(function(r){
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 8px 8px;border-bottom:1px solid #f0f8ff">'
+          +'<div style="flex:1;min-width:0;margin-right:8px">'
+          +'<div style="font-size:12px;font-weight:600;color:#1a3a5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.sp||'Khong ro')+'</div>'
+          +'<div style="font-size:10px;color:#90b8d8;margin-top:2px">'+r.thang+'</div>'
+          +'</div>'
+          +'<div style="font-size:12px;font-weight:700;color:#1565C0;flex-shrink:0">'+fmtN(r.giaNhap)+' d</div>'
+          +'</div>';
+      });
+      html += '<div style="height:8px"></div>';
+    });
+    document.getElementById('dTonList').innerHTML = html;
   }
 }
 
