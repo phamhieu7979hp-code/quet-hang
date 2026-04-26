@@ -143,7 +143,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 
 <!-- CAMERA -->
 <div id="camModal">
-  <video id="camVideo" autoplay muted playsinline></video>
+  <div class="dce-video-container" style="width:100%;flex:1;position:relative;background:#000"></div>
   <div id="camFrame"></div>
   <div id="camHint">Huong ma vach vao khung xanh</div>
   <button id="camClose" onclick="closeCam()">Dong</button>
@@ -237,8 +237,8 @@ async function openCam(tab){
       closeCam();
       onScanned(txt.trim());
     };
-    await dbrScanner.setUIElement(document.getElementById('camModal'));
     document.getElementById('camModal').classList.add('show');
+    await dbrScanner.setUIElement(document.getElementById('camModal'));
     await dbrScanner.open();
   }catch(ex){
     // Fallback: dung camera thu cong neu Dynamsoft loi
