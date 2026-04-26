@@ -6,79 +6,67 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Quan ly Hang</title>
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-bottom:10px}
-.top{background:linear-gradient(135deg,#2196F3,#64B5F6);padding:18px 20px 14px;position:sticky;top:0;z-index:10;box-shadow:0 3px 15px rgba(33,150,243,.3)}
-.top h1{font-size:21px;font-weight:700;color:#fff}
+body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-bottom:20px}
+.top{background:linear-gradient(135deg,#2196F3,#64B5F6);padding:16px 20px;position:sticky;top:0;z-index:10;box-shadow:0 3px 15px rgba(33,150,243,.3)}
+.top h1{font-size:20px;font-weight:700;color:#fff}
 .top p{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
 .tabs{display:flex;margin:14px 14px 0;gap:6px}
-.tab{flex:1;padding:11px 4px;border:none;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#90b8d8}
+.tab{flex:1;padding:10px 4px;border:none;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#90b8d8}
 .tab.active{background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff}
-.sec{display:none;padding:14px 0 0}.sec.active{display:block}
-.sbtn{display:block;margin:0 14px 12px;border-radius:18px;overflow:hidden;width:calc(100% - 28px)}
-.sbtn label{display:block;padding:16px;background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff;cursor:pointer;text-align:center;font-size:16px;font-weight:700}
+.sec{display:none;padding:12px 0 0}.sec.active{display:block}
+.sbtn{display:block;margin:0 14px 10px;border-radius:16px;overflow:hidden;width:calc(100% - 28px)}
+.sbtn label{display:block;padding:15px;background:linear-gradient(135deg,#2196F3,#42A5F5);color:#fff;cursor:pointer;text-align:center;font-size:16px;font-weight:700}
 .sbtn input{position:absolute;opacity:0;width:0;height:0}
-.sbtn2 label{background:linear-gradient(135deg,#7C3AED,#9D64F8)}
-.row{margin:0 14px 12px;display:flex;gap:8px}
-.row input{flex:1;background:#fff;border:2px solid #BBDEFB;border-radius:14px;padding:13px 14px;color:#1a3a5c;font-size:15px;outline:none}
+.row{margin:0 14px 10px;display:flex;gap:8px}
+.row input{flex:1;background:#fff;border:2px solid #BBDEFB;border-radius:12px;padding:12px 14px;color:#1a3a5c;font-size:15px;outline:none}
 .row input:focus{border-color:#2196F3}
-.row button{background:linear-gradient(135deg,#2196F3,#42A5F5);border:none;border-radius:14px;padding:13px 16px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
-.ship{margin:0 14px 12px;display:none}
+.row button,.abtn{background:linear-gradient(135deg,#2196F3,#42A5F5);border:none;border-radius:12px;padding:12px 16px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.ship{margin:0 14px 10px;display:none}
 .ship label,.pi label{font-size:12px;color:#FF8F00;margin-bottom:5px;display:block;font-weight:600}
 .ship .row{margin:0}.ship .row input{border-color:#FFE082}
 .ship .row button{background:linear-gradient(135deg,#FFB300,#FFA000)}
-.pi{margin:0 14px 12px;display:none}
-.pi input{width:100%;background:#fff;border:2px solid #FFE082;border-radius:14px;padding:13px 14px;color:#1a3a5c;font-size:15px;outline:none}
-.bc{display:none;margin:0 14px 12px;padding:15px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;width:calc(100% - 28px)}
-.res{margin:0 14px 12px;border-radius:18px;padding:15px;display:none;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.pi{margin:0 14px 10px;display:none}
+.pi input{width:100%;background:#fff;border:2px solid #FFE082;border-radius:12px;padding:12px 14px;color:#1a3a5c;font-size:15px;outline:none}
+.bc{display:none;margin:0 14px 10px;padding:14px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;width:calc(100% - 28px)}
+.res{margin:0 14px 10px;border-radius:16px;padding:14px;display:none;box-shadow:0 4px 20px rgba(0,0,0,.08)}
 .res.show{display:block}
 .res.ok{background:#E3F2FD;border-left:4px solid #2196F3}
 .res.err{background:#FFEBEE;border-left:4px solid #F44336}
 .res.warn{background:#FFF8E1;border-left:4px solid #FFB300}
 .res.info{background:#E8F5E9;border-left:4px solid #4CAF50}
-.rt{font-size:15px;font-weight:700;margin-bottom:5px}
+.rt{font-size:14px;font-weight:700;margin-bottom:5px}
 .res.ok .rt{color:#1565C0}.res.err .rt{color:#C62828}.res.warn .rt{color:#E65100}.res.info .rt{color:#2E7D32}
-.rb{font-size:14px;color:#546E7A;line-height:1.8}.rb b{color:#1a3a5c}
-.prbtn{display:block;margin:10px 0 0;padding:13px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;width:100%}
-.divider{margin:0 14px 12px;border:none;border-top:1.5px dashed #BBDEFB}
-.sec-lbl{margin:0 14px 5px;font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+.rb{font-size:13px;color:#546E7A;line-height:1.8}.rb b{color:#1a3a5c}
+.prbtn{display:block;margin:8px 0 0;padding:12px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:10px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;width:100%}
+.divider{margin:0 14px 10px;border:none;border-top:1.5px dashed #BBDEFB}
+.sec-lbl{margin:0 14px 4px;font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;font-weight:700}
 .hist{margin:0 14px}
 .ht{font-size:11px;color:#90b8d8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:700}
-.hi{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(33,150,243,.08)}
-.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hi{background:#fff;border-radius:12px;padding:11px 13px;margin-bottom:6px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(33,150,243,.08)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .dot.ok{background:#2196F3}.dot.err{background:#F44336}
 .hin{flex:1;min-width:0}
 .htr{font-size:13px;color:#1a3a5c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hn{font-size:12px;color:#90b8d8;margin-top:1px}
+.hn{font-size:11px;color:#90b8d8;margin-top:1px}
 .htm{font-size:11px;color:#90b8d8;flex-shrink:0}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid #BBDEFB;border-top-color:#2196F3;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid #BBDEFB;border-top-color:#2196F3;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:5px}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* OCR candidates */
-.cands{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px}
-.cand{background:#fff;border:2px solid #BBDEFB;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#1565C0;cursor:pointer}
-.cand:active{background:#E3F2FD}
-/* Camera */
 #camModal{display:none;position:fixed;inset:0;background:#000;z-index:999;flex-direction:column}
 #camModal.show{display:flex}
 #camVideo{width:100%;flex:1;object-fit:cover}
-#camFrame{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);width:75%;height:70px;border:3px solid #00e676;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.55)}
-#camClose{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.15);backdrop-filter:blur(10px);color:#fff;border:2px solid rgba(255,255,255,.4);border-radius:50px;padding:14px 36px;font-size:16px;font-weight:700;cursor:pointer}
-#camHint{position:absolute;top:calc(50% - 80px);left:0;right:0;text-align:center;color:#fff;font-size:13px;opacity:.8}
-/* URL bar */
-#urlBar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #BBDEFB;padding:8px 14px;display:flex;gap:8px;z-index:100}
-#urlBar input{flex:1;border:1.5px solid #BBDEFB;border-radius:10px;padding:8px 12px;font-size:12px;color:#1a3a5c;outline:none}
-#urlBar button{background:linear-gradient(135deg,#2196F3,#42A5F5);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+#camFrame{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);width:75%;height:65px;border:3px solid #00e676;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.55)}
+#camClose{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.15);backdrop-filter:blur(10px);color:#fff;border:2px solid rgba(255,255,255,.4);border-radius:50px;padding:13px 34px;font-size:15px;font-weight:700;cursor:pointer}
+#camHint{position:absolute;top:calc(50% - 75px);left:0;right:0;text-align:center;color:#fff;font-size:13px;opacity:.8}
 </style>
 </head>
 <body>
 
 <div class="top">
   <h1>📦 Quan ly Hang</h1>
-  <p id="urlStatus">Chua co URL</p>
+  <p>eb2 · T12 / 2026 / T4</p>
 </div>
 
 <div class="tabs">
@@ -93,10 +81,6 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
     <label onclick="openCam('nhap')">📷 Quet ma vach Tracking</label>
     <input type="hidden">
   </div>
-  <div class="sbtn sbtn2">
-    <label onclick="openOCR('nhap')">🔤 Chup chu so Tracking</label>
-    <input type="hidden">
-  </div>
   <div class="row">
     <input type="text" id="inpNhap" placeholder="Nhap tracking...">
     <button onclick="doNhap()">OK</button>
@@ -109,18 +93,14 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
     </div>
   </div>
   <div class="res" id="resNhap"><div class="rt" id="rtNhap"></div><div class="rb" id="rbNhap"></div></div>
-  <div id="temWrap" style="display:none;margin:0 14px 12px">
-    <button class="prbtn" id="btnTem">🖨 In tem Order ID</button>
+  <div id="temWrap" style="display:none;margin:0 14px 10px">
+    <button class="prbtn" onclick="inTemCur()">🖨 In tem Order ID</button>
   </div>
   <hr class="divider">
   <div class="sec-lbl">In tem theo Order ID</div>
-  <div class="sbtn">
-    <label onclick="openCam('intem')">📷 Quet Order ID de in tem</label>
-    <input type="hidden">
-  </div>
   <div class="row">
     <input type="text" id="inpInTem" placeholder="Nhap Order ID de in tem...">
-    <button onclick="doInTem()">In</button>
+    <button onclick="inTemManual()">In</button>
   </div>
 </div>
 
@@ -161,52 +141,49 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
   <div id="hl"><div style="font-size:13px;color:#90b8d8">Chua co lich su</div></div>
 </div>
 
-<!-- CAMERA MODAL -->
+<!-- CAMERA -->
 <div id="camModal">
   <video id="camVideo" autoplay muted playsinline></video>
   <div id="camFrame"></div>
   <div id="camHint">Huong ma vach vao khung xanh</div>
-  <button id="camClose" onclick="closeCam()">Dong camera</button>
+  <button id="camClose" onclick="closeCam()">Dong</button>
 </div>
 
-<!-- OCR: input file an -->
-<input type="file" id="ocrInput" accept="image/*" capture="environment" style="position:absolute;opacity:0;width:0;height:0" onchange="handleOCR(this)">
-
-<!-- URL BAR hidden -->
-<div id="urlBar" style="display:none">
-  <input type="text" id="urlInput">
-  <button onclick="saveUrl()">Luu</button>
+<!-- TRANG IN TEM (an) -->
+<div id="temPage" style="display:none;position:fixed;inset:0;background:#fff;z-index:998;flex-direction:column;align-items:center;justify-content:center">
+  <div style="width:35mm;height:22mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1mm;border:1px solid #ccc">
+    <svg id="temSvg" style="width:33mm;height:13mm"></svg>
+    <div id="temNum" style="font-family:monospace;font-size:5.5pt;margin-top:.5mm;text-align:center;width:33mm;word-break:break-all;line-height:1.2"></div>
+  </div>
+  <button onclick="window.print()" style="margin-top:16px;background:#2196F3;border:none;padding:12px 28px;border-radius:10px;font-size:16px;font-weight:700;color:#fff;cursor:pointer">🖨 In tem</button>
+  <button onclick="closeTem()" style="margin-top:10px;background:#eee;border:none;padding:10px 28px;border-radius:10px;font-size:14px;color:#555;cursor:pointer">Dong</button>
 </div>
+
+<style>
+@media print {
+  body > *:not(#temPage) { display:none!important; }
+  #temPage { display:flex!important;position:fixed!important;inset:0!important;background:#fff!important }
+  #temPage button { display:none!important }
+  @page { size:35mm 22mm;margin:0 }
+}
+</style>
 
 <script>
 var BASE = 'https://script.google.com/macros/s/AKfycbxKzmkwxzgiOAakluFROAc0xWD1guCKRh9UQ5N3w_NZJYisNEmwjCPihLTrMiVF8JI/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '';
-var camTab = '', camStream = null, camReader = null, ocrTab = '';
+var camTab = '', camStream = null, camTick = null;
 
-document.getElementById('urlInput').value = BASE;
-updateUrlStatus();
-document.getElementById('btnTem').onclick = function(){ inTem(curOid); };
-
-function saveUrl(){
-  BASE = document.getElementById('urlInput').value.trim();
-  localStorage.setItem('khoUrl', BASE);
-  updateUrlStatus();
-  alert('Da luu URL!');
-}
-function updateUrlStatus(){
-  document.getElementById('urlStatus').textContent = 'eb2 · T12 / 2026 / T4';
-}
-
-function switchTab(t){
+// ===== TABS =====
+function switchTab(t) {
   document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('active',['nhap','ban','gia'][i]===t); });
   document.querySelectorAll('.sec').forEach(function(s){ s.classList.remove('active'); });
   document.getElementById('tab-'+t).classList.add('active');
 }
 
+// ===== HELPERS =====
 function fmt(el){ var v=el.value.replace(/[^0-9]/g,''); el.value=v?Number(v).toLocaleString('vi-VN'):''; }
 function raw(id){ return parseFloat((document.getElementById(id).value||'0').replace(/[^0-9]/g,''))||0; }
 function pad(n){ return String(n).padStart(2,'0'); }
-
 function showRes(id,type,title,body){
   var sfx=id.replace('res','');
   document.getElementById(id).className='res show '+type;
@@ -214,54 +191,70 @@ function showRes(id,type,title,body){
   document.getElementById('rb'+sfx).innerHTML=body;
 }
 
-// ===== CAMERA BARCODE =====
+// ===== IN TEM - dung trong trang, khong dung window.open =====
+function inTemCur(){ inTem(curOid); }
+function inTemManual(){ var v=document.getElementById('inpInTem').value.trim(); if(v)inTem(v); }
+document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.key==='Enter')inTemManual();});
+
+function inTem(oid){
+  if(!oid){ alert('Chua co Order ID!'); return; }
+  document.getElementById('temNum').textContent = oid;
+  var svg = document.getElementById('temSvg');
+  // Xoa SVG cu
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  try {
+    JsBarcode(svg, oid, {format:'CODE128', width:1.5, height:38, displayValue:false, margin:1});
+  } catch(e) {
+    alert('Loi tao ma vach: ' + e.message);
+    return;
+  }
+  document.getElementById('temPage').style.display = 'flex';
+}
+function closeTem(){
+  document.getElementById('temPage').style.display = 'none';
+}
+
+// ===== CAMERA =====
 function openCam(tab){
-  if(!BASE){ alert('Chua co URL!'); return; }
-  camTab=tab;
+  camTab = tab;
   navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
   .then(function(stream){
-    camStream=stream;
-    var video=document.getElementById('camVideo');
-    video.srcObject=stream;
+    camStream = stream;
+    var video = document.getElementById('camVideo');
+    video.srcObject = stream;
     video.play();
     document.getElementById('camModal').classList.add('show');
-    var hints=new Map();
-    hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
-      ZXing.BarcodeFormat.CODE_128,
-      ZXing.BarcodeFormat.CODE_39,
-      ZXing.BarcodeFormat.EAN_13,
-      ZXing.BarcodeFormat.UPC_A
-    ]);
-    var reader=new ZXing.MultiFormatReader();
-    reader.setHints(hints);
-    var canvas=document.createElement('canvas');
-    var ctx=canvas.getContext('2d');
-    var scanning=true;
-    camReader={stop:function(){scanning=false;}};
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
     function tick(){
-      if(!scanning)return;
-      if(video.readyState===video.HAVE_ENOUGH_DATA){
-        canvas.width=video.videoWidth;
-        canvas.height=video.videoHeight;
+      if(!camStream) return;
+      if(video.readyState === video.HAVE_ENOUGH_DATA){
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
         ctx.drawImage(video,0,0,canvas.width,canvas.height);
-        try{
-          var imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-          var src=new ZXing.RGBLuminanceSource(imgData.data,canvas.width,canvas.height);
-          var bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(src));
-          var result=reader.decode(bmp);
-          if(result){
-            scanning=false;
-            var t=result.getText().trim();
-            closeCam();
-            onScanned(t);
-            return;
-          }
-        }catch(e){}
+        var imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+        // Dung ZXing neu co
+        if(typeof ZXing !== 'undefined'){
+          try{
+            var src = new ZXing.RGBLuminanceSource(imgData.data, canvas.width, canvas.height);
+            var bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(src));
+            var hints = new Map();
+            hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+            var reader = new ZXing.MultiFormatReader();
+            reader.setHints(hints);
+            var result = reader.decode(bmp);
+            if(result){
+              var t = result.getText().trim();
+              closeCam();
+              onScanned(t);
+              return;
+            }
+          }catch(e){}
+        }
       }
-      setTimeout(tick,150);
+      camTick = setTimeout(tick, 200);
     }
-    video.addEventListener('loadeddata',function(){setTimeout(tick,500);});
+    video.addEventListener('loadeddata', function(){ camTick = setTimeout(tick, 500); });
   }).catch(function(){
     alert('Khong mo duoc camera!\nVao Settings > Safari > Camera > cho phep.');
   });
@@ -269,64 +262,15 @@ function openCam(tab){
 
 function closeCam(){
   document.getElementById('camModal').classList.remove('show');
-  if(camReader){try{camReader.stop();}catch(e){}camReader=null;}
-  if(camStream){camStream.getTracks().forEach(function(t){t.stop();});camStream=null;}
+  if(camTick){ clearTimeout(camTick); camTick=null; }
+  if(camStream){ camStream.getTracks().forEach(function(t){t.stop();}); camStream=null; }
 }
 
 function onScanned(t){
-  if(navigator.vibrate)navigator.vibrate(100);
-  if(camTab==='nhap')findTracking(t);
-  else if(camTab==='ban')findBan(t);
-  else if(camTab==='gia')findGia(t);
-  else if(camTab==='intem'){document.getElementById('inpInTem').value=t;inTem(t);}
-}
-
-// ===== OCR =====
-function openOCR(tab){
-  ocrTab=tab;
-  document.getElementById('ocrInput').click();
-}
-
-async function handleOCR(input){
-  if(!input.files||!input.files[0])return;
-  var file=input.files[0];
-  input.value='';
-  var resId = ocrTab==='nhap'?'resNhap':ocrTab==='ban'?'resBan':'resGia';
-  showRes(resId,'warn','<span class="spin"></span>Dang nhan dien chu so...','Vui long cho...');
-  try{
-    var worker=await Tesseract.createWorker('eng');
-    await worker.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'});
-    var result=await worker.recognize(file);
-    await worker.terminate();
-    var text=result.data.text;
-    // Tach cac cum chu+so co do dai 8-30 ky tu (dang tracking)
-    var matches=text.match(/[A-Z0-9]{8,30}/gi)||[];
-    // Loc bo trung
-    var unique=matches.filter(function(v,i,a){return a.indexOf(v)===i;});
-    if(!unique.length){
-      showRes(resId,'err','Khong nhan dien duoc','Thu chup gan hon, ro net hon.');
-      return;
-    }
-    // Neu chi co 1 ung vien -> dung luon
-    if(unique.length===1){
-      var t=unique[0];
-      showRes(resId,'info','Nhan dien duoc: <b>'+t+'</b>','<button class="prbtn" onclick="useTracking(\''+t+'\',\''+ocrTab+'\')">Dung so nay</button>');
-      return;
-    }
-    // Nhieu ung vien -> cho bo chon
-    var btns=unique.map(function(t){
-      return '<button class="cand" onclick="useTracking(\''+t+'\',\''+ocrTab+'\')" style="margin:4px">'+t+'</button>';
-    }).join('');
-    showRes(resId,'info','Chon so tracking:','<div class="cands">'+btns+'</div>');
-  }catch(ex){
-    showRes(resId,'err','Loi OCR','Thu lai sau. '+ex.message);
-  }
-}
-
-function useTracking(t, tab){
-  if(tab==='nhap'){ document.getElementById('inpNhap').value=t; findTracking(t); }
-  else if(tab==='ban'){ document.getElementById('inpBan').value=t; findBan(t); }
-  else if(tab==='gia'){ document.getElementById('inpGia').value=t; findGia(t); }
+  if(navigator.vibrate) navigator.vibrate(100);
+  if(camTab==='nhap') findTracking(t);
+  else if(camTab==='ban') findBan(t);
+  else if(camTab==='gia') findGia(t);
 }
 
 // ===== NHAP KHO =====
@@ -335,13 +279,13 @@ document.getElementById('inpNhap').addEventListener('keydown',function(e){if(e.k
 document.getElementById('phiShip').addEventListener('keydown',function(e){if(e.key==='Enter')confirmNhap();});
 
 async function findTracking(t){
-  var now=new Date(),ng=now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
+  var now=new Date(), ng=now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
   showRes('resNhap','warn','<span class="spin"></span>Dang tim...','Tracking: <b>'+t+'</b>');
   try{
     var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&checkOnly=1');
     var d=await r.json();
     if(d.found){
-      nT=t;nInfo=d;nNg=ng;curOid=d.orderId||'';
+      nT=t; nInfo=d; nNg=ng; curOid=d.orderId||'';
       showRes('resNhap','info','Tim thay! Nhap phi ship','Tracking: <b>'+t+'</b><br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b>');
       document.getElementById('shipWrap').style.display='block';
       document.getElementById('phiShip').focus();
@@ -349,15 +293,15 @@ async function findTracking(t){
       showRes('resNhap','err','Khong tim thay','<b>'+t+'</b> khong co.');
       addH('err',t,'Khong tim thay');
     }
-  }catch(ex){showRes('resNhap','err','Loi ket noi','Thu lai sau.');}
+  }catch(ex){ showRes('resNhap','err','Loi ket noi','Thu lai sau.'); }
 }
 
 async function confirmNhap(){
-  if(!nT)return;
+  if(!nT) return;
   var ps=raw('phiShip');
   document.getElementById('shipWrap').style.display='none';
   document.getElementById('phiShip').value='';
-  var t=nT,d=nInfo,ng=nNg;nT=null;nInfo=null;nNg=null;
+  var t=nT,d=nInfo,ng=nNg; nT=null;nInfo=null;nNg=null;
   try{
     var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps);
     var res=await r.json();
@@ -367,36 +311,9 @@ async function confirmNhap(){
       showRes('resNhap','ok','Cap nhat thanh cong!','Tracking: <b>'+t+'</b><br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b><br>Ngay ve: <b>'+ng+'</b>'+psStr);
       document.getElementById('temWrap').style.display='block';
       addH('ok',t,'Nhap kho'+(ps>0?' | '+ps.toLocaleString('vi')+' d':''));
-      if(navigator.vibrate)navigator.vibrate([80,40,80]);
+      if(navigator.vibrate) navigator.vibrate([80,40,80]);
     }else showRes('resNhap','err','Loi','Khong cap nhat duoc.');
-  }catch(ex){showRes('resNhap','err','Loi ket noi','Thu lai sau.');}
-}
-
-// ===== IN TEM 35x22mm NGANG =====
-function doInTem(){ var v=document.getElementById('inpInTem').value.trim(); if(v)inTem(v); }
-document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.key==='Enter')doInTem();});
-
-function inTem(oid){
-  if(!oid||oid==='N/A'){alert('Chua co Order ID!');return;}
-  var w=window.open('','_blank');
-  if(!w){alert('Popup bi chan! Cho phep popup cho trang nay.');return;}
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>In tem</title>'
-    +'<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>'
-    +'<style>'
-    +'*{margin:0;padding:0;box-sizing:border-box}'
-    +'html,body{width:35mm;height:22mm;overflow:hidden;background:#fff}'
-    +'.wrap{width:35mm;height:22mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1mm}'
-    +'svg{width:33mm!important;height:13mm!important}'
-    +'.num{font-family:monospace;font-size:5.5pt;margin-top:.5mm;text-align:center;width:33mm;word-break:break-all;line-height:1.2}'
-    +'.btn{position:fixed;bottom:4px;right:4px;background:#2196F3;border:none;padding:6px 14px;border-radius:6px;font-size:13px;color:#fff;cursor:pointer;font-weight:700}'
-    +'@media print{@page{size:35mm 22mm;margin:0}html,body{width:35mm;height:22mm}.btn{display:none}}'
-    +'<\/style><\/head><body>'
-    +'<div class="wrap"><svg id="bc"><\/svg><div class="num">'+oid+'<\/div><\/div>'
-    +'<button class="btn" onclick="window.print()">In<\/button>'
-    +'<script>JsBarcode(document.getElementById("bc"),"'+oid+'",{format:"CODE128",width:1.5,height:38,displayValue:false,margin:1});<\/script>'
-    +'<\/body><\/html>';
-  w.document.write(html);
-  w.document.close();
+  }catch(ex){ showRes('resNhap','err','Loi ket noi','Thu lai sau.'); }
 }
 
 // ===== BAN HANG =====
@@ -411,20 +328,20 @@ async function findBan(orderId){
     var d=await r.json();
     if(d.found){
       if(d.daBan){showRes('resBan','err','Da ban roi!','Order ID: <b>'+orderId+'</b> da ban truoc do!');addH('err',orderId,'Da ban roi');return;}
-      cT=orderId;cInfo=d;
+      cT=orderId; cInfo=d;
       showRes('resBan','info','Tim thay!','SP: <b>'+d.sp+'</b><br>Sheet: <b>'+d.sheet+'</b>');
       document.getElementById('pi').style.display='block';
       document.getElementById('bc').style.display='block';
       document.getElementById('giaBan').focus();
     }else{
       showRes('resBan','err','Khong tim thay','Order ID: <b>'+orderId+'</b> khong co.');
-      cT=null;cInfo=null;
+      cT=null; cInfo=null;
     }
-  }catch(ex){showRes('resBan','err','Loi ket noi','Thu lai sau.');}
+  }catch(ex){ showRes('resBan','err','Loi ket noi','Thu lai sau.'); }
 }
 
 async function confirmBan(){
-  if(!cT||!cInfo)return;
+  if(!cT||!cInfo) return;
   var gb=raw('giaBan');
   if(!gb){alert('Chua nhap gia ban!');return;}
   showRes('resBan','warn','<span class="spin"></span>Dang cap nhat...','');
@@ -434,15 +351,15 @@ async function confirmBan(){
     if(d.success){
       showRes('resBan','ok','Ban thanh cong!','Order ID: <b>'+cT+'</b><br>Gia ban: <b>'+gb.toLocaleString('vi')+' d</b>');
       addH('ok',cT,'Ban '+gb.toLocaleString('vi')+' d');
-      if(navigator.vibrate)navigator.vibrate([80,40,80]);
+      if(navigator.vibrate) navigator.vibrate([80,40,80]);
       document.getElementById('pi').style.display='none';
       document.getElementById('bc').style.display='none';
       document.getElementById('giaBan').value='';
       document.getElementById('inpBan').value='';
-      cT=null;cInfo=null;
-    }else if(d.daBan)showRes('resBan','err','Da ban roi!','Order ID nay da ban truoc do!');
+      cT=null; cInfo=null;
+    }else if(d.daBan) showRes('resBan','err','Da ban roi!','Order ID nay da ban truoc do!');
     else showRes('resBan','err','Loi','Khong cap nhat duoc.');
-  }catch(ex){showRes('resBan','err','Loi ket noi','Thu lai sau.');}
+  }catch(ex){ showRes('resBan','err','Loi ket noi','Thu lai sau.'); }
 }
 
 // ===== KIEM TRA GIA =====
@@ -458,7 +375,7 @@ async function findGia(orderId){
       var tt=d.daBan?"<b style='color:#C62828'>Da ban roi</b>":"<b style='color:#2E7D32'>Chua ban</b>";
       showRes('resGia','info','Tim thay!','Order ID: <b>'+orderId+'</b><br>SP: <b>'+d.sp+'</b><br>Gia nhap: <b>'+Number(d.giaNhap).toLocaleString('vi')+' d</b><br>Trang thai: '+tt);
     }else showRes('resGia','err','Khong tim thay','<b>'+orderId+'</b> khong co.');
-  }catch(ex){showRes('resGia','err','Loi ket noi','Thu lai sau.');}
+  }catch(ex){ showRes('resGia','err','Loi ket noi','Thu lai sau.'); }
 }
 
 // ===== LICH SU =====
@@ -476,5 +393,8 @@ function renderH(){
   }).join('');
 }
 </script>
+
+<!-- Load ZXing sau cung de khong block render -->
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
 </body>
 </html>
