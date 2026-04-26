@@ -480,15 +480,19 @@ async function findGia(orderId) {
 }
 
 // ===== DASHBOARD =====
+var dAllData = [], dFilter = 'all', dashLoaded = false;
+var dChartLai = null, dChartTon = null;
+
 async function loadDash() {
   document.getElementById('dLoading').style.display='block';
   document.getElementById('dContent').style.display='none';
   document.getElementById('dLoading').innerHTML='<span class="spin"></span>Dang tai du lieu...';
   try {
-    var r=await fetch(BASE+'?action=getDashboard');
-    var d=await r.json();
-    if (!d.ok) throw new Error(d.error||'Loi');
-    dAllData=d.data; dashLoaded=true;
+    var r = await fetch(BASE + '?action=getDashboard');
+    var d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Loi');
+    dAllData = d.data;
+    dashLoaded = true;
     buildDFilter();
     renderDash();
     document.getElementById('dLoading').style.display='none';
@@ -499,124 +503,104 @@ async function loadDash() {
 }
 
 function buildDFilter() {
-  var months=[...new Set(dAllData.map(function(r){return r.thang;}))].sort();
-  var wrap=document.getElementById('dFilter');
-  wrap.innerHTML='<button class="d-ftab'+(dFilter==='all'?' active':'')+'" onclick="setDFilter(\'all\')">Tat ca</button>';
-  months.forEach(function(m){
-    var btn=document.createElement('button');
-    btn.className='d-ftab'+(dFilter===m?' active':'');
-    btn.textContent=m;
-    btn.onclick=function(){setDFilter(m);};
+  var sheets = [...new Set(dAllData.map(function(r){return r.sheet;}))].sort();
+  var wrap = document.getElementById('dFilter');
+  wrap.innerHTML = '<button class="d-ftab'+(dFilter==='all'?' active':'')+'" onclick="setDFilter('all')">Tat ca</button>';
+  sheets.forEach(function(s){
+    var btn = document.createElement('button');
+    btn.className = 'd-ftab' + (dFilter===s?' active':'');
+    btn.textContent = s;
+    btn.onclick = function(){ setDFilter(s); };
     wrap.appendChild(btn);
   });
 }
 
-function setDFilter(f) {
-  dFilter=f;
-  buildDFilter();
-  renderDash();
-}
+function setDFilter(f) { dFilter=f; buildDFilter(); renderDash(); }
 
 function renderDash() {
-  var data=dFilter==='all'?dAllData:dAllData.filter(function(r){return r.sheet===dFilter;});
-  var daBan=data.filter(function(r){return r.daBan;});
-  var tonKho=data.filter(function(r){return !r.daBan;});
-  var lai=daBan.reduce(function(s,r){return s+(r.lai||0);},0);
-  var dt=daBan.reduce(function(s,r){return s+r.giaBan;},0);
-  var von=daBan.reduce(function(s,r){return s+r.giaNhap;},0);
-  var vonTon=tonKho.reduce(function(s,r){return s+r.giaNhap;},0);
+  var data = dFilter==='all' ? dAllData : dAllData.filter(function(r){return r.sheet===dFilter;});
+  var daBan  = data.filter(function(r){return r.daBan;});
+  var tonKho = data.filter(function(r){return !r.daBan;});
+  var lai    = daBan.reduce(function(s,r){return s+(r.lai||0);},0);
+  var dt     = daBan.reduce(function(s,r){return s+r.giaBan;},0);
+  var von    = daBan.reduce(function(s,r){return s+r.giaNhap;},0);
+  var vonTon = tonKho.reduce(function(s,r){return s+r.giaNhap;},0);
 
-  document.getElementById('dLai').textContent=(lai>=0?'+':'')+fmtN(lai)+' d';
-  document.getElementById('dLai').style.color=lai>=0?'#2E7D32':'#C62828';
-  document.getElementById('dLaiSub').textContent=daBan.length+' don da ban';
-  document.getElementById('dDT').textContent=fmtN(dt)+' d';
-  document.getElementById('dVon').textContent=fmtN(von)+' d';
-  document.getElementById('dTon').textContent=tonKho.length+' may';
-  document.getElementById('dTonVon').textContent='Von ton: '+fmtN(vonTon)+' d';
-  // Phan loai ton kho theo da ve / chua ve
-  var daVe   = tonKho.filter(function(r){return r.daVe;});
-  var chuaVe = tonKho.filter(function(r){return !r.daVe;});
-  var vonDaVe   = daVe.reduce(function(s,r){return s+r.giaNhap;},0);
-  var vonChuaVe = chuaVe.reduce(function(s,r){return s+r.giaNhap;},0);
-  document.getElementById('dDaVe').textContent=daVe.length+' may';
-  document.getElementById('dDaVeVon').textContent='Von: '+fmtN(vonDaVe)+' d';
-  document.getElementById('dChuaVe').textContent=chuaVe.length+' may';
-  document.getElementById('dChuaVeVon').textContent='Von: '+fmtN(vonChuaVe)+' d';
-  // Chart ton kho
-  if(dChartTon && typeof dChartTon.destroy === 'function')dChartTon.destroy();
-  dChartTon=new Chart(document.getElementById('dChartTon'),{
-    type:'doughnut',
-    data:{
-      labels:['Da ve kho ('+daVe.length+' may)','Chua ve ('+chuaVe.length+' may)'],
-      datasets:[{data:[Math.round(vonDaVe/1000000*10)/10, Math.round(vonChuaVe/1000000*10)/10],
-        backgroundColor:['#00897B','#FB8C00'],borderWidth:0}]
-    },
-    options:{responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'M';}}}}
-    }
-  });
+  document.getElementById('dLai').textContent = (lai>=0?'+':'')+fmtN(lai)+' d';
+  document.getElementById('dLai').style.color = lai>=0?'#2E7D32':'#C62828';
+  document.getElementById('dLaiSub').textContent = daBan.length+' don da ban';
+  document.getElementById('dDT').textContent = fmtN(dt)+' d';
+  document.getElementById('dVon').textContent = fmtN(von)+' d';
+  document.getElementById('dTon').textContent = tonKho.length+' may';
+  document.getElementById('dTonVon').textContent = 'Von ton: '+fmtN(vonTon)+' d';
+
+  // Da ve / chua ve (chi tinh hang chua ban)
+  var daVeList   = tonKho.filter(function(r){return r.daVe;});
+  var chuaVeList = tonKho.filter(function(r){return !r.daVe;});
+  var vonDaVe    = daVeList.reduce(function(s,r){return s+r.giaNhap;},0);
+  var vonChuaVe  = chuaVeList.reduce(function(s,r){return s+r.giaNhap;},0);
+  document.getElementById('dDaVe').textContent   = daVeList.length+' may';
+  document.getElementById('dDaVeVon').textContent = 'Von: '+fmtN(vonDaVe)+' d';
+  document.getElementById('dChuaVe').textContent  = chuaVeList.length+' may';
+  document.getElementById('dChuaVeVon').textContent = 'Von: '+fmtN(vonChuaVe)+' d';
 
   // Chart lai theo sheet
-  var mLai={};
-  data.forEach(function(r){
-    if(!mLai[r.sheet])mLai[r.sheet]=0;
-    if(r.daBan)mLai[r.sheet]+=(r.giaBan-r.giaNhap);
-  });
-  var mKeys=Object.keys(mLai).sort();
-  var mVals=mKeys.map(function(k){return Math.round(mLai[k]/1000000*10)/10;});
-  if(dChartLai)dChartLai.destroy();
-  dChartLai=new Chart(document.getElementById('dChartLai'),{
-    type:'bar',
-    data:{labels:mKeys,datasets:[{data:mVals,backgroundColor:mVals.map(function(v){return v>=0?'rgba(33,150,243,.8)':'rgba(244,67,54,.8)';}),borderRadius:6}]},
-    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return v+'M';}}}}}
+  var mLai = {};
+  data.forEach(function(r){ if(!mLai[r.sheet])mLai[r.sheet]=0; if(r.daBan)mLai[r.sheet]+=(r.lai||0); });
+  var mKeys = Object.keys(mLai).sort();
+  var mVals = mKeys.map(function(k){return Math.round(mLai[k]/1000000*10)/10;});
+  if (dChartLai) { dChartLai.destroy(); dChartLai = null; }
+  dChartLai = new Chart(document.getElementById('dChartLai'), {
+    type: 'bar',
+    data: { labels: mKeys, datasets:[{ data: mVals, backgroundColor: mVals.map(function(v){return v>=0?'rgba(33,150,243,.8)':'rgba(244,67,54,.8)';}), borderRadius: 6 }] },
+    options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:function(v){return v+'M';}}}} }
   });
 
-
-
-  // Table theo sheet
-  var mData={};
-  data.forEach(function(r){
-    if(!mData[r.sheet])mData[r.sheet]={don:0,dt:0,lai:0};
-    if(r.daBan){mData[r.sheet].don++;mData[r.sheet].dt+=r.giaBan;mData[r.sheet].lai+=r.giaBan-r.giaNhap;}
+  // Chart ton kho: da ve vs chua ve
+  if (dChartTon) { dChartTon.destroy(); dChartTon = null; }
+  dChartTon = new Chart(document.getElementById('dChartTon'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Da ve kho ('+daVeList.length+' may)', 'Chua ve ('+chuaVeList.length+' may)'],
+      datasets: [{ data: [Math.round(vonDaVe/1000000*10)/10, Math.round(vonChuaVe/1000000*10)/10], backgroundColor: ['#00897B','#FB8C00'], borderWidth: 0 }]
+    },
+    options: { responsive:true, plugins:{ legend:{position:'bottom'}, tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'M';}}} } }
   });
-  var html='';
+
+  // Bang theo sheet
+  var mData = {};
+  data.forEach(function(r){ if(!mData[r.sheet])mData[r.sheet]={don:0,dt:0,lai:0}; if(r.daBan){mData[r.sheet].don++;mData[r.sheet].dt+=r.giaBan;mData[r.sheet].lai+=(r.lai||0);} });
+  var html = '';
   Object.keys(mData).sort().forEach(function(m){
-    var v=mData[m];
-    var c=v.lai>=0?'#2E7D32':'#C62828';
-    html+='<tr><td style="font-weight:700">'+m+'</td><td style="text-align:right">'+v.don+'</td><td style="text-align:right">'+fmtN(v.dt)+'</td><td style="text-align:right;color:'+c+';font-weight:700">'+(v.lai>=0?'+':'')+fmtN(v.lai)+'</td></tr>';
+    var v = mData[m], c = v.lai>=0?'#2E7D32':'#C62828';
+    html += '<tr><td style="font-weight:700">'+m+'</td><td style="text-align:right">'+v.don+'</td><td style="text-align:right">'+fmtN(v.dt)+'</td><td style="text-align:right;color:'+c+';font-weight:700">'+(v.lai>=0?'+':'')+fmtN(v.lai)+'</td></tr>';
   });
-  document.getElementById('dTable').innerHTML=html||'<tr><td colspan="4" style="text-align:center;color:#90b8d8;padding:12px">Khong co du lieu</td></tr>';
+  document.getElementById('dTable').innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#90b8d8;padding:12px">Khong co du lieu</td></tr>';
 
-  // Ton kho - chia theo sheet
-  if(!tonKho.length){
-    document.getElementById('dTonList').innerHTML='<div style="text-align:center;padding:16px;color:#90b8d8;font-size:13px">Khong co hang ton kho</div>';
+  // Ton kho - 2 nhom
+  if (!tonKho.length) {
+    document.getElementById('dTonList').innerHTML = '<div style="text-align:center;padding:16px;color:#90b8d8;font-size:13px">Khong co hang ton kho</div>';
   } else {
-    tonKho.sort(function(a,b){return b.giaNhap-a.giaNhap;});
-    // Nhom theo sheet
-    var bySheet = {};
-    tonKho.forEach(function(r){
-      if(!bySheet[r.sheet]) bySheet[r.sheet] = [];
-      bySheet[r.sheet].push(r);
-    });
-    var html = '';
-    Object.keys(bySheet).sort().forEach(function(sh){
-      var items = bySheet[sh];
-      var vonSheet = items.reduce(function(s,r){return s+r.giaNhap;},0);
-      html += '<div style="background:#e8f4fd;border-radius:8px;padding:7px 10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
-        +'<span style="font-size:12px;font-weight:700;color:#2196F3">Sheet: '+sh+' ('+items.length+' may)</span>'
-        +'<span style="font-size:11px;font-weight:700;color:#1565C0">Von: '+fmtN(vonSheet)+' d</span>'
-        +'</div>';
+    daVeList.sort(function(a,b){return b.giaNhap-a.giaNhap;});
+    chuaVeList.sort(function(a,b){return b.giaNhap-a.giaNhap;});
+    function renderGroup(title, color, items) {
+      if (!items.length) return '';
+      var vonG = items.reduce(function(s,r){return s+r.giaNhap;},0);
+      var h = '<div style="background:'+color+';border-radius:8px;padding:7px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">'
+        +'<span style="font-size:12px;font-weight:700;color:#fff">'+title+' ('+items.length+' may)</span>'
+        +'<span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.9)">'+fmtN(vonG)+' d</span></div>';
       items.forEach(function(r){
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 8px 8px;border-bottom:1px solid #f0f8ff">'
+        h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 8px 8px;border-bottom:1px solid #f0f8ff">'
           +'<div style="flex:1;min-width:0;margin-right:8px">'
           +'<div style="font-size:12px;font-weight:600;color:#1a3a5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.sp||'Khong ro')+'</div>'
-
-          +'</div>'
-          +'<div style="font-size:12px;font-weight:700;color:#1565C0;flex-shrink:0">'+fmtN(r.giaNhap)+' d</div>'
-          +'</div>';
+          +'<div style="font-size:10px;color:#90b8d8;font-family:monospace;margin-top:2px">'+(r.orderId||'')+'</div></div>'
+          +'<div style="font-size:12px;font-weight:700;color:#1565C0;flex-shrink:0">'+fmtN(r.giaNhap)+' d</div></div>';
       });
-      html += '<div style="height:8px"></div>';
-    });
-    document.getElementById('dTonList').innerHTML = html;
+      return h + '<div style="height:10px"></div>';
+    }
+    document.getElementById('dTonList').innerHTML =
+      renderGroup('Da ve kho - chua ban', '#00897B', daVeList) +
+      renderGroup('Chua ve kho', '#FB8C00', chuaVeList);
   }
 }
 
