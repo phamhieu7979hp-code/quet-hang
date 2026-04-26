@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-bottom:70px}
+body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-bottom:10px}
 .top{background:linear-gradient(135deg,#2196F3,#64B5F6);padding:18px 20px 14px;position:sticky;top:0;z-index:10;box-shadow:0 3px 15px rgba(33,150,243,.3)}
 .top h1{font-size:21px;font-weight:700;color:#fff}
 .top p{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
@@ -173,14 +173,14 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 <!-- OCR: input file an -->
 <input type="file" id="ocrInput" accept="image/*" capture="environment" style="position:absolute;opacity:0;width:0;height:0" onchange="handleOCR(this)">
 
-<!-- URL BAR -->
-<div id="urlBar">
-  <input type="text" id="urlInput" placeholder="Paste Apps Script URL...">
+<!-- URL BAR hidden -->
+<div id="urlBar" style="display:none">
+  <input type="text" id="urlInput">
   <button onclick="saveUrl()">Luu</button>
 </div>
 
 <script>
-var BASE = localStorage.getItem('khoUrl') || '';
+var BASE = 'https://script.google.com/macros/s/AKfycbxKzmkwxzgiOAakluFROAc0xWD1guCKRh9UQ5N3w_NZJYisNEmwjCPihLTrMiVF8JI/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '';
 var camTab = '', camStream = null, camReader = null, ocrTab = '';
 
@@ -195,7 +195,7 @@ function saveUrl(){
   alert('Da luu URL!');
 }
 function updateUrlStatus(){
-  document.getElementById('urlStatus').textContent = BASE ? 'eb2 · T12 / 2026 / T4' : 'Chua co URL — nhap phia duoi';
+  document.getElementById('urlStatus').textContent = 'eb2 · T12 / 2026 / T4';
 }
 
 function switchTab(t){
