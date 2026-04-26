@@ -8,6 +8,7 @@
 <title>Quan ly Hang</title>
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -380,27 +381,40 @@ document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.
 
 function inTem(oid){
   if(!oid)oid=curOid||'N/A';
-  // ZPL cho Xprinter 365B, kho 35x22mm (280x176 dots @ 8dpmm)
-  var zpl = '^XA'
-    +'^MMT'
-    +'^PW280'
-    +'^LL176'
-    +'^LS0'
-    // Barcode CODE128 - rong 240 dots, cao 80 dots, tu dong center
-    +'^FO20,20^BY2,3,80^BCN,,N,N^FD'+oid+'^FS'
-    // So tracking ben duoi
-    +'^FO20,108^A0N,22,22^FB240,1,0,C^FD'+oid+'^FS'
-    +'^XZ';
-  // Tao file .zpl va download
-  var blob = new Blob([zpl], {type:'application/octet-stream'});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'tem_'+oid+'.zpl';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Tao SVG barcode
+  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('id','tmpbc');
+  svg.style.position='absolute';svg.style.left='-9999px';
+  document.body.appendChild(svg);
+  JsBarcode('#tmpbc',oid,{format:'CODE128',width:2,height:60,displayValue:false,margin:2});
+  var svgData=new XMLSerializer().serializeToString(svg);
+  document.body.removeChild(svg);
+  // Chuyen SVG sang canvas
+  var img=new Image();
+  var svgBlob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
+  var svgUrl=URL.createObjectURL(svgBlob);
+  img.onload=function(){
+    var canvas=document.createElement('canvas');
+    canvas.width=img.width;canvas.height=img.height;
+    var ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0);
+    URL.revokeObjectURL(svgUrl);
+    var imgData=canvas.toDataURL('image/png');
+    // Tao PDF 35x22mm
+    var doc=new jspdf.jsPDF({orientation:'landscape',unit:'mm',format:[35,22]});
+    // Barcode - rong 31mm, cao 12mm, vi tri x=2,y=2
+    doc.addImage(imgData,'PNG',2,2,31,12);
+    // So tracking
+    doc.setFontSize(6);
+    doc.setFont('courier','normal');
+    doc.text(oid,17.5,16.5,{align:'center',maxWidth:31});
+    // Mo PDF trong tab moi - tren iPhone se hien nut Share
+    var pdfBlob=doc.output('blob');
+    var pdfUrl=URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl,'_blank');
+  };
+  img.src=svgUrl;
 }
 
 // ===== BAN HANG =====
