@@ -204,6 +204,10 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
       <div class="d-chart-title">Ton kho: Da ve vs Chua ve (trieu dong)</div>
       <canvas id="dChartTon" height="180"></canvas>
     </div>
+    <div class="d-chart">
+      <div class="d-chart-title">% Lai / Gia von (theo sheet)</div>
+      <canvas id="dChartPct" height="180"></canvas>
+    </div>
     <!-- Bang -->
     <div class="d-table">
       <div class="d-chart-title">Chi tiet theo sheet</div>
@@ -254,7 +258,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 var BASE = 'https://script.google.com/macros/s/AKfycbxeZYFT2ImTdgqOYxvRYWNzP81Ps8O3EQkcwzFUNh8EzEoNQaPgKA8tvQ71ikfT-BSN/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
-var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartTon = null;
+var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartTon = null, dChartPct = null;
 
 // Init Dynamsoft
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
@@ -563,6 +567,29 @@ function renderDash() {
       datasets:[{data:[Math.round(vonDaVe/1000000*10)/10,Math.round(vonChuaVe/1000000*10)/10],backgroundColor:['#00897B','#FB8C00'],borderWidth:0}]
     },
     options:{responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'M';}}}}}
+  });
+
+  // Chart % lai/von
+  dChartPct=destroyChart(dChartPct);
+  var pctData={};
+  data.forEach(function(r){
+    if(!pctData[r.sheet])pctData[r.sheet]={lai:0,von:0};
+    if(r.daBan){pctData[r.sheet].lai+=(r.lai||0);pctData[r.sheet].von+=r.giaNhap;}
+  });
+  var pctKeys=Object.keys(pctData).sort();
+  var pctVals=pctKeys.map(function(k){
+    return pctData[k].von>0?Math.round(pctData[k].lai/pctData[k].von*1000)/10:0;
+  });
+  dChartPct=new Chart(document.getElementById('dChartPct'),{
+    type:'bar',
+    data:{labels:pctKeys,datasets:[{
+      label:'% Lai/Von',
+      data:pctVals,
+      backgroundColor:pctVals.map(function(v){return v>=0?'rgba(76,175,80,.8)':'rgba(244,67,54,.8)';}),
+      borderRadius:6
+    }]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.raw+'%';}}}},
+      scales:{y:{ticks:{callback:function(v){return v+'%';}}}}}
   });
 
   // Bang
