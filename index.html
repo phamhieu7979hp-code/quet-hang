@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Quan ly Hang</title>
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
 <style>
@@ -215,44 +215,53 @@ function showRes(id,type,title,body){
 }
 
 // ===== CAMERA BARCODE =====
+var dbr = null;
+
+async function initDBR(){
+  if(dbr) return;
+  try{
+    Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
+    dbr = await Dynamsoft.DBR.BarcodeReader.createInstance();
+    await dbr.updateRuntimeSettings('speed');
+    var s = await dbr.getRuntimeSettings();
+    s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 | Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39;
+    s.expectedBarcodesCount = 1;
+    await dbr.updateRuntimeSettings(s);
+  }catch(e){ dbr = null; }
+}
+
 function openCam(tab){
   if(!BASE){ alert('Chua co URL!'); return; }
   camTab=tab;
-  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
+  initDBR();
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
   .then(function(stream){
     camStream=stream;
     var video=document.getElementById('camVideo');
     video.srcObject=stream; video.play();
     document.getElementById('camModal').classList.add('show');
-    var hints=new Map();
-    hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-    var reader=new ZXing.MultiFormatReader();
-    reader.setHints(hints);
     var canvas=document.createElement('canvas');
     var ctx=canvas.getContext('2d');
     var scanning=true;
     camReader={stop:function(){scanning=false;}};
-    function scanFrame(){
+    async function scanFrame(){
       if(!scanning)return;
-      if(video.readyState===video.HAVE_ENOUGH_DATA){
+      if(video.readyState===video.HAVE_ENOUGH_DATA && dbr){
         canvas.width=video.videoWidth;
         canvas.height=video.videoHeight;
         ctx.drawImage(video,0,0,canvas.width,canvas.height);
         try{
-          var imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-          var src=new ZXing.RGBLuminanceSource(imgData.data,canvas.width,canvas.height);
-          var bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(src));
-          var result=reader.decode(bmp);
-          if(result){
+          var results=await dbr.decode(canvas);
+          if(results&&results.length>0){
             scanning=false;
-            var t=result.getText().trim();
+            var t=results[0].barcodeText.trim();
             closeCam();
             onScanned(t);
             return;
           }
         }catch(e){}
       }
-      requestAnimationFrame(scanFrame);
+      setTimeout(function(){requestAnimationFrame(scanFrame);},100);
     }
     video.addEventListener('loadeddata',function(){ requestAnimationFrame(scanFrame); });
   }).catch(function(){
