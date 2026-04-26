@@ -216,29 +216,55 @@ function openCam(tab) {
   if (!BASE) { alert('Chua co URL! Nhap URL Apps Script phia duoi truoc.'); return; }
   camTab = tab;
   navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
   }).then(function(stream) {
     camStream = stream;
     var video = document.getElementById('camVideo');
     video.srcObject = stream;
     video.play();
     document.getElementById('camModal').classList.add('show');
-    camReader = new ZXing.BrowserMultiFormatReader();
-    camReader.decodeFromVideoElement(video, function(result, err) {
-      if (result) {
-        var t = result.getText().trim();
-        closeCam();
-        onScanned(t);
+    // Scan tung frame bang canvas
+    var hints = new Map();
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    var reader = new ZXing.MultiFormatReader();
+    reader.setHints(hints);
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var scanning = true;
+    camReader = { stop: function(){ scanning = false; } };
+    function scanFrame() {
+      if (!scanning) return;
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        try {
+          var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          var src = new ZXing.RGBLuminanceSource(imgData.data, canvas.width, canvas.height);
+          var bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(src));
+          var result = reader.decode(bmp);
+          if (result) {
+            scanning = false;
+            var t = result.getText().trim();
+            closeCam();
+            onScanned(t);
+            return;
+          }
+        } catch(e) {}
       }
+      requestAnimationFrame(scanFrame);
+    }
+    video.addEventListener('loadeddata', function() {
+      requestAnimationFrame(scanFrame);
     });
   }).catch(function(err) {
-    alert('Khong mo duoc camera!\nVui long cho phep truy cap camera trong Settings > Safari > Camera.');
+    alert('Khong mo duoc camera!\nVao Settings > Safari > Camera > cho phep.');
   });
 }
 
 function closeCam() {
   document.getElementById('camModal').classList.remove('show');
-  if (camReader) { try { camReader.reset(); } catch(e) {} camReader = null; }
+  if (camReader) { try { camReader.stop(); } catch(e) {} camReader = null; }
   if (camStream) { camStream.getTracks().forEach(function(t) { t.stop(); }); camStream = null; }
 }
 
