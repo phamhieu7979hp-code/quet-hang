@@ -215,53 +215,50 @@ function closeTem(){
 }
 
 // ===== CAMERA =====
-function openCam(tab){
+var dbrScanner = null;
+
+async function openCam(tab){
   camTab = tab;
-  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
-  .then(function(stream){
-    camStream = stream;
-    var video = document.getElementById('camVideo');
-    video.srcObject = stream;
-    video.play();
-    document.getElementById('camModal').classList.add('show');
-    var canvas = document.createElement('canvas');
-    var ctx = canvas.getContext('2d');
-    function tick(){
-      if(!camStream) return;
-      if(video.readyState === video.HAVE_ENOUGH_DATA){
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video,0,0,canvas.width,canvas.height);
-        var imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-        // Dung ZXing neu co
-        if(typeof ZXing !== 'undefined'){
-          try{
-            var src = new ZXing.RGBLuminanceSource(imgData.data, canvas.width, canvas.height);
-            var bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(src));
-            var hints = new Map();
-            hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-            var reader = new ZXing.MultiFormatReader();
-            reader.setHints(hints);
-            var result = reader.decode(bmp);
-            if(result){
-              var t = result.getText().trim();
-              closeCam();
-              onScanned(t);
-              return;
-            }
-          }catch(e){}
-        }
-      }
-      camTick = setTimeout(tick, 200);
+  try{
+    Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
+    await Dynamsoft.DBR.BarcodeReader.loadWasm();
+    if(!dbrScanner){
+      dbrScanner = await Dynamsoft.DBR.BarcodeScanner.createInstance();
+      await dbrScanner.updateRuntimeSettings('speed');
+      var s = await dbrScanner.getRuntimeSettings();
+      s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128
+        | Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39
+        | Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13;
+      s.expectedBarcodesCount = 1;
+      await dbrScanner.updateRuntimeSettings(s);
     }
-    video.addEventListener('loadeddata', function(){ camTick = setTimeout(tick, 500); });
-  }).catch(function(){
-    alert('Khong mo duoc camera!\nVao Settings > Safari > Camera > cho phep.');
-  });
+    dbrScanner.onFrameRead = function(results){};
+    dbrScanner.onUnduplicatedRead = function(txt){
+      closeCam();
+      onScanned(txt.trim());
+    };
+    await dbrScanner.setUIElement(document.getElementById('camModal'));
+    document.getElementById('camModal').classList.add('show');
+    await dbrScanner.open();
+  }catch(ex){
+    // Fallback: dung camera thu cong neu Dynamsoft loi
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
+    .then(function(stream){
+      camStream = stream;
+      var video = document.getElementById('camVideo');
+      video.srcObject = stream;
+      video.play();
+      document.getElementById('camModal').classList.add('show');
+      alert('Dang dung che do thu cong. Dynamsoft loi: '+ex.message);
+    }).catch(function(){
+      alert('Khong mo duoc camera!');
+    });
+  }
 }
 
 function closeCam(){
   document.getElementById('camModal').classList.remove('show');
+  if(dbrScanner){ try{ dbrScanner.close(); }catch(e){} }
   if(camTick){ clearTimeout(camTick); camTick=null; }
   if(camStream){ camStream.getTracks().forEach(function(t){t.stop();}); camStream=null; }
 }
@@ -394,7 +391,6 @@ function renderH(){
 }
 </script>
 
-<!-- Load ZXing sau cung de khong block render -->
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 </body>
 </html>
