@@ -199,9 +199,10 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
       <canvas id="dChartLai" height="180"></canvas>
     </div>
     <div class="d-chart">
-      <div class="d-chart-title">Co cau san pham</div>
-      <canvas id="dChartLoai" height="180"></canvas>
+      <div class="d-chart-title">Ton kho: Da ve vs Chua ve (VND)</div>
+      <canvas id="dChartTon" height="180"></canvas>
     </div>
+
     <div class="d-table">
       <div class="d-chart-title">Chi tiet theo sheet</div>
       <table>
@@ -251,10 +252,10 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
 Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
 
-var BASE = 'https://script.google.com/macros/s/AKfycbwE_aLUL8weO2pFlrp2VxPoVLFGESagi03Z_wDPJzVEF2V_erA7qo39Us3cvHkbrXL1/exec';
+var BASE = 'https://script.google.com/macros/s/AKfycbxeZYFT2ImTdgqOYxvRYWNzP81Ps8O3EQkcwzFUNh8EzEoNQaPgKA8tvQ71ikfT-BSN/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
-var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartLoai = null;
+var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null;
 
 // ===== TABS =====
 function switchTab(t) {
@@ -541,6 +542,18 @@ function renderDash() {
   document.getElementById('dDaVeVon').textContent='Von: '+fmtN(vonDaVe)+' d';
   document.getElementById('dChuaVe').textContent=chuaVe.length+' may';
   document.getElementById('dChuaVeVon').textContent='Von: '+fmtN(vonChuaVe)+' d';
+  // Chart ton kho
+  if(dChartTon)dChartTon.destroy();
+  dChartTon=new Chart(document.getElementById('dChartTon'),{
+    type:'doughnut',
+    data:{
+      labels:['Da ve kho ('+daVe.length+' may)','Chua ve ('+chuaVe.length+' may)'],
+      datasets:[{data:[Math.round(vonDaVe/1000000*10)/10, Math.round(vonChuaVe/1000000*10)/10],
+        backgroundColor:['#00897B','#FB8C00'],borderWidth:0}]
+    },
+    options:{responsive:true,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'M';}}}}
+    }
+  });
 
   // Chart lai theo sheet
   var mLai={};
@@ -557,22 +570,7 @@ function renderDash() {
     options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return v+'M';}}}}}
   });
 
-  // Chart co cau
-  var loai={MacBook:0,iPad:0,iPhone:0,Khac:0};
-  data.forEach(function(r){
-    var sp=(r.sp||'').toLowerCase();
-    if(sp.indexOf('macbook')>=0||sp.indexOf('mac ')>=0)loai.MacBook++;
-    else if(sp.indexOf('ipad')>=0)loai.iPad++;
-    else if(sp.indexOf('iphone')>=0)loai.iPhone++;
-    else loai.Khac++;
-  });
-  var lKeys=Object.keys(loai).filter(function(k){return loai[k]>0;});
-  if(dChartLoai)dChartLoai.destroy();
-  dChartLoai=new Chart(document.getElementById('dChartLoai'),{
-    type:'doughnut',
-    data:{labels:lKeys,datasets:[{data:lKeys.map(function(k){return loai[k];}),backgroundColor:['#2196F3','#4CAF50','#FF9800','#9E9E9E'],borderWidth:0}]},
-    options:{responsive:true,plugins:{legend:{position:'bottom'}}}
-  });
+
 
   // Table theo sheet
   var mData={};
