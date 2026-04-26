@@ -181,6 +181,18 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
         <div class="d-val" id="dTon">0</div>
         <div class="d-sub" id="dTonVon">Von ton: 0</div>
       </div>
+      <div class="d-card" style="grid-column:1/-1;background:#fff;border-left:4px solid #00897B;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(33,150,243,.08);display:flex;gap:16px">
+        <div style="flex:1">
+          <div class="d-lbl">Da ve kho (chua ban)</div>
+          <div class="d-val" id="dDaVe" style="color:#00897B">0 may</div>
+          <div class="d-sub" id="dDaVeVon">Von: 0</div>
+        </div>
+        <div style="flex:1;border-left:1px solid #e0e0e0;padding-left:16px">
+          <div class="d-lbl">Chua ve kho</div>
+          <div class="d-val" id="dChuaVe" style="color:#FB8C00">0 may</div>
+          <div class="d-sub" id="dChuaVeVon">Von: 0</div>
+        </div>
+      </div>
     </div>
     <div class="d-chart">
       <div class="d-chart-title">Lai lo theo sheet (trieu dong)</div>
@@ -239,7 +251,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
 Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
 
-var BASE = 'https://script.google.com/macros/s/AKfycbzHcxOXuUJfad65NJKZBUstYZzUOz3BnLJeNTiGHH5NEBdm7dWsdcWFq5tx2vAce0HU/exec';
+var BASE = 'https://script.google.com/macros/s/AKfycbwE_aLUL8weO2pFlrp2VxPoVLFGESagi03Z_wDPJzVEF2V_erA7qo39Us3cvHkbrXL1/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
 var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartLoai = null;
@@ -520,6 +532,15 @@ function renderDash() {
   document.getElementById('dVon').textContent=fmtN(von)+' d';
   document.getElementById('dTon').textContent=tonKho.length+' may';
   document.getElementById('dTonVon').textContent='Von ton: '+fmtN(vonTon)+' d';
+  // Phan loai ton kho theo da ve / chua ve
+  var daVe   = tonKho.filter(function(r){return r.daVe;});
+  var chuaVe = tonKho.filter(function(r){return !r.daVe;});
+  var vonDaVe   = daVe.reduce(function(s,r){return s+r.giaNhap;},0);
+  var vonChuaVe = chuaVe.reduce(function(s,r){return s+r.giaNhap;},0);
+  document.getElementById('dDaVe').textContent=daVe.length+' may';
+  document.getElementById('dDaVeVon').textContent='Von: '+fmtN(vonDaVe)+' d';
+  document.getElementById('dChuaVe').textContent=chuaVe.length+' may';
+  document.getElementById('dChuaVeVon').textContent='Von: '+fmtN(vonChuaVe)+' d';
 
   // Chart lai theo sheet
   var mLai={};
