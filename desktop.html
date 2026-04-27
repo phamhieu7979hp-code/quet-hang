@@ -670,7 +670,7 @@ async function loadAndTrack(){
     trackResults=[];
 
     // Tra song song tung nhom 3
-    var BATCH=3;
+    var BATCH=1;
     for(var i=0;i<list.length;i+=BATCH){
       var chunk=list.slice(i,i+BATCH);
       prog.textContent='Dang tra ('+(i+1)+'-'+Math.min(i+BATCH,list.length)+'/'+list.length+')...';
@@ -954,6 +954,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.7.7</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.7.8</div>
 </body>
 </html>
