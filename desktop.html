@@ -396,7 +396,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbwS29am_U5BJAWQSzsen3rzWP6b1tj8mRbyino6EAVfLxT7SGLY-uCiVOjr-5D__HwR/exec';
+var BASE='https://script.google.com/macros/s/AKfycbzM5EpfZ1C8rxp7ZSxstwEmzF4Ow_Ui5ULsc_VcIlDdSTdx9tI4sKqcmAlxYPuDxLHp/exec';
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
 var curTab='nhap',scanner=null,camTab='';
@@ -681,11 +681,18 @@ async function loadAndTrack(){
       await Promise.all(chunk.map(function(item){
         var tn=item.tracking;
         var carrier=detectCarrier(tn);
-        var isShop = (item.kho||'').toLowerCase().trim()==='shop';
-        var action = isShop ? 'trackShop' : 'trackEbay';
-        var params = isShop
-          ? '&trackingNumber='+encodeURIComponent(tn)
-          : '&orderId='+encodeURIComponent(item.orderId)+'&trackingNumber='+encodeURIComponent(tn);
+        var kho = (item.kho||'').toLowerCase().trim();
+        var action, params;
+        if (kho === 'shop') {
+          action = 'trackShop';
+          params = '&trackingNumber='+encodeURIComponent(tn);
+        } else if (kho === 'da') {
+          action = 'trackDA';
+          params = '&trackingNumber='+encodeURIComponent(tn);
+        } else {
+          action = 'trackEbay';
+          params = '&orderId='+encodeURIComponent(item.orderId)+'&trackingNumber='+encodeURIComponent(tn);
+        }
         return fetch(BASE+'?action='+action+params)
           .then(function(res){return res.json();})
           .then(function(data){
@@ -937,6 +944,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.5.4</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.5.5</div>
 </body>
 </html>
