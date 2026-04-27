@@ -396,7 +396,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbzrqwSORldTFVHmLH38KVG7epOT5otgR4epzoPlB6oAuXAm10QmEqzFqFYDzUPbw_8u/exec';
+var BASE='https://script.google.com/macros/s/AKfycbytIHV2TPU27Vly5qFrRFHGU9ZVLrHW9zV_LSN93yXMdM5h-fhHhr4WijfhuE2E2_Vz/exec';
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
 var curTab='nhap',scanner=null,camTab='';
@@ -682,7 +682,7 @@ async function loadAndTrack(){
         var tn=item.tracking;
         var carrier=detectCarrier(tn);
         var action='trackEbay';
-        return fetch(BASE+'?action='+action+'&trackingNumber='+encodeURIComponent(tn))
+        return fetch(BASE+'?action='+action+'&orderId='+encodeURIComponent(item.orderId)+'&trackingNumber='+encodeURIComponent(tn))
           .then(function(res){return res.json();})
           .then(function(data){
             if(data.ok){
