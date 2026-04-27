@@ -95,7 +95,8 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
   <button class="tab active" onclick="switchTab('nhap')">Nhap kho</button>
   <button class="tab" onclick="switchTab('ban')">Ban hang</button>
   <button class="tab" onclick="switchTab('gia')">Kiem tra</button>
-  <button class="tab" onclick="switchTab('dash')">&#x1F4CA; Bao cao</button>
+  <button class="tab" onclick="switchTab('track')">&#x1F4E6; Tracking</button>
+<button class="tab" onclick="switchTab('dash')">&#x1F4CA; Bao cao</button>
 </div>
 
 <!-- NHAP KHO -->
@@ -156,6 +157,23 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 </div>
 
 <!-- BAO CAO -->
+<div class="sec" id="tab-track">
+  <div class="sbtn"><label onclick="loadAndTrack()" style="cursor:pointer">Tai & Tra cuu hang chua ve</label></div>
+  <div id="trackProgress" style="display:none;margin:0 14px 10px;font-size:12px;color:#90b8d8;text-align:center"></div>
+  <div style="margin:0 14px 10px;overflow-x:auto;display:none" id="trackTableWrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:#90b8d8;text-transform:uppercase">Ket qua (<span id="trackCount">0</span> don)</div>
+      <button onclick="exportTrackCSV()" style="background:none;border:1px solid #BBDEFB;border-radius:6px;padding:3px 10px;font-size:11px;color:#2196F3;cursor:pointer" id="btnExportTrack">Xuat CSV</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px" id="trackTable">
+      <thead><tr style="background:#e8f4fd">
+        <th style="padding:6px">Tracking</th><th style="padding:6px">Sheet</th><th style="padding:6px">SP</th><th style="padding:6px">Trang thai</th><th style="padding:6px">DK giao</th><th style="padding:6px">Da giao</th>
+      </tr></thead>
+      <tbody id="trackTableBody"><tr><td colspan="4" style="text-align:center;color:#90b8d8;padding:12px">Chua co du lieu</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
 <div class="sec" id="tab-dash">
   <div class="d-filter" id="dFilter">
     <button class="d-ftab active" onclick="setDFilter('all')">Tat ca</button>
@@ -264,7 +282,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 <script>
 var SUPA_URL = 'https://wpzyzgiokgvpfukzsfnz.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwenl6Z2lva2d2cGZ1a3pzZm56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNzEyMDAsImV4cCI6MjA5Mjg0NzIwMH0.TcukbXJk6j4zPUWSmAyPuDNwVw-MxWuV0dpP11bgWTM';
-var BASE = 'https://script.google.com/macros/s/AKfycbxgkQRsepjn_oKC9ePnQs0TbweBKWCwk-mPrco1Kxf3zMuFMCnNvQBX0Uyln6z3xFBd/exec';
+var BASE = 'https://script.google.com/macros/s/AKfycbxzbg7VOiMhKN2h9BMe018F1tvVYI1v7iEwz7uY8b660qEdGIAKLP0VyHlXdBWQwjme/exec';
 var hist = JSON.parse(localStorage.getItem('khoHist')||'[]'), cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
 var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartTon = null;
