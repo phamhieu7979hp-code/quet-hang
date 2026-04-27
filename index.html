@@ -233,7 +233,13 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 
 <!-- LICH SU -->
 <div class="hist">
-  <div class="ht">Lich su</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div class="ht" style="margin-bottom:0">Lich su</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="loadFromSupa()" style="background:none;border:1px solid #BBDEFB;border-radius:6px;padding:3px 10px;font-size:11px;color:#2196F3;cursor:pointer">Tai</button>
+      <button onclick="clearHist()" style="background:none;border:1px solid #BBDEFB;border-radius:6px;padding:3px 10px;font-size:11px;color:#90b8d8;cursor:pointer">Xoa</button>
+    </div>
+  </div>
   <div id="hl"><div style="font-size:13px;color:#90b8d8">Chua co lich su</div></div>
 </div>
 
@@ -256,11 +262,14 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 </div>
 
 <script>
+var SUPA_URL = 'https://wpzyzgiokgvpfukzsfnz.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwenl6Z2lva2d2cGZ1a3pzZm56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNzEyMDAsImV4cCI6MjA5Mjg0NzIwMH0.TcukbXJk6j4zPUWSmAyPuDNwVw-MxWuV0dpP11bgWTM';
 var BASE = 'https://script.google.com/macros/s/AKfycbxgkQRsepjn_oKC9ePnQs0TbweBKWCwk-mPrco1Kxf3zMuFMCnNvQBX0Uyln6z3xFBd/exec';
-var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
+var hist = JSON.parse(localStorage.getItem('khoHist')||'[]'), cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
 var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartTon = null;
 
+renderH();
 // Init Dynamsoft
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
 Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
@@ -285,7 +294,10 @@ function switchTab(t) {
   document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('active',['nhap','ban','gia','dash'][i]===t); });
   document.querySelectorAll('.sec').forEach(function(s){ s.classList.remove('active'); });
   document.getElementById('tab-'+t).classList.add('active');
-  if (t==='dash' && !dashLoaded) loadDash();
+  if (t==='dash') {
+    if(!checkDashPass()) return;
+    if(!dashLoaded) loadDash();
+  }
 }
 
 // ===== HELPERS =====
@@ -632,6 +644,40 @@ function addH(s,t,n){
   var now=new Date();
   hist.unshift({s:s,t:t,n:n,time:pad(now.getHours())+':'+pad(now.getMinutes())});
   if(hist.length>30)hist.pop();
+  try{localStorage.setItem('khoHist',JSON.stringify(hist));}catch(e){}
+  if(s==='ok') saveToSupa(s,t,n,hist[0].time);
+  renderH();
+}
+// ===== SUPABASE =====
+var SUPA_SOURCE = 'index';
+
+async function saveToSupa(s,t,n,time){
+  try{
+    await fetch(SUPA_URL+'/rest/v1/lich_su',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+      body:JSON.stringify({trang_thai:s,noi_dung:t,ghi_chu:n,thoi_gian:time,nguon:SUPA_SOURCE})
+    });
+  }catch(e){}
+}
+
+async function loadFromSupa(){
+  try{
+    var r=await fetch(SUPA_URL+'/rest/v1/lich_su?order=created_at.desc&limit=50&nguon=eq.'+SUPA_SOURCE,{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    var data=await r.json();
+    if(Array.isArray(data)&&data.length){
+      hist=data.map(function(d){return{s:d.trang_thai,t:d.noi_dung,n:d.ghi_chu,time:d.thoi_gian};});
+      try{localStorage.setItem('khoHist',JSON.stringify(hist));}catch(e){}
+      renderH();
+    }
+  }catch(e){}
+}
+
+function clearHist(){
+  hist=[];
+  try{localStorage.removeItem('khoHist');}catch(e){}
   renderH();
 }
 function renderH(){
