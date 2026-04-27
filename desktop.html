@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quan ly Kho</title>
+<title>KokTrack</title>
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -147,7 +147,19 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 
 <div class="topbar">
   <div>
-    <span class="brand">Quan ly Kho <span>eb2 · T12 / 2026 / T4</span></span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#FFD700,#FFA500);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 6px rgba(255,165,0,.3)">
+        <svg width="24" height="24" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <rect x="80" y="60" width="55" height="280" rx="4" fill="#1a1a2e"/>
+          <polygon points="135,200 295,60 340,95 180,235" fill="#1a1a2e"/>
+          <polygon points="135,200 295,340 340,305 180,165" fill="#1a1a2e"/>
+        </svg>
+      </div>
+      <div>
+        <span style="font-size:16px;font-weight:900;letter-spacing:-.3px;font-family:Arial Black,Arial"><span style="color:#1e2d3d">KOK</span><span style="color:#FFA500">.TRACK</span></span>
+        
+      </div>
+    </div>
   </div>
   <div class="status">
     <div class="sdot" id="sDot"></div>
@@ -999,6 +1011,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.8.3</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.8.7</div>
 </body>
 </html>
