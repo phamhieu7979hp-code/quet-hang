@@ -256,7 +256,7 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
 </div>
 
 <script>
-var BASE = 'https://script.google.com/macros/s/AKfycbxZyrcsfCh220f2AeXIwfHqQCdFDnKNP1TekrNLxCNEvUIjDT1vX_lckTlLzrqn6yWp/exec';
+var BASE = 'https://script.google.com/macros/s/AKfycbxgkQRsepjn_oKC9ePnQs0TbweBKWCwk-mPrco1Kxf3zMuFMCnNvQBX0Uyln6z3xFBd/exec';
 var hist = [], cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
 var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartTon = null;
@@ -393,7 +393,11 @@ async function findTracking(t) {
     if (d.found) {
       nT=t; nInfo=d; nNg=ng; curOid=d.orderId||''; curSp=d.sp||'';
       var spTxt=d.sp?'<br>SP: <b>'+d.sp+'</b>':'';
-      showRes('resNhap','info','Tim thay! Nhap phi ship','Tracking: <b>'+t+'</b>'+spTxt+'<br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b>');
+      var slTxt=d.sl>1?'<br>So luong trong sheet: <b>'+d.sl+'</b>':'';
+      showRes('resNhap','info','Tim thay! Nhap phi ship','Tracking: <b>'+t+'</b>'+spTxt+slTxt+'<br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b>');
+      var sl=d.sl||1;
+      document.getElementById('slVe').value=sl;
+      document.getElementById('slVe').max=sl;
       document.getElementById('shipWrap').style.display='block';
       document.getElementById('phiShip').focus();
     } else { showRes('resNhap','err','Khong tim thay','<b>'+t+'</b> khong co.'); addH('err',t,'Khong tim thay'); }
