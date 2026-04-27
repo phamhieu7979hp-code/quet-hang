@@ -681,7 +681,7 @@ async function loadAndTrack(){
       await Promise.all(chunk.map(function(item){
         var tn=item.tracking;
         var carrier=detectCarrier(tn);
-        var isShop = (item.kho||'').toLowerCase()==='shop';
+        var isShop = (item.kho||'').toLowerCase().trim()==='shop';
         var action = isShop ? 'trackShop' : 'trackEbay';
         var params = isShop
           ? '&trackingNumber='+encodeURIComponent(tn)
@@ -937,6 +937,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.5.3</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.5.4</div>
 </body>
 </html>
