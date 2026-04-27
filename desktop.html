@@ -681,9 +681,12 @@ async function loadAndTrack(){
       await Promise.all(chunk.map(function(item){
         var tn=item.tracking;
         var carrier=detectCarrier(tn);
-        var kho = (item.kho||'').toLowerCase().trim();
+        var kho = (item.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+        var oid = String(item.orderId||'').trim();
+        var isEbayFormat = /^\d{2}-\d{5}-\d{5}$/.test(oid);
+        var isShop = kho.indexOf('shop') >= 0 || !isEbayFormat;
         var action, params;
-        if (kho.indexOf('shop') >= 0) {
+        if (isShop) {
           action = 'trackShop';
           params = '&trackingNumber='+encodeURIComponent(tn);
         } else {
@@ -738,7 +741,12 @@ function renderTrackTable(){
   // Sort: chua giao len truoc
   var sorted=trackResults.slice().sort(function(a,b){return a.delivered-b.delivered;});
   tbody.innerHTML=sorted.map(function(r){
-    var isShop = (r.kho||'').toLowerCase().indexOf('shop') >= 0;
+    var khoNorm = (r.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+    var isEbayFormat = /^\d{2}-\d{5}-\d{5}$/.test(String(r.orderId||'').trim());
+    var isShop = khoNorm.indexOf('shop') >= 0 || !isEbayFormat;
+    // Don bao loi ebay -> coi nhu khong tra duoc, hien tron giong shop
+    var isError = !r.ok || (r.status||'').indexOf('Loi') >= 0 || (r.status||'').indexOf('Timeout') >= 0;
+    if (isError) isShop = true;
     var sc = r.status==='DELI' ? '#34a853'
              : r.status==='SHIPPING' ? '#1a73e8'
              : r.ok ? '#f9ab00' : '#ea4335';
@@ -948,6 +956,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.7.1</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.7.4</div>
 </body>
 </html>
