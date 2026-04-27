@@ -169,21 +169,24 @@ body{background:#e8f4fd;color:#1a3a5c;font-family:Arial,sans-serif;padding-botto
   <div class="res" id="resGia"><div class="rt" id="rtGia"></div><div class="rb" id="rbGia"></div></div>
 </div>
 
-<!-- BAO CAO -->
+<!-- TRACKING TAB -->
 <div class="sec" id="tab-track">
   <div class="sbtn"><label onclick="loadAndTrack()" style="cursor:pointer">Tai & Tra cuu hang chua ve</label></div>
-  <div id="trackProgress" style="display:none;margin:0 14px 10px;font-size:12px;color:#90b8d8;text-align:center"></div>
-  <div style="margin:0 14px 10px;overflow-x:auto;display:none" id="trackTableWrap">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:11px;font-weight:700;color:#90b8d8;text-transform:uppercase">Ket qua (<span id="trackCount">0</span> don)</div>
-      <button onclick="exportTrackCSV()" style="background:none;border:1px solid #BBDEFB;border-radius:6px;padding:3px 10px;font-size:11px;color:#2196F3;cursor:pointer" id="btnExportTrack">Xuat CSV</button>
+  <div id="trackProgress" style="display:none;margin:8px 14px;padding:10px 14px;background:linear-gradient(135deg,#1e3a5f,#2a4a7a);border-radius:10px;font-size:12px;color:#cfe2f8;text-align:center;font-weight:500;letter-spacing:.3px"></div>
+  
+  <div style="margin:0 14px 10px;display:none" id="trackTableWrap">
+    <!-- Stat header voi divider -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px 14px;border-bottom:1px solid rgba(144,184,216,.2);margin-bottom:14px">
+      <div>
+        <div style="font-size:9px;font-weight:700;color:#7a93b0;text-transform:uppercase;letter-spacing:1.2px">Tong don</div>
+        <div style="font-size:24px;font-weight:900;color:#fff;margin-top:2px;font-family:'Courier New',monospace"><span id="trackCount">0</span></div>
+      </div>
+      <div id="trackStats" style="display:flex;gap:14px"></div>
+      <button onclick="exportTrackCSV()" style="background:transparent;border:1px solid rgba(144,184,216,.4);border-radius:8px;padding:6px 12px;font-size:10px;color:#a8c4e0;cursor:pointer;font-weight:600;letter-spacing:.5px;text-transform:uppercase">CSV</button>
     </div>
-    <table style="width:100%;border-collapse:collapse;font-size:11px" id="trackTable">
-      <thead><tr style="background:#e8f4fd">
-        <th style="padding:6px">Tracking</th><th style="padding:6px">Sheet</th><th style="padding:6px">Kho</th><th style="padding:6px">Acc</th><th style="padding:6px">SP</th><th style="padding:6px">Trang thai</th><th style="padding:6px">DK giao</th><th style="padding:6px">Da giao</th>
-      </tr></thead>
-      <tbody id="trackTableBody"><tr><td colspan="4" style="text-align:center;color:#90b8d8;padding:12px">Chua co du lieu</td></tr></tbody>
-    </table>
+    
+    <!-- Card list -->
+    <div id="trackCardList" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 
@@ -628,20 +631,34 @@ async function loadAndTrack(){
 }
 
 function renderTrackTable(){
-  var tbody=document.getElementById('trackTableBody');
-  if(!trackResults.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:12px">Chua co du lieu</td></tr>';return;}
-  var sorted=trackResults.slice().sort(function(a,b){
-    // 1. eBay len truoc, Shop xuong duoi
+  var container = document.getElementById('trackCardList');
+  if(!trackResults.length){
+    container.innerHTML='<div style="text-align:center;padding:30px 20px;color:#7a93b0;font-size:13px;font-style:italic">Chua co du lieu</div>';
+    document.getElementById('trackCount').textContent = 0;
+    document.getElementById('trackStats').innerHTML = '';
+    return;
+  }
+  
+  // Sort: eBay len truoc, Shop xuong duoi, chua giao len truoc, OrderID giam dan
+  var sorted = trackResults.slice().sort(function(a,b){
     var aShop = a.isShop || a.status === 'SHOP' ? 1 : 0;
     var bShop = b.isShop || b.status === 'SHOP' ? 1 : 0;
     if (aShop !== bShop) return aShop - bShop;
-    // 2. Don chua giao len truoc (chi cho eBay)
     if (a.delivered !== b.delivered) return a.delivered - b.delivered;
-    // 3. Sort orderId giam dan (moi nhat truoc)
     var oa = String(a.orderId||''), ob = String(b.orderId||'');
     return ob > oa ? 1 : ob < oa ? -1 : 0;
   });
-  // Render voi divider giua eBay va Shop
+  
+  // Stats
+  var deli = sorted.filter(function(x){return x.delivered && !x.isShop && x.status !== 'SHOP';}).length;
+  var shipping = sorted.filter(function(x){return !x.delivered && x.ok && !x.isShop && x.status !== 'SHOP';}).length;
+  var shopCount = sorted.filter(function(x){return x.isShop || x.status === 'SHOP';}).length;
+  
+  document.getElementById('trackStats').innerHTML = 
+    '<div style="text-align:center"><div style="font-size:9px;color:#34a853;font-weight:700;text-transform:uppercase;letter-spacing:1px">DELI</div><div style="font-size:18px;font-weight:900;color:#34a853;font-family:Courier New,monospace">'+deli+'</div></div>'
+    +'<div style="text-align:center"><div style="font-size:9px;color:#1a73e8;font-weight:700;text-transform:uppercase;letter-spacing:1px">SHIP</div><div style="font-size:18px;font-weight:900;color:#5ba8ff;font-family:Courier New,monospace">'+shipping+'</div></div>'
+    +(shopCount>0?'<div style="text-align:center"><div style="font-size:9px;color:#e65100;font-weight:700;text-transform:uppercase;letter-spacing:1px">SHOP</div><div style="font-size:18px;font-weight:900;color:#ff9800;font-family:Courier New,monospace">'+shopCount+'</div></div>':'');
+  
   var html = '';
   var lastIsShop = null;
   sorted.forEach(function(r){
@@ -650,40 +667,73 @@ function renderTrackTable(){
     var isShop = khoNorm.indexOf('shop') >= 0 || !isEbayFormat || r.isShop || r.status === 'SHOP';
     var isError = !r.ok || (r.status||'').indexOf('Loi') >= 0 || (r.status||'').indexOf('Timeout') >= 0;
     
-    // Them divider khi chuyen tu eBay sang Shop
+    // Divider giua eBay va Shop
     if (lastIsShop === false && isShop) {
-      var shopCount = sorted.filter(function(x){
-        var k = (x.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
-        var ef = /^\d{2}-\d{5}-\d{5}$/.test(String(x.orderId||'').trim());
-        return k.indexOf('shop') >= 0 || !ef || x.isShop || x.status === 'SHOP';
-      }).length;
-      html += '<tr style="background:#fff3e0"><td colspan="8" style="text-align:center;padding:8px;font-size:11px;color:#e65100;font-weight:700;letter-spacing:1.5px">━━━ DON SHOP ('+shopCount+' don) ━━━</td></tr>';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 4px 6px;margin-top:6px"><div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,152,0,.4),transparent)"></div><div style="font-size:9px;font-weight:800;color:#ff9800;letter-spacing:2px;text-transform:uppercase">DON SHOP</div><div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,152,0,.4),transparent)"></div></div>';
     }
     lastIsShop = isShop;
     
-    var sc = r.status==='DELI' ? '#34a853' : r.status==='SHIPPING' ? '#1a73e8' : r.ok ? '#f9ab00' : '#ea4335';
-    var hideStatus = isShop || isError;
-    var stCell;
-    if (hideStatus) {
-      stCell = '<span style="color:#8a9bb0;font-size:11px">—</span>';
+    // Status tag
+    var statusTag, statusBg, leftBorder;
+    if (isShop) {
+      statusTag = 'SHOP';
+      statusBg = 'rgba(255,152,0,.15)';
+      leftBorder = '#ff9800';
+    } else if (isError) {
+      statusTag = 'LOI';
+      statusBg = 'rgba(234,67,53,.15)';
+      leftBorder = '#ea4335';
+    } else if (r.status === 'DELI') {
+      statusTag = 'DELI';
+      statusBg = 'rgba(52,168,83,.18)';
+      leftBorder = '#34a853';
     } else {
-      var stLabel = r.status || 'SHIPPING';
-      stCell = '<span style="font-weight:700;color:'+sc+'">'+stLabel+'</span>';
+      statusTag = 'SHIP';
+      statusBg = 'rgba(26,115,232,.18)';
+      leftBorder = '#1a73e8';
     }
+    
+    var statusColor = leftBorder;
     var accShort = (r.account||'').replace('kok.comp_92','kok').replace('mi_844318','mi');
-    html += '<tr>'
-      +'<td style="font-family:monospace;font-size:10px">'+r.tracking+'</td>'
-      +'<td style="font-size:11px;color:#8a9bb0">'+r.sheet+'</td>'
-      +'<td style="font-size:11px;color:#1a73e8;font-weight:600">'+(r.kho||'')+'</td>'
-      +'<td style="font-size:11px;color:#6C3483;font-weight:600">'+accShort+'</td>'
-      +'<td style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">'+r.sp+'</td>'
-      +'<td>'+stCell+'</td>'
-      +'<td style="font-size:11px">'+(hideStatus?'':r.estDelivery)+'</td>'
-      +'<td style="font-size:11px;color:#34a853;font-weight:600">'+(hideStatus?'':r.actDelivery)+'</td>'
-      +'</tr>';
+    var carrier = r.carrier ? r.carrier.toUpperCase() : '';
+    
+    // Card layout
+    html += '<div style="background:linear-gradient(135deg,#1a2740,#162032);border-left:3px solid '+leftBorder+';border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.3)">';
+    
+    // Top row: status tag + sheet + acc
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">';
+    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+    html += '<span style="background:'+statusBg+';color:'+statusColor+';font-size:9px;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:1px">'+statusTag+'</span>';
+    if (r.kho) html += '<span style="background:rgba(33,150,243,.15);color:#5ba8ff;font-size:9px;font-weight:700;padding:3px 7px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase">'+r.kho+'</span>';
+    if (r.sheet) html += '<span style="font-size:10px;color:#7a93b0;font-weight:500">'+r.sheet+'</span>';
+    html += '</div>';
+    if (accShort) html += '<span style="font-size:10px;color:#b388dd;font-weight:700;letter-spacing:.5px">@'+accShort+'</span>';
+    html += '</div>';
+    
+    // Tracking number (mono font)
+    html += '<div style="font-family:Courier New,monospace;font-size:12px;color:#fff;font-weight:700;letter-spacing:.5px;margin-bottom:6px;word-break:break-all">'+r.tracking;
+    if (carrier) html += ' <span style="color:#7a93b0;font-size:10px;font-weight:500">· '+carrier+'</span>';
+    html += '</div>';
+    
+    // SP - san pham
+    html += '<div style="font-size:11px;color:#cfe2f8;line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+(r.sp||'')+'</div>';
+    
+    // Bottom row: Order ID + dates
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(144,184,216,.1);font-size:10px">';
+    html += '<span style="font-family:Courier New,monospace;color:#7a93b0;letter-spacing:.5px">#'+(r.orderId||'')+'</span>';
+    
+    if (!isShop && !isError) {
+      var dates = '';
+      if (r.estDelivery) dates += '<span style="color:#7a93b0">Ship: <b style="color:#a8c4e0">'+r.estDelivery+'</b></span>';
+      if (r.actDelivery) dates += (dates?' · ':'')+'<span style="color:#7a93b0">Giao: <b style="color:#34a853">'+r.actDelivery+'</b></span>';
+      html += '<span>'+dates+'</span>';
+    }
+    
+    html += '</div></div>';
   });
-  tbody.innerHTML = html;
-  document.getElementById('trackCount').textContent=trackResults.length;
+  
+  container.innerHTML = html;
+  document.getElementById('trackCount').textContent = trackResults.length;
 }
 
 function exportTrackCSV(){
@@ -885,6 +935,6 @@ function renderH(){
   }).join('');
 }
 </script>
-<div style="text-align:center;padding:8px 0 4px;font-size:10px;color:#90b8d8;font-family:monospace">KokTrack v2.8.8</div>
+<div style="text-align:center;padding:8px 0 4px;font-size:10px;color:#90b8d8;font-family:monospace">KokTrack v2.9.0</div>
 </body>
 </html>
