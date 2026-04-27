@@ -30,7 +30,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 .workspace{display:flex;flex:1;overflow:hidden}
 
 /* LEFT PANEL */
-.panel-left{width:40%;flex-shrink:0;background:#fff;border-right:1px solid #e8ecf0;overflow-y:auto;display:flex;flex-direction:column}
+.panel-left{width:30%;flex-shrink:0;background:#fff;border-right:1px solid #e8ecf0;overflow-y:auto;display:flex;flex-direction:column}
 .panel-body{padding:16px;display:flex;flex-direction:column;gap:12px}
 .sec{display:none}.sec.active{display:contents}
 
@@ -269,7 +269,10 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 
     <!-- History -->
     <div class="card" id="histBox">
-      <div class="card-title">Lich su hoat dong</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="card-title" style="margin-bottom:0">Lich su hoat dong</div>
+        <button onclick="clearHist()" style="background:none;border:1px solid #e8ecf0;border-radius:6px;padding:3px 10px;font-size:11px;color:#8a9bb0;cursor:pointer">Xoa</button>
+      </div>
       <div id="hl"><div style="font-size:12px;color:#bfc9d4;text-align:center;padding:20px">Chua co hoat dong nao</div></div>
     </div>
 
@@ -365,7 +368,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 
 <script>
 var BASE='https://script.google.com/macros/s/AKfycbxgkQRsepjn_oKC9ePnQs0TbweBKWCwk-mPrco1Kxf3zMuFMCnNvQBX0Uyln6z3xFBd/exec';
-var hist=[],cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
+var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
 var curTab='nhap',scanner=null,camTab='';
 
@@ -723,6 +726,12 @@ function addH(s,t,n){
   var now=new Date();
   hist.unshift({s:s,t:t,n:n,time:pad(now.getHours())+':'+pad(now.getMinutes())});
   if(hist.length>50)hist.pop();
+  try{localStorage.setItem('khoHist',JSON.stringify(hist));}catch(e){}
+  renderH();
+}
+function clearHist(){
+  hist=[];
+  try{localStorage.removeItem('khoHist');}catch(e){}
   renderH();
 }
 function renderH(){
