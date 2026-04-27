@@ -665,7 +665,15 @@ async function loadAndTrack(){
       prog.textContent='Khong co hang nao chua ve!';
       return;
     }
-    var list=d.data;
+    var list = (d.data || []).slice();
+    // Sort theo Order ID giam dan (don moi nhat truoc)
+    list.sort(function(a, b){
+      var oa = String(a.orderId || '');
+      var ob = String(b.orderId || '');
+      if (ob > oa) return 1;
+      if (ob < oa) return -1;
+      return 0;
+    });
     prog.textContent='Tim thay '+list.length+' hang chua ve. Dang tra cuu...';
     trackResults=[];
 
@@ -751,36 +759,59 @@ function renderTrackTable(){
     return;
   }
   // Sort: chua giao len truoc
-  var sorted=trackResults.slice().sort(function(a,b){return a.delivered-b.delivered;});
-  tbody.innerHTML=sorted.map(function(r){
+  var sorted=trackResults.slice().sort(function(a,b){
+    // 1. eBay len truoc, Shop xuong duoi
+    var aShop = a.isShop || a.status === 'SHOP' ? 1 : 0;
+    var bShop = b.isShop || b.status === 'SHOP' ? 1 : 0;
+    if (aShop !== bShop) return aShop - bShop;
+    // 2. Don chua giao len truoc (chi cho eBay)
+    if (a.delivered !== b.delivered) return a.delivered - b.delivered;
+    // 3. Sort orderId giam dan (moi nhat truoc)
+    var oa = String(a.orderId||''), ob = String(b.orderId||'');
+    return ob > oa ? 1 : ob < oa ? -1 : 0;
+  });
+  // Render voi divider giua eBay va Shop
+  var html = '';
+  var lastIsShop = null;
+  sorted.forEach(function(r){
     var khoNorm = (r.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
     var isEbayFormat = /^\d{2}-\d{5}-\d{5}$/.test(String(r.orderId||'').trim());
-    var isShop = khoNorm.indexOf('shop') >= 0 || !isEbayFormat;
-    // Don bao loi ebay -> coi nhu khong tra duoc, hien tron giong shop
+    var isShop = khoNorm.indexOf('shop') >= 0 || !isEbayFormat || r.isShop || r.status === 'SHOP';
     var isError = !r.ok || (r.status||'').indexOf('Loi') >= 0 || (r.status||'').indexOf('Timeout') >= 0;
-    if (isError) isShop = true;
-    var sc = r.status==='DELI' ? '#34a853'
-             : r.status==='SHIPPING' ? '#1a73e8'
-             : r.ok ? '#f9ab00' : '#ea4335';
+    
+    // Them divider khi chuyen tu eBay sang Shop
+    if (lastIsShop === false && isShop) {
+      var shopCount = sorted.filter(function(x){
+        var k = (x.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+        var ef = /^\d{2}-\d{5}-\d{5}$/.test(String(x.orderId||'').trim());
+        return k.indexOf('shop') >= 0 || !ef || x.isShop || x.status === 'SHOP';
+      }).length;
+      html += '<tr style="background:#fff3e0"><td colspan="8" style="text-align:center;padding:8px;font-size:11px;color:#e65100;font-weight:700;letter-spacing:1.5px">━━━ DON SHOP ('+shopCount+' don) ━━━</td></tr>';
+    }
+    lastIsShop = isShop;
+    
+    var sc = r.status==='DELI' ? '#34a853' : r.status==='SHIPPING' ? '#1a73e8' : r.ok ? '#f9ab00' : '#ea4335';
+    var hideStatus = isShop || isError;
     var stCell;
-    if (isShop) {
+    if (hideStatus) {
       stCell = '<span style="color:#8a9bb0;font-size:11px">—</span>';
     } else {
       var stLabel = r.status || 'SHIPPING';
       stCell = '<span style="font-weight:700;color:'+sc+'">'+stLabel+'</span>';
     }
     var accShort = (r.account||'').replace('kok.comp_92','kok').replace('mi_844318','mi');
-    return '<tr>'
+    html += '<tr>'
       +'<td style="font-family:monospace;font-size:10px">'+r.tracking+'</td>'
       +'<td style="font-size:11px;color:#8a9bb0">'+r.sheet+'</td>'
       +'<td style="font-size:11px;color:#1a73e8;font-weight:600">'+(r.kho||'')+'</td>'
       +'<td style="font-size:11px;color:#6C3483;font-weight:600">'+accShort+'</td>'
       +'<td style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">'+r.sp+'</td>'
       +'<td>'+stCell+'</td>'
-      +'<td style="font-size:11px">'+(isShop?'':r.estDelivery)+'</td>'
-      +'<td style="font-size:11px;color:#34a853;font-weight:600">'+(isShop?'':r.actDelivery)+'</td>'
+      +'<td style="font-size:11px">'+(hideStatus?'':r.estDelivery)+'</td>'
+      +'<td style="font-size:11px;color:#34a853;font-weight:600">'+(hideStatus?'':r.actDelivery)+'</td>'
       +'</tr>';
-  }).join('');
+  });
+  tbody.innerHTML = html;
   document.getElementById('trackCount').textContent=trackResults.length;
 }
 
@@ -968,6 +999,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.8.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.8.2</div>
 </body>
 </html>
