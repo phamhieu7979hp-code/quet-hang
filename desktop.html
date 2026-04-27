@@ -396,7 +396,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbxWGZiKM3kWYvU_POxkbvnca1BDwpJuH8XTHdUDcCPtEDOb4F3b0-0fBqtw7V_OA7Gr/exec';
+var BASE='https://script.google.com/macros/s/AKfycbxQeQB0oqJehv00yQoCjMwkzIZogQ0gaDD6s9mZjGyhrcoByZTwf3DBZEZ92t0pahcv/exec';
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
 var curTab='nhap',scanner=null,camTab='';
@@ -686,9 +686,6 @@ async function loadAndTrack(){
         if (kho === 'shop') {
           action = 'trackShop';
           params = '&trackingNumber='+encodeURIComponent(tn);
-        } else if (kho === 'da') {
-          action = 'trackDA';
-          params = '&trackingNumber='+encodeURIComponent(tn);
         } else {
           action = 'trackEbay';
           params = '&orderId='+encodeURIComponent(item.orderId)+'&trackingNumber='+encodeURIComponent(tn);
@@ -944,6 +941,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.5.5</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.5.7</div>
 </body>
 </html>
