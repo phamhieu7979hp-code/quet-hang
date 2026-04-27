@@ -644,19 +644,6 @@ function checkDashPass(){
 var trackResults = [];
 
 function detectCarrier(t){
-  t=t.trim().toUpperCase();
-  // UPS formats
-  if(t.startsWith('1Z')) return 'UPS';
-  if(/^[0-9]{18}$/.test(t)) return 'UPS'; // 18 so = UPS
-  if(/^(T|K|J|V|R)[0-9]{10}$/.test(t)) return 'UPS';
-  // FedEx formats: 12, 15, 20, 22 so
-  if(/^[0-9]{12}$/.test(t)) return 'FEDEX';
-  if(/^[0-9]{15}$/.test(t)) return 'FEDEX';
-  if(/^[0-9]{20}$/.test(t)) return 'FEDEX';
-  if(/^[0-9]{22}$/.test(t)) return 'FEDEX';
-  if(t.startsWith('96')||t.startsWith('61')||t.startsWith('74')||t.startsWith('75')) return 'FEDEX';
-  // Mac dinh UPS neu 12-18 so
-  if(/^[0-9]{12,18}$/.test(t)) return 'UPS';
   return 'FEDEX';
 }
 
@@ -686,38 +673,35 @@ async function loadAndTrack(){
     prog.textContent='Tim thay '+list.length+' hang chua ve. Dang tra cuu...';
     trackResults=[];
 
-    // Tra cuu tung tracking
-    for(var i=0;i<list.length;i++){
-      var item=list[i];
-      var tn=item.tracking;
-      var carrier=detectCarrier(tn);
-      prog.textContent='Dang tra ('+(i+1)+'/'+list.length+'): '+tn;
-      try{
-        var action=carrier==='UPS'?'trackUps':'trackFedex';
-        var res=await fetch(BASE+'?action='+action+'&trackingNumber='+encodeURIComponent(tn));
-        var data=await res.json();
-        if(data.ok){
-          var delivered = data.actDelivery ? true : false;
-          trackResults.push({
-            tracking:   tn,
-            orderId:    item.orderId,
-            sp:         item.sp,
-            sheet:      item.sheet,
-            carrier:    data.carrier||carrier,
-            status:     data.status||'',
-            estDelivery:fmtDate(data.estDelivery),
-            actDelivery:fmtDate(data.actDelivery),
-            delivered:  delivered,
-            ok:         true
+    // Tra song song tung nhom 3
+    var BATCH=3;
+    for(var i=0;i<list.length;i+=BATCH){
+      var chunk=list.slice(i,i+BATCH);
+      prog.textContent='Dang tra ('+(i+1)+'-'+Math.min(i+BATCH,list.length)+'/'+list.length+')...';
+      await Promise.all(chunk.map(function(item){
+        var tn=item.tracking;
+        var carrier=detectCarrier(tn);
+        var action='trackFedex';
+        return fetch(BASE+'?action='+action+'&trackingNumber='+encodeURIComponent(tn))
+          .then(function(res){return res.json();})
+          .then(function(data){
+            if(data.ok){
+              trackResults.push({
+                tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
+                carrier:data.carrier||carrier,status:data.status||'',
+                estDelivery:fmtDate(data.estDelivery),actDelivery:fmtDate(data.actDelivery),
+                delivered:!!data.actDelivery,ok:true
+              });
+            } else {
+              trackResults.push({tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
+                carrier:carrier,status:'Loi: '+(data.error||'?'),estDelivery:'',actDelivery:'',delivered:false,ok:false});
+            }
+          })
+          .catch(function(){
+            trackResults.push({tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
+              carrier:carrier,status:'Timeout',estDelivery:'',actDelivery:'',delivered:false,ok:false});
           });
-        } else {
-          trackResults.push({tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
-            carrier:carrier,status:'Loi tra cuu',estDelivery:'',actDelivery:'',delivered:false,ok:false});
-        }
-      }catch(ex){
-        trackResults.push({tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
-          carrier:carrier,status:'Loi ket noi',estDelivery:'',actDelivery:'',delivered:false,ok:false});
-      }
+      }));
       renderTrackTable();
     }
 
