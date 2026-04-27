@@ -159,6 +159,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
   <button class="tab active" onclick="switchTab('nhap')">Nhap kho</button>
   <button class="tab" onclick="switchTab('ban')">Ban hang</button>
   <button class="tab" onclick="switchTab('gia')">Kiem tra</button>
+  <button class="tab" onclick="switchTab('track')">Tracking</button>
   <button class="tab" onclick="switchTab('dash')">Bao cao</button>
 </div>
 
@@ -247,6 +248,13 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
         <div class="res" id="resGia"><div class="res-title" id="rtGia"></div><div class="res-body" id="rbGia"></div></div>
       </div>
 
+      <!-- TRACKING -->
+      <div class="sec" id="tab-track">
+        <div class="hint">Tu dong lay hang chua ve tu sheet va tra cuu trang thai</div>
+        <button class="btn btn-block" onclick="loadAndTrack()" id="btnLoadTrack">Tai & Tra cuu hang chua ve</button>
+        <div id="trackProgress" style="display:none;margin-top:8px;font-size:11px;color:#8a9bb0;text-align:center"></div>
+      </div>
+
       <!-- DASH FILTER -->
       <div class="sec" id="tab-dash">
         <div class="dash-filter-wrap">
@@ -271,9 +279,30 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
     <div class="card" id="histBox">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="card-title" style="margin-bottom:0">Lich su hoat dong</div>
-        <button onclick="clearHist()" style="background:none;border:1px solid #e8ecf0;border-radius:6px;padding:3px 10px;font-size:11px;color:#8a9bb0;cursor:pointer">Xoa</button>
+        <div style="display:flex;gap:6px">
+          <button onclick="loadFromSupa()" style="background:none;border:1px solid #e8ecf0;border-radius:6px;padding:3px 10px;font-size:11px;color:#1a73e8;cursor:pointer">Tai</button>
+          <button onclick="clearHist()" style="background:none;border:1px solid #e8ecf0;border-radius:6px;padding:3px 10px;font-size:11px;color:#8a9bb0;cursor:pointer">Xoa</button>
+        </div>
       </div>
       <div id="hl"><div style="font-size:12px;color:#bfc9d4;text-align:center;padding:20px">Chua co hoat dong nao</div></div>
+    </div>
+
+    <!-- Tracking -->
+    <div id="trackContent" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:0">Ket qua tracking (<span id="trackCount">0</span> don)</div>
+          <button onclick="exportTrackCSV()" style="background:none;border:1px solid #e8ecf0;border-radius:6px;padding:3px 10px;font-size:11px;color:#1a73e8;cursor:pointer;display:none" id="btnExportTrack">Xuat CSV</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl" id="trackTable">
+            <thead><tr>
+              <th>Tracking</th><th>Sheet</th><th>San pham</th><th>Trang thai</th><th>Du kien giao</th><th>Da giao</th>
+            </tr></thead>
+            <tbody id="trackTableBody"><tr><td colspan="5" style="text-align:center;color:#bfc9d4;padding:20px">Chua co du lieu</td></tr></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Dashboard -->
@@ -367,7 +396,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbxgkQRsepjn_oKC9ePnQs0TbweBKWCwk-mPrco1Kxf3zMuFMCnNvQBX0Uyln6z3xFBd/exec';
+var BASE='https://script.google.com/macros/s/AKfycbxzbg7VOiMhKN2h9BMe018F1tvVYI1v7iEwz7uY8b660qEdGIAKLP0VyHlXdBWQwjme/exec';
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
 var curTab='nhap',scanner=null,camTab='';
@@ -410,11 +439,12 @@ function onScanned(t){
 
 function switchTab(t){
   curTab=t;
-  document.querySelectorAll('.tab').forEach(function(el,i){el.classList.toggle('active',['nhap','ban','gia','dash'][i]===t);});
+  document.querySelectorAll('.tab').forEach(function(el,i){el.classList.toggle('active',['nhap','ban','gia','track','dash'][i]===t);});
   document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('active');});
   document.getElementById('tab-'+t).classList.add('active');
-  document.getElementById('histBox').style.display=t==='dash'?'none':'block';
+  document.getElementById('histBox').style.display=(t==='dash'||t==='track')?'none':'block';
   document.getElementById('dashContent').style.display=t==='dash'?'block':'none';
+  document.getElementById('trackContent').style.display=t==='track'?'block':'none';
   if(t==='dash'&&!dashLoaded)loadDash();
   setTimeout(function(){var ids={nhap:'inpNhap',ban:'inpBan',gia:'inpGia'};if(ids[t])document.getElementById(ids[t]).focus();},100);
 }
@@ -601,6 +631,131 @@ async function findGia(orderId){
   }catch(ex){showRes('resGia','err','Loi ket noi','Thu lai sau.');}
 }
 
+var dashUnlocked = false;
+function checkDashPass(){
+  if(dashUnlocked) return true;
+  var p=prompt('Nhap mat khau de xem Bao cao:');
+  if(p===null) return false;
+  if(p==='1234'){dashUnlocked=true;return true;}
+  alert('Sai mat khau!'); return false;
+}
+
+// ===== TRACKING AUTO =====
+var trackResults = [];
+
+function detectCarrier(t){
+  t=t.trim().toUpperCase();
+  if(t.startsWith('1Z')) return 'UPS';
+  return 'FEDEX';
+}
+
+function fmtDate(dt){
+  if(!dt)return '';
+  try{var d=new Date(dt);return d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});}
+  catch(e){return String(dt).substring(0,10);}
+}
+
+async function loadAndTrack(){
+  var prog=document.getElementById('trackProgress');
+  var tc=document.getElementById('trackContent');
+  var wrap=document.getElementById('trackTableWrap');
+  prog.style.display='block';
+  prog.innerHTML='<span class="spin"></span>Dang lay danh sach hang chua ve...';
+  if(tc) tc.style.display='block';
+  if(wrap) wrap.style.display='block';
+
+  try{
+    var r=await fetch(BASE+'?action=getHangChuaVe');
+    var d=await r.json();
+    if(!d.ok||!d.data.length){
+      prog.textContent='Khong co hang nao chua ve!';
+      return;
+    }
+    var list=d.data;
+    prog.textContent='Tim thay '+list.length+' hang chua ve. Dang tra cuu...';
+    trackResults=[];
+
+    // Tra cuu tung tracking
+    for(var i=0;i<list.length;i++){
+      var item=list[i];
+      var tn=item.tracking;
+      var carrier=detectCarrier(tn);
+      prog.textContent='Dang tra ('+(i+1)+'/'+list.length+'): '+tn;
+      try{
+        var action=carrier==='UPS'?'trackUps':'trackFedex';
+        var res=await fetch(BASE+'?action='+action+'&trackingNumber='+encodeURIComponent(tn));
+        var data=await res.json();
+        if(data.ok){
+          var delivered = data.actDelivery ? true : false;
+          trackResults.push({
+            tracking:   tn,
+            orderId:    item.orderId,
+            sp:         item.sp,
+            sheet:      item.sheet,
+            carrier:    data.carrier||carrier,
+            status:     data.status||'',
+            estDelivery:fmtDate(data.estDelivery),
+            actDelivery:fmtDate(data.actDelivery),
+            delivered:  delivered,
+            ok:         true
+          });
+        } else {
+          trackResults.push({tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
+            carrier:carrier,status:'Loi tra cuu',estDelivery:'',actDelivery:'',delivered:false,ok:false});
+        }
+      }catch(ex){
+        trackResults.push({tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
+          carrier:carrier,status:'Loi ket noi',estDelivery:'',actDelivery:'',delivered:false,ok:false});
+      }
+      renderTrackTable();
+    }
+
+    var delivered=trackResults.filter(function(r){return r.delivered;}).length;
+    prog.innerHTML='Hoan thanh! <b>'+trackResults.length+'</b> hang — <b style="color:#34a853">'+delivered+' da giao</b> — <b style="color:#f9ab00">'+(trackResults.length-delivered)+' chua giao</b>';
+    document.getElementById('trackCount').textContent=trackResults.length;
+    var btn=document.getElementById('btnExportTrack');
+    if(btn) btn.style.display='';
+  }catch(e){
+    prog.textContent='Loi: '+e.message;
+  }
+}
+
+function renderTrackTable(){
+  var tbody=document.getElementById('trackTableBody');
+  if(!trackResults.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:12px">Chua co du lieu</td></tr>';
+    return;
+  }
+  // Sort: chua giao len truoc
+  var sorted=trackResults.slice().sort(function(a,b){return a.delivered-b.delivered;});
+  tbody.innerHTML=sorted.map(function(r){
+    var sc=r.delivered?'#34a853':r.ok?'#f9ab00':'#ea4335';
+    var stLabel=r.delivered?'Da giao':r.status||'Chua giao';
+    return '<tr>'
+      +'<td style="font-family:monospace;font-size:10px">'+r.tracking+'</td>'
+      +'<td style="font-size:11px;color:#8a9bb0">'+r.sheet+'</td>'
+      +'<td style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">'+r.sp+'</td>'
+      +'<td style="font-weight:700;color:'+sc+'">'+stLabel+'</td>'
+      +'<td style="font-size:11px">'+r.estDelivery+'</td>'
+      +'<td style="font-size:11px;color:#34a853;font-weight:600">'+r.actDelivery+'</td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('trackCount').textContent=trackResults.length;
+}
+
+function exportTrackCSV(){
+  if(!trackResults.length)return;
+  var csv='Tracking,Sheet,San pham,Trang thai,Du kien giao,Da giao\n';
+  csv+=trackResults.map(function(r){
+    return [r.tracking,r.sheet,r.sp,r.status,r.estDelivery,r.actDelivery]
+      .map(function(v){return '"'+(v||'')+'"';}).join(',');
+  }).join('\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='tracking_'+new Date().toLocaleDateString('vi-VN').replace(/\//g,'-')+'.csv';
+  a.click();
+}
+
 async function loadDash(){
   document.getElementById('dLoading').style.display='block';
   document.getElementById('dashContent').style.display='none';
@@ -727,8 +882,36 @@ function addH(s,t,n){
   hist.unshift({s:s,t:t,n:n,time:pad(now.getHours())+':'+pad(now.getMinutes())});
   if(hist.length>50)hist.pop();
   try{localStorage.setItem('khoHist',JSON.stringify(hist));}catch(e){}
+  if(s==='ok') saveToSupa(s,t,n,hist[0].time);
   renderH();
 }
+// ===== SUPABASE =====
+var SUPA_SOURCE = 'desktop';
+
+async function saveToSupa(s,t,n,time){
+  try{
+    await fetch(SUPA_URL+'/rest/v1/lich_su',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+      body:JSON.stringify({trang_thai:s,noi_dung:t,ghi_chu:n,thoi_gian:time,nguon:SUPA_SOURCE})
+    });
+  }catch(e){}
+}
+
+async function loadFromSupa(){
+  try{
+    var r=await fetch(SUPA_URL+'/rest/v1/lich_su?order=created_at.desc&limit=50&nguon=eq.'+SUPA_SOURCE,{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    var data=await r.json();
+    if(Array.isArray(data)&&data.length){
+      hist=data.map(function(d){return{s:d.trang_thai,t:d.noi_dung,n:d.ghi_chu,time:d.thoi_gian};});
+      try{localStorage.setItem('khoHist',JSON.stringify(hist));}catch(e){}
+      renderH();
+    }
+  }catch(e){}
+}
+
 function clearHist(){
   hist=[];
   try{localStorage.removeItem('khoHist');}catch(e){}
