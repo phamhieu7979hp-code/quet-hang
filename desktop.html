@@ -396,7 +396,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbwDD4poCnvJ6lzG0QtW3zcIhLbnBVQl1g-yAcuTv5RTdpEcKp8UtB-kJU-wnXjNZZbp/exec';
+var BASE='https://script.google.com/macros/s/AKfycbxf52yoMG60lecxozCB_aTvpjl8S3NFf150tUJSz8k0xMLp2J2GDX5XSAyNdBVhe_vo/exec';
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
 var curTab='nhap',scanner=null,camTab='';
@@ -670,12 +670,9 @@ async function loadAndTrack(){
     trackResults=[];
 
     // Tra song song tung nhom 3
-    // Chay tuan tu tung don de tranh race condition
-    for (var i = 0; i < list.length; i++) {
-      var item = list[i];
-      prog.textContent='Dang tra ('+(i+1)+'/'+list.length+'): '+item.tracking;
-      
-      var tn = item.tracking;
+    // Phan loai don eBay vs Shop
+    var ebayItems = [];
+    list.forEach(function(item){
       var kho = (item.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
       var oid = String(item.orderId||'').trim();
       var isEbayFormat = /^\d{2}-\d{5}-\d{5}$/.test(oid);
@@ -683,39 +680,55 @@ async function loadAndTrack(){
       
       if (isShop) {
         trackResults.push({
-          tracking:tn, orderId:item.orderId, sp:item.sp, sheet:item.sheet,
+          tracking:item.tracking, orderId:item.orderId, sp:item.sp, sheet:item.sheet,
           kho:item.kho||'', account:'',
           status:'SHOP', estDelivery:'', actDelivery:'',
           delivered:false, ok:true, isShop:true
         });
-        renderTrackTable();
-        continue;
+      } else {
+        ebayItems.push(item);
       }
+    });
+    renderTrackTable();
+    
+    // Goi batch eBay 10 orderId moi lan
+    var BATCH_SIZE = 10;
+    for (var bi = 0; bi < ebayItems.length; bi += BATCH_SIZE) {
+      var chunk = ebayItems.slice(bi, bi + BATCH_SIZE);
+      prog.textContent='Dang tra eBay ('+(bi+1)+'-'+Math.min(bi+BATCH_SIZE,ebayItems.length)+'/'+ebayItems.length+')...';
       
+      var orderIds = chunk.map(function(it){return it.orderId;}).join(',');
       try {
-        var res = await fetch(BASE+'?action=trackEbay&orderId='+encodeURIComponent(item.orderId)+'&trackingNumber='+encodeURIComponent(tn));
+        var res = await fetch(BASE+'?action=trackEbayBatch&orderIds='+encodeURIComponent(orderIds));
         var data = await res.json();
-        if (data.ok) {
+        var resultsMap = (data && data.results) || {};
+        
+        chunk.forEach(function(item){
+          var r = resultsMap[item.orderId];
+          if (r && r.ok) {
+            trackResults.push({
+              tracking:item.tracking, orderId:item.orderId, sp:item.sp, sheet:item.sheet,
+              kho:item.kho||'', account:r.account||'',
+              carrier:r.carrier||'eBay', status:r.status||'SHIPPING',
+              estDelivery:r.shipDate||'',
+              actDelivery:r.actDelivery||'',
+              delivered:!!r.delivered, ok:true
+            });
+          } else {
+            trackResults.push({
+              tracking:item.tracking, orderId:item.orderId, sp:item.sp, sheet:item.sheet,
+              kho:item.kho||'', status:'Loi eBay',
+              estDelivery:'', actDelivery:'', delivered:false, ok:false
+            });
+          }
+        });
+      } catch(err) {
+        chunk.forEach(function(item){
           trackResults.push({
-            tracking:tn, orderId:item.orderId, sp:item.sp, sheet:item.sheet,
-            kho:item.kho||'', account:data.account||'',
-            carrier:data.carrier||'eBay', status:data.status||'SHIPPING',
-            estDelivery:data.estDelivery||data.shipDate||'',
-            actDelivery:data.actDelivery||'',
-            delivered:!!data.delivered, ok:true
-          });
-        } else {
-          trackResults.push({
-            tracking:tn, orderId:item.orderId, sp:item.sp, sheet:item.sheet,
-            kho:item.kho||'', status:'Loi eBay',
+            tracking:item.tracking, orderId:item.orderId, sp:item.sp, sheet:item.sheet,
+            kho:item.kho||'', status:'Timeout',
             estDelivery:'', actDelivery:'', delivered:false, ok:false
           });
-        }
-      } catch(err) {
-        trackResults.push({
-          tracking:tn, orderId:item.orderId, sp:item.sp, sheet:item.sheet,
-          kho:item.kho||'', status:'Timeout',
-          estDelivery:'', actDelivery:'', delivered:false, ok:false
         });
       }
       renderTrackTable();
@@ -955,6 +968,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.7.9</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.8.0</div>
 </body>
 </html>
