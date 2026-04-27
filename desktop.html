@@ -645,7 +645,18 @@ var trackResults = [];
 
 function detectCarrier(t){
   t=t.trim().toUpperCase();
+  // UPS formats
   if(t.startsWith('1Z')) return 'UPS';
+  if(/^[0-9]{18}$/.test(t)) return 'UPS'; // 18 so = UPS
+  if(/^(T|K|J|V|R)[0-9]{10}$/.test(t)) return 'UPS';
+  // FedEx formats: 12, 15, 20, 22 so
+  if(/^[0-9]{12}$/.test(t)) return 'FEDEX';
+  if(/^[0-9]{15}$/.test(t)) return 'FEDEX';
+  if(/^[0-9]{20}$/.test(t)) return 'FEDEX';
+  if(/^[0-9]{22}$/.test(t)) return 'FEDEX';
+  if(t.startsWith('96')||t.startsWith('61')||t.startsWith('74')||t.startsWith('75')) return 'FEDEX';
+  // Mac dinh UPS neu 12-18 so
+  if(/^[0-9]{12,18}$/.test(t)) return 'UPS';
   return 'FEDEX';
 }
 
