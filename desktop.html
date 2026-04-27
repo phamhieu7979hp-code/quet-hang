@@ -297,7 +297,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
         <div style="overflow-x:auto">
           <table class="tbl" id="trackTable">
             <thead><tr>
-              <th>Tracking</th><th>Sheet</th><th>San pham</th><th>Trang thai</th><th>Du kien giao</th><th>Da giao</th>
+              <th>Tracking</th><th>Sheet</th><th>Kho</th><th>San pham</th><th>Trang thai</th><th>Du kien giao</th><th>Da giao</th>
             </tr></thead>
             <tbody id="trackTableBody"><tr><td colspan="5" style="text-align:center;color:#bfc9d4;padding:20px">Chua co du lieu</td></tr></tbody>
           </table>
@@ -741,6 +741,7 @@ function renderTrackTable(){
     return '<tr>'
       +'<td style="font-family:monospace;font-size:10px">'+r.tracking+'</td>'
       +'<td style="font-size:11px;color:#8a9bb0">'+r.sheet+'</td>'
+      +'<td style="font-size:11px;color:#1a73e8;font-weight:600">'+(r.kho||'')+'</td>'
       +'<td style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">'+r.sp+'</td>'
       +'<td>'+stCell+'</td>'
       +'<td style="font-size:11px">'+r.estDelivery+'</td>'
@@ -934,6 +935,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.5.1</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:#bfc9d4;font-family:monospace;z-index:1000">KokTrack v2.5.2</div>
 </body>
 </html>
