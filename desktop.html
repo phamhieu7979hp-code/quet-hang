@@ -396,7 +396,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbytIHV2TPU27Vly5qFrRFHGU9ZVLrHW9zV_LSN93yXMdM5h-fhHhr4WijfhuE2E2_Vz/exec';
+var BASE='https://script.google.com/macros/s/AKfycbwW4KYvcUFXNhUWPmEvH9owfktRfXosH4_Dm9y3w6tK37kDnIrdqJ5WNldi6nantgO_/exec';
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
 var curTab='nhap',scanner=null,camTab='';
@@ -688,8 +688,10 @@ async function loadAndTrack(){
             if(data.ok){
               trackResults.push({
                 tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
-                carrier:data.carrier||'eBay',status:data.status||'',
-                estDelivery:data.shipDate||'',actDelivery:data.delivered?(data.shipDate||'Da giao'):'',
+                carrier:data.carrier||'eBay',
+                status:data.status||'CHUA DELI',
+                estDelivery:data.estDelivery||data.shipDate||'',
+                actDelivery:data.delivered?(data.shipDate||''):'',
                 delivered:!!data.delivered,ok:true
               });
             } else {
