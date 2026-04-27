@@ -396,7 +396,7 @@ body{background:#f5f7fa;color:#1e2d3d;font-family:Arial,sans-serif;height:100vh;
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbwlL5Iffu-a2S5N1qLQQKhuP12pdvnD2XBg41qrJxDVWoypb3YPDQM8pkWZTePzX3Wl/exec';
+var BASE='https://script.google.com/macros/s/AKfycbw5ETU0Cnu4X0eFhjoOAo8jWa11coL8UnxswsjphG0xkuSjEw16NV8_tQfjpnaCUUwV/exec';
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
 var curTab='nhap',scanner=null,camTab='';
@@ -681,17 +681,22 @@ async function loadAndTrack(){
       await Promise.all(chunk.map(function(item){
         var tn=item.tracking;
         var carrier=detectCarrier(tn);
-        var action='trackEbay';
-        return fetch(BASE+'?action='+action+'&orderId='+encodeURIComponent(item.orderId)+'&trackingNumber='+encodeURIComponent(tn))
+        var isShop = (item.kho||'').toLowerCase()==='shop';
+        var action = isShop ? 'trackShop' : 'trackEbay';
+        var params = isShop
+          ? '&trackingNumber='+encodeURIComponent(tn)
+          : '&orderId='+encodeURIComponent(item.orderId)+'&trackingNumber='+encodeURIComponent(tn);
+        return fetch(BASE+'?action='+action+params)
           .then(function(res){return res.json();})
           .then(function(data){
             if(data.ok){
               trackResults.push({
                 tracking:tn,orderId:item.orderId,sp:item.sp,sheet:item.sheet,
+                kho:item.kho||'',
                 carrier:data.carrier||'eBay',
                 status:data.status||'CHUA DELI',
                 estDelivery:data.estDelivery||data.shipDate||'',
-                actDelivery:data.delivered?(data.shipDate||''):'',
+                actDelivery:data.actDelivery||'',
                 delivered:!!data.delivered,ok:true
               });
             } else {
