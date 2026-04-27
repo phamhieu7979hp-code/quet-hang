@@ -11,22 +11,22 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #22263a;
-  --border: #2a2f45;
-  --border2: #343a52;
-  --text: #e8eaf6;
-  --text2: #8b90a8;
-  --text3: #555a72;
-  --accent: #5b8cff;
-  --accent2: #3d6bff;
-  --green: #36d399;
-  --green2: #2bb887;
-  --amber: #fbbf24;
-  --red: #f87171;
-  --teal: #34d4c8;
-  --purple: #a78bfa;
+  --bg: #e8f4fd;
+  --surface: #ffffff;
+  --surface2: #f0f8ff;
+  --border: #BBDEFB;
+  --border2: #90CAF9;
+  --text: #1a3a5c;
+  --text2: #546E7A;
+  --text3: #90b8d8;
+  --accent: #2196F3;
+  --accent2: #1565C0;
+  --green: #2E7D32;
+  --green2: #43A047;
+  --amber: #FFB300;
+  --red: #F44336;
+  --teal: #00897B;
+  --purple: #7B1FA2;
   --radius: 12px;
   --radius-sm: 8px;
 }
@@ -75,7 +75,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 .btn-cam:hover{opacity:.9}
 
 /* SCAN BOX */
-.scan-hint{background:var(--surface2);border:1px dashed var(--border2);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--text3);text-align:center;font-family:'DM Mono',monospace}
+.scan-hint{background:#f8fbff;border:1px dashed var(--border2);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--text3);text-align:center;font-family:'DM Mono',monospace}
 
 /* SHIP BOX */
 .subform{display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:12px;gap:8px;flex-direction:column}
@@ -169,9 +169,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 
 <div class="top">
   <div class="logo">
-    <div class="logo-mark">📦</div>
+    
     <div>
-      <div class="logo-text">KHO</div>
+      <div class="logo-text" style="color:var(--accent)">Quan ly Kho</div>
       <div class="logo-sub">eb2 · T12 / 2026 / T4</div>
     </div>
   </div>
@@ -182,10 +182,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('nhap')">↓ Nhap kho</button>
-  <button class="tab" onclick="switchTab('ban')">$ Ban hang</button>
-  <button class="tab" onclick="switchTab('gia')">⌕ Kiem tra</button>
-  <button class="tab" onclick="switchTab('dash')">▦ Bao cao</button>
+  <button class="tab active" onclick="switchTab('nhap')">Nhap kho</button>
+  <button class="tab" onclick="switchTab('ban')">Ban hang</button>
+  <button class="tab" onclick="switchTab('gia')">Kiem tra</button>
+  <button class="tab" onclick="switchTab('dash')">Bao cao</button>
 </div>
 
 <div class="main">
@@ -194,12 +194,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 
       <!-- NHAP KHO -->
       <div class="sec active" id="tab-nhap">
-        <div class="scan-hint">⌨ sung USB · camera · nhap tay → Enter</div>
+        <div class="scan-hint">Sung USB / camera / nhap tay — Enter</div>
         <div>
           <div class="field-label">Tracking Number</div>
           <div class="inp-wrap">
             <input class="inp" type="text" id="inpNhap" placeholder="Quet hoac nhap..." autofocus>
-            <button class="btn-cam" onclick="openCam('nhap')">📷</button>
+            <button class="btn-cam" onclick="openCam('nhap')">Cam</button>
             <button class="btn" onclick="doNhap()">→</button>
           </div>
         </div>
@@ -214,14 +214,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
         </div>
         <div class="res" id="resNhap"><div class="rt" id="rtNhap"></div><div class="rb" id="rbNhap"></div></div>
         <div id="temWrap" style="display:none">
-          <button class="prbtn" onclick="inTem(curOid,curSp)">🖨 In tem Order ID</button>
+          <button class="prbtn" onclick="inTem(curOid,curSp)">In tem Order ID</button>
         </div>
         <div class="divider"></div>
         <div>
           <div class="field-label">In tem theo Order ID</div>
           <div class="inp-wrap">
             <input class="inp" type="text" id="inpInTem" placeholder="Nhap Order ID...">
-            <button class="btn-cam" onclick="openCam('intem')">📷</button>
+            <button class="btn-cam" onclick="openCam('intem')">Cam</button>
             <button class="btn" onclick="inTemManual()">In</button>
           </div>
         </div>
@@ -229,12 +229,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 
       <!-- BAN HANG -->
       <div class="sec" id="tab-ban">
-        <div class="scan-hint">⌨ sung USB · camera · nhap tay → Enter</div>
+        <div class="scan-hint">Sung USB / camera / nhap tay — Enter</div>
         <div>
           <div class="field-label">Order ID</div>
           <div class="inp-wrap">
             <input class="inp" type="text" id="inpBan" placeholder="Quet hoac nhap...">
-            <button class="btn-cam" onclick="openCam('ban')">📷</button>
+            <button class="btn-cam" onclick="openCam('ban')">Cam</button>
             <button class="btn" onclick="doBan()">→</button>
           </div>
         </div>
@@ -252,12 +252,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 
       <!-- KIEM TRA -->
       <div class="sec" id="tab-gia">
-        <div class="scan-hint">⌨ sung USB · camera · nhap tay → Enter</div>
+        <div class="scan-hint">Sung USB / camera / nhap tay — Enter</div>
         <div>
           <div class="field-label">Order ID</div>
           <div class="inp-wrap">
             <input class="inp" type="text" id="inpGia" placeholder="Quet hoac nhap...">
-            <button class="btn-cam" onclick="openCam('gia')">📷</button>
+            <button class="btn-cam" onclick="openCam('gia')">Cam</button>
             <button class="btn" onclick="doGia()">→</button>
           </div>
         </div>
@@ -272,7 +272,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
             <button class="df-btn active" onclick="setDFilter('all')">All</button>
           </div>
         </div>
-        <button class="btn block green" onclick="loadDash()">↻ Refresh data</button>
+        <button class="btn block green" onclick="loadDash()">Tai lai du lieu</button>
         <div id="dLoading" style="font-size:12px;color:var(--text3);text-align:center;padding:16px;font-family:'DM Mono',monospace">
           <span class="spin"></span>loading...
         </div>
@@ -686,8 +686,8 @@ function renderDash(){
     return v>0?Math.round(mLai[k]/v*1000)/10:0;
   });
   dChartLai=destroyChart(dChartLai);
-  Chart.defaults.color='#8b90a8';
-  Chart.defaults.borderColor='#2a2f45';
+  Chart.defaults.color='#546E7A';
+  Chart.defaults.borderColor='#BBDEFB';
   dChartLai=new Chart(document.getElementById('dChartLai'),{
     type:'bar',
     data:{labels:mKeys,datasets:[
