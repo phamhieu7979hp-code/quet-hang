@@ -862,7 +862,26 @@ async function confirmNhap(){
   }catch(ex){showRes('resNhap','err','Lỗi kết nối','Thu lai sau.');}
 }
 
-function inTemManual(){var v=document.getElementById('inpInTem').value.trim();if(v)inTem(v,'');}
+async function inTemManual(){
+  var v=document.getElementById('inpInTem').value.trim();
+  if(!v) return;
+  // Auto fetch SP từ backend để tem có đủ tên sản phẩm
+  showToast({type:'info',title:'Đang tra cứu sản phẩm',msg:v});
+  try{
+    var r=await fetch(BASE+'?action=timMay&orderId='+encodeURIComponent(v));
+    var d=await r.json();
+    if(d.found && d.sp){
+      inTem(v,d.sp);
+    }else{
+      // Không tìm thấy - vẫn in nhưng không có tên SP
+      inTem(v,'');
+      if(!d.found) showToast({type:'warn',title:'Không tìm thấy SP',msg:'In tem chỉ với Order ID'});
+    }
+  }catch(e){
+    inTem(v,'');
+    showToast({type:'err',title:'Lỗi tra cứu',msg:e.message});
+  }
+}
 
 function inTem(oid,sp){
   if(!oid){alert('Chua co Order ID!');return;}
