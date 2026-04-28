@@ -355,6 +355,37 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .debt-refresh:hover{color:var(--primary);border-color:var(--primary)}
 .debt-add-btn{background:var(--primary-soft);border:1px solid var(--primary);border-radius:6px;padding:0 12px;height:28px;color:var(--primary);font-size:11px;font-weight:600;cursor:pointer;margin-left:auto;margin-bottom:6px;font-family:inherit;transition:all .15s}
 .debt-add-btn:hover{background:var(--primary);color:#fff}
+
+/* Payment method picker (3 nút lớn) */
+.pay-methods{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.pay-method{padding:11px 8px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;transition:all .15s;text-align:center}
+.pay-method-icon{font-size:18px;line-height:1}
+.pay-method-label{font-size:11px;font-weight:600;color:var(--text);line-height:1.2}
+.pay-method-sub{font-size:9px;color:var(--text-3);line-height:1.2}
+.pay-method.active{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px rgba(21,101,192,.08)}
+.pay-method.active .pay-method-label{color:var(--primary)}
+.pay-method[data-method="debt"].active{border-color:var(--warning);background:var(--warning-soft);box-shadow:0 0 0 3px rgba(255,160,0,.08)}
+.pay-method[data-method="debt"].active .pay-method-label{color:var(--warning)}
+
+/* Charts in debt tab */
+.debt-charts{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+.debt-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
+.debt-chart-title{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.debt-chart-title b{font-size:12px;color:var(--text);text-transform:none;font-weight:600;letter-spacing:0}
+.top-debtor-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px}
+.top-debtor-rank{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text-3);background:var(--surface-2);flex-shrink:0;font-variant-numeric:tabular-nums}
+.top-debtor-rank.gold{background:#ffd700;color:#7a5400}
+.top-debtor-rank.silver{background:#c0c0c0;color:#555}
+.top-debtor-rank.bronze{background:#cd7f32;color:#fff}
+.top-debtor-bar{flex:1;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;position:relative;display:flex;align-items:center}
+.top-debtor-bar-fill{height:100%;background:linear-gradient(90deg,var(--danger) 0%,var(--warning) 100%);border-radius:4px;transition:width .3s ease}
+.top-debtor-name{flex:0 0 auto;min-width:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;color:var(--text-2)}
+.top-debtor-amt{flex-shrink:0;font-size:11px;font-weight:700;color:var(--danger);font-variant-numeric:tabular-nums;min-width:80px;text-align:right}
+.aging-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:11px}
+.aging-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.aging-label{flex:1;color:var(--text-2);font-weight:500}
+.aging-count{color:var(--text-3);font-size:10px}
+.aging-amt{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
 .debt-search{display:flex;align-items:center;gap:7px;padding:8px 11px;background:var(--surface);border:1px solid var(--border);border-radius:7px;margin-bottom:12px}
 .debt-search:focus-within{border-color:var(--primary)}
 .debt-search svg{color:var(--text-3);flex-shrink:0}
@@ -853,6 +884,25 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input type="text" id="debtSearch" placeholder="Tìm khách, Order ID..." oninput="renderDebtView()">
         </div>
+
+
+    <!-- CHARTS - chỉ hiện khi có data + có công nợ -->
+    <div class="debt-charts" id="debtCharts" style="display:none">
+      <div class="debt-chart-card">
+        <div class="debt-chart-title">
+          🏆 TOP 5 KHÁCH NỢ NHIỀU
+          <b id="debtChartTopCount">—</b>
+        </div>
+        <div id="debtChartTopList"></div>
+      </div>
+      <div class="debt-chart-card">
+        <div class="debt-chart-title">
+          📅 PHÂN BỔ THEO TUỔI NỢ
+          <b id="debtChartAgingTotal">—</b>
+        </div>
+        <div id="debtChartAgingList"></div>
+      </div>
+    </div>
 
         <div id="debtLoading" style="text-align:center;padding:40px;color:var(--text-3);font-size:13px">
           <span class="spin"></span> Đang tải lịch sử bán...
@@ -1694,18 +1744,39 @@ async function submitBanCart(){
   openCustomerDialog();
 }
 
+// Payment method state: 'full' | 'partial' | 'debt'
+var currentPayMethod = 'full';
+
 function openCustomerDialog(){
   var totalDT=banCart.reduce(function(s,it){return s+it.giaBan;},0);
   document.getElementById('cdNumOrders').textContent=banCart.length;
   document.getElementById('cdTotalDT').textContent=Number(totalDT).toLocaleString('vi')+' đ';
   document.getElementById('cdKhachName').value='';
-  document.getElementById('cdPaid').value=Number(totalDT).toLocaleString('vi');
+  document.getElementById('cdPaid').value='';
   document.getElementById('cdNote').value='';
   document.getElementById('cdSuggest').style.display='none';
-  updateDebtPreview();
+  setPayMethod('full');
   document.getElementById('customerDialog').style.display='flex';
   document.body.style.overflow='hidden';
   setTimeout(function(){document.getElementById('cdKhachName').focus();},100);
+}
+
+function setPayMethod(method){
+  currentPayMethod = method;
+  document.querySelectorAll('#cdPayMethods .pay-method').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-method')===method);
+  });
+  var paidWrap = document.getElementById('cdPaidWrap');
+  if (method === 'partial') {
+    paidWrap.style.display = 'block';
+    setTimeout(function(){
+      var inp = document.getElementById('cdPaid');
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  } else {
+    paidWrap.style.display = 'none';
+  }
+  updateDebtPreview();
 }
 
 function closeCustomerDialog(){
@@ -1737,7 +1808,11 @@ function getPaidValue(){
 
 function updateDebtPreview(){
   var totalDT=banCart.reduce(function(s,it){return s+it.giaBan;},0);
-  var paid=getPaidValue();
+  var paid;
+  if (currentPayMethod === 'full') paid = totalDT;
+  else if (currentPayMethod === 'debt') paid = 0;
+  else paid = getPaidValue(); // partial
+  if (paid > totalDT) paid = totalDT;
   var debt=Math.max(0, totalDT-paid);
   var info=document.getElementById('cdDebtInfo');
   var debtVal=document.getElementById('cdDebt');
@@ -1787,9 +1862,13 @@ async function confirmSubmitCart(){
   }
   var note=document.getElementById('cdNote').value.trim();
   var totalDT=banCart.reduce(function(s,it){return s+it.giaBan;},0);
-  var paid=getPaidValue();
-  if (paid > totalDT) paid=totalDT;
-  var owed=Math.max(0, totalDT-paid);
+  // Tính paid dựa trên currentPayMethod
+  var paid;
+  if (currentPayMethod === 'full') paid = totalDT;
+  else if (currentPayMethod === 'debt') paid = 0;
+  else paid = getPaidValue(); // partial
+  if (paid > totalDT) paid = totalDT;
+  var owed = Math.max(0, totalDT - paid);
 
   var btn=document.getElementById('cdConfirmBtn');
   btn.disabled=true;
@@ -1957,6 +2036,8 @@ function renderDebtView(){
   if (debtView === 'customer') renderDebtByCustomer(listEl, search);
   else if (debtView === 'date') renderDebtByDate(listEl, search);
   else if (debtView === 'owed') renderDebtOwed(listEl, search);
+  // Render charts (chỉ khi có nợ + đang xem 'customer' hoặc 'owed')
+  renderDebtCharts();
 }
 
 function renderDebtByCustomer(listEl, search){
@@ -2076,6 +2157,85 @@ function renderDebtOwed(listEl, search){
 }
 
 var pdContext = null;
+
+
+
+// ╔════════════════════════════════════════════════════════════╗
+// ║  CHARTS công nợ - Top debtors + Aging breakdown             ║
+// ╚════════════════════════════════════════════════════════════╝
+
+function renderDebtCharts(){
+  var chartsEl = document.getElementById('debtCharts');
+  if (!chartsEl) return;
+  var debtors = customersCache.filter(function(c){return c.totalOwed > 0;});
+  if (debtors.length === 0) {
+    chartsEl.style.display = 'none';
+    return;
+  }
+  chartsEl.style.display = 'grid';
+
+  // ─── TOP 5 DEBTORS ───
+  var top = debtors.slice().sort(function(a,b){return b.totalOwed - a.totalOwed;}).slice(0, 5);
+  var maxOwed = top[0].totalOwed;
+  var topListEl = document.getElementById('debtChartTopList');
+  topListEl.innerHTML = top.map(function(c, i){
+    var pct = Math.round((c.totalOwed / maxOwed) * 100);
+    var rankCls = i === 0 ? 'gold' : (i === 1 ? 'silver' : (i === 2 ? 'bronze' : ''));
+    return '<div class="top-debtor-row">'
+      + '<span class="top-debtor-rank ' + rankCls + '">' + (i+1) + '</span>'
+      + '<span class="top-debtor-name" title="' + escapeHtml(c.khach) + '">' + escapeHtml(c.khach) + '</span>'
+      + '<span class="top-debtor-bar"><span class="top-debtor-bar-fill" style="width:' + pct + '%"></span></span>'
+      + '<span class="top-debtor-amt">' + formatShortMoney(c.totalOwed) + '</span>'
+      + '</div>';
+  }).join('');
+  document.getElementById('debtChartTopCount').textContent = debtors.length + ' khách nợ';
+
+  // ─── AGING BREAKDOWN ───
+  var now = Date.now();
+  var DAY = 24*60*60*1000;
+  var buckets = [
+    { label:'< 30 ngày', color:'#10b981', count:0, amt:0, range:[0, 30*DAY] },
+    { label:'30 - 60 ngày', color:'#f59e0b', count:0, amt:0, range:[30*DAY, 60*DAY] },
+    { label:'60 - 90 ngày', color:'#f97316', count:0, amt:0, range:[60*DAY, 90*DAY] },
+    { label:'> 90 ngày', color:'#dc2626', count:0, amt:0, range:[90*DAY, Infinity] }
+  ];
+  // Mỗi sale chưa trả hết → tính tuổi từ ngày bán
+  salesData.forEach(function(s){
+    var owed = parseFloat(s.total_owed)||0;
+    if (owed <= 0) return;
+    var age = now - new Date(s.ngay).getTime();
+    for (var i=0;i<buckets.length;i++){
+      if (age >= buckets[i].range[0] && age < buckets[i].range[1]){
+        buckets[i].count++;
+        buckets[i].amt += owed;
+        break;
+      }
+    }
+  });
+  var totalDebt = buckets.reduce(function(s,b){return s+b.amt;},0);
+  var agingEl = document.getElementById('debtChartAgingList');
+  agingEl.innerHTML = buckets.map(function(b){
+    var pct = totalDebt > 0 ? Math.round((b.amt / totalDebt) * 100) : 0;
+    return '<div class="aging-row">'
+      + '<span class="aging-dot" style="background:' + b.color + '"></span>'
+      + '<span class="aging-label">' + b.label + '</span>'
+      + '<span class="aging-count">' + b.count + ' đơn</span>'
+      + '<span class="aging-amt">' + formatShortMoney(b.amt) + '</span>'
+      + '</div>'
+      + '<div style="height:4px;background:var(--surface-2);border-radius:2px;margin:2px 0 6px;overflow:hidden">'
+      +   '<div style="height:100%;background:' + b.color + ';width:' + pct + '%;transition:width .4s"></div>'
+      + '</div>';
+  }).join('');
+  document.getElementById('debtChartAgingTotal').textContent = formatShortMoney(totalDebt);
+}
+
+function formatShortMoney(n){
+  n = Number(n) || 0;
+  if (n >= 1000000000) return (n/1000000000).toFixed(1).replace(/\.0$/,'') + 'tỷ';
+  if (n >= 1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'') + 'tr';
+  if (n >= 1000) return (n/1000).toFixed(0) + 'k';
+  return String(n);
+}
 
 function openPaymentDialogForCustomer(khach){
   var c = customersCache.find(function(x){return x.khach===khach;});
@@ -3428,7 +3588,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.14.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.15.0</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
@@ -3453,12 +3613,28 @@ setTimeout(function(){
         </div>
       </div>
       <div class="kd-field">
-        <label>Khách trả</label>
-        <div class="kd-paid-row">
-          <input type="text" id="cdPaid" placeholder="0" oninput="onPaidInput(this)" inputmode="numeric">
-          <button class="kd-paid-full" onclick="setPaidFull()">Trả đủ</button>
-          <button class="kd-paid-zero" onclick="setPaidZero()">Nợ</button>
+        <label>Phương thức thanh toán <span class="kd-req">*</span></label>
+        <div class="pay-methods" id="cdPayMethods">
+          <button class="pay-method active" data-method="full" onclick="setPayMethod('full')">
+            <span class="pay-method-icon">💵</span>
+            <span class="pay-method-label">Trả đủ</span>
+            <span class="pay-method-sub">Tiền mặt / CK</span>
+          </button>
+          <button class="pay-method" data-method="partial" onclick="setPayMethod('partial')">
+            <span class="pay-method-icon">💰</span>
+            <span class="pay-method-label">Trả 1 phần</span>
+            <span class="pay-method-sub">Còn lại nợ</span>
+          </button>
+          <button class="pay-method" data-method="debt" onclick="setPayMethod('debt')">
+            <span class="pay-method-icon">📝</span>
+            <span class="pay-method-label">Ghi nợ</span>
+            <span class="pay-method-sub">Không trả</span>
+          </button>
         </div>
+      </div>
+      <div class="kd-field" id="cdPaidWrap" style="display:none">
+        <label>Số tiền khách trả</label>
+        <input type="text" id="cdPaid" placeholder="0" oninput="onPaidInput(this)" inputmode="numeric">
       </div>
       <div class="kd-debt-info" id="cdDebtInfo">
         <span class="kd-debt-label">Còn nợ:</span>
