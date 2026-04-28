@@ -302,6 +302,78 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 @keyframes cmdkFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes cmdkSlideIn{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  TRACKING FILTER - Linear/Stripe/Shopify pattern (2025)   ║
+   ║  Saved Views + Search bar + Filter chips + Add popover    ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* === SAVED VIEWS TABS (Shopify Admin style) === */
+.sv-tabs{display:flex;align-items:center;gap:0;border-bottom:1px solid var(--border);margin-bottom:12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sv-tabs-list{display:flex;align-items:center;gap:0;flex:1;min-width:0}
+.sv-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-3);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;position:relative;font-family:inherit;margin-bottom:-1px}
+.sv-tab:hover:not(.active){color:var(--text-2);background:var(--surface-2)}
+.sv-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.sv-tab-count{font-size:10px;padding:1px 6px;background:var(--border);color:var(--text-3);border-radius:8px;font-weight:600;font-variant-numeric:tabular-nums}
+.sv-tab.active .sv-tab-count{background:var(--primary-soft);color:var(--primary)}
+.sv-tab-x{margin-left:4px;width:14px;height:14px;border-radius:50%;border:none;background:none;color:var(--text-3);font-size:13px;line-height:1;display:none;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.sv-tab:hover .sv-tab-x{display:inline-flex}
+.sv-tab-x:hover{background:var(--danger-soft);color:var(--danger)}
+.sv-add-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:none;border:1px dashed var(--border);border-radius:6px;color:var(--text-3);font-size:11px;font-weight:500;cursor:pointer;flex-shrink:0;margin-left:8px;margin-bottom:6px;transition:all .15s;font-family:inherit}
+.sv-add-btn:hover{color:var(--primary);border-color:var(--primary);background:var(--primary-soft)}
+
+/* === MAIN FILTER BAR === */
+.lf-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.lf-search{display:flex;align-items:center;gap:7px;padding:7px 11px;background:var(--surface);border:1px solid var(--border);border-radius:7px;flex:1;min-width:240px;transition:all .15s;position:relative}
+.lf-search:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(21,101,192,.1)}
+.lf-search svg{color:var(--text-3);flex-shrink:0}
+.lf-search input{flex:1;border:none;outline:none;background:none;font-size:12px;color:var(--text);font-family:inherit;min-width:0}
+.lf-search input::placeholder{color:var(--text-3)}
+.lf-search-clear{background:var(--text-3);color:#fff;border:none;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+.lf-search-clear:hover{background:var(--danger)}
+.lf-kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;letter-spacing:.3px;flex-shrink:0;font-weight:500}
+.lf-search:focus-within .lf-kbd{display:none}
+.lf-add-filter{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:var(--surface);border:1px dashed var(--border);border-radius:7px;color:var(--text-2);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;flex-shrink:0;font-family:inherit}
+.lf-add-filter:hover{color:var(--primary);border-color:var(--primary);background:var(--primary-soft)}
+.lf-add-filter.active{background:var(--primary);color:#fff;border-color:var(--primary);border-style:solid}
+
+/* === ACTIVE FILTER CHIPS === */
+.lf-chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:0;animation:fadeSlide .15s ease-out}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.lf-chip{display:inline-flex;align-items:center;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:11px;overflow:hidden;transition:border-color .15s}
+.lf-chip:hover{border-color:var(--primary)}
+.lf-chip-key{padding:4px 8px;background:var(--surface-2);color:var(--text-3);font-weight:600;border-right:1px solid var(--border);text-transform:capitalize}
+.lf-chip-val{padding:4px 8px;color:var(--text);font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:3px}
+.lf-chip-val:hover{background:var(--primary-soft);color:var(--primary)}
+.lf-chip-val .lf-chip-count{font-size:10px;color:var(--text-3);font-weight:600;padding:0 4px;background:var(--border);border-radius:8px;font-variant-numeric:tabular-nums}
+.lf-chip-x{padding:4px 7px;background:none;border:none;border-left:1px solid var(--border);color:var(--text-3);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.lf-chip-x:hover{background:var(--danger-soft);color:var(--danger)}
+.lf-chips-clear{padding:4px 10px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-3);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit;margin-left:4px}
+.lf-chips-clear:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-soft)}
+
+/* === POPOVER (Add filter / Detail) === */
+.lf-popover{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);z-index:100;width:280px;overflow:hidden;animation:popIn .15s cubic-bezier(.2,.8,.2,1)}
+@keyframes popIn{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.lf-popover-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+.lf-back-btn{background:none;border:none;color:var(--text-3);width:22px;height:22px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+.lf-back-btn:hover{background:var(--surface);color:var(--text)}
+.lf-detail-clear{margin-left:auto;background:none;border:none;color:var(--danger);font-size:11px;font-weight:500;cursor:pointer;padding:3px 7px;border-radius:4px;font-family:inherit}
+.lf-detail-clear:hover{background:var(--danger-soft)}
+.lf-popover-search{display:flex;align-items:center;gap:7px;padding:8px 11px;border-bottom:1px solid var(--border)}
+.lf-popover-search svg{color:var(--text-3);flex-shrink:0}
+.lf-popover-search input{flex:1;border:none;outline:none;background:none;font-size:12px;color:var(--text);font-family:inherit}
+.lf-popover-search input::placeholder{color:var(--text-3)}
+.lf-popover-list{max-height:280px;overflow-y:auto;padding:4px 0}
+.lf-popover-item{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:12px;color:var(--text);transition:background .1s}
+.lf-popover-item:hover{background:var(--surface-2)}
+.lf-popover-item-icon{width:14px;height:14px;color:var(--text-3);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.lf-popover-item-label{flex:1}
+.lf-popover-item-meta{font-size:10px;color:var(--text-3);font-weight:500}
+.lf-popover-item-check{width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.lf-popover-item-check.checked{background:var(--primary);border-color:var(--primary)}
+.lf-popover-item-check.checked::after{content:'';display:block;width:5px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);margin-bottom:2px}
+.lf-popover-item.active{background:var(--primary-soft)}
+.lf-popover-empty{padding:20px;text-align:center;font-size:11px;color:var(--text-3)}
+
 /* ╔════════════════════════════════════════════════════╗
    ║  POS CART - Square/Shopify/Lightspeed grade         ║
    ╚════════════════════════════════════════════════════╝ */
@@ -557,10 +629,73 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <!-- Tracking -->
     <div id="trackContent" style="display:none">
       <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div class="card-title" style="margin-bottom:0">Kết quả tracking (<span id="trackCount">0</span> don)</div>
-          <button onclick="exportTrackCSV()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--primary);cursor:pointer;display:none" id="btnExportTrack">Xuất CSV</button>
+        <!-- ╔══════════════ HEADER ROW ══════════════╗ -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap">
+          <div class="card-title" style="margin-bottom:0">
+            Kết quả tracking 
+            <span style="color:var(--text-3);font-weight:400">·</span> 
+            <span id="trackCount">0</span> đơn<span id="trackCountFilter" style="color:var(--text-3);font-weight:400;display:none"> · hiện <b id="trackVisibleN" style="color:var(--text)">0</b></span>
+          </div>
+          <button onclick="exportTrackCSV()" id="btnExportTrack" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 11px;font-size:11px;color:var(--text-2);cursor:pointer;font-weight:500;align-items:center;gap:5px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Xuất CSV
+          </button>
         </div>
+
+        <!-- ╔══════════════ SAVED VIEWS TABS (Shopify style) ══════════════╗ -->
+        <div class="sv-tabs" id="savedViewsTabs" style="display:none">
+          <div class="sv-tabs-list" id="svTabsList"></div>
+          <button class="sv-add-btn" id="svAddBtn" onclick="saveCurrentView()" style="display:none" title="Lưu view hiện tại">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <span>Lưu view</span>
+          </button>
+        </div>
+
+        <!-- ╔══════════════ FILTER BAR (Linear/Stripe pattern) ══════════════╗ -->
+        <div class="lf-bar" id="filterBarRow" style="display:none">
+          <!-- Search box LUÔN visible -->
+          <div class="lf-search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="tfbSearch" placeholder="Tìm tracking, Order ID, sản phẩm..." oninput="onSearchInput()">
+            <button class="lf-search-clear" id="tfbClearBtn" onclick="clearTrackSearch()" style="display:none">×</button>
+            <kbd class="lf-kbd">⌘ K</kbd>
+          </div>
+
+          <!-- "+ Filter" button → mở popover -->
+          <button class="lf-add-filter" id="lfAddFilterBtn" onclick="toggleAddFilterPopover()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Filter</span>
+          </button>
+        </div>
+
+        <!-- ACTIVE FILTER CHIPS (hiện khi có filter) -->
+        <div class="lf-chips" id="lfChips" style="display:none"></div>
+
+        <!-- ADD FILTER POPOVER -->
+        <div class="lf-popover" id="lfAddPopover" style="display:none">
+          <div class="lf-popover-search">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="lfPopoverSearch" placeholder="Tìm filter..." oninput="filterAddPopover()">
+          </div>
+          <div class="lf-popover-list" id="lfAddPopoverList"></div>
+        </div>
+
+        <!-- DIMENSION DETAIL POPOVER (chọn options) -->
+        <div class="lf-popover lf-detail-popover" id="lfDetailPopover" style="display:none">
+          <div class="lf-popover-head">
+            <button class="lf-back-btn" onclick="closeDetailPopover()" title="Quay lại">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span id="lfDetailTitle" style="font-weight:600;font-size:12px">Filter</span>
+            <button class="lf-detail-clear" id="lfDetailClear" onclick="clearCurrentDimension()" style="display:none">Xóa</button>
+          </div>
+          <div class="lf-popover-search">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="lfDetailSearch" placeholder="Tìm option..." oninput="filterDetailPopover()">
+          </div>
+          <div class="lf-popover-list" id="lfDetailList"></div>
+        </div>
+
         <div style="overflow-x:auto">
           <table class="dash-table" id="trackTable" style="font-size:11px">
             <thead><tr>
@@ -1572,25 +1707,495 @@ async function loadAndTrack(){
   }
 }
 
+// ╔════════════ TRACKING FILTER STATE ════════════╗
+// ╔══════════════════════════════════════════════════════════╗
+// ║  TRACKING FILTER PRO - Linear/Stripe pattern + Saved Views║
+// ║  Multi-select (OR within), AND across dimensions          ║
+// ║  localStorage-backed Saved Views (Shopify Admin style)    ║
+// ╚══════════════════════════════════════════════════════════╝
+
+// Multi-select: arrays. status:[] = no filter (all)
+var trackFilters = { status:[], sheet:[], account:[], search:'' };
+
+// Dimension config (ordered)
+var FILTER_DIMENSIONS = [
+  { key:'status',  label:'Trạng thái', icon:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
+  { key:'sheet',   label:'Sheet',      icon:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>' },
+  { key:'account', label:'Account',    icon:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' }
+];
+
+var STATUS_LABELS = { shipping:'Đang giao', delivered:'Đã giao', shop:'Shop', error:'Lỗi' };
+
+// Cache options + counts (rebuild khi load tracking mới)
+var dimensionOptions = { status:[], sheet:[], account:[] };
+
+// State popover
+var currentDetailDimension = null;
+
+function classifyTrackRow(r){
+  var khoNorm = (r.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  var isEbayFormat = /^\d{2}-\d{5}-\d{5}$/.test(String(r.orderId||'').trim());
+  var isShop = khoNorm.indexOf('shop') >= 0 || !isEbayFormat || r.isShop || r.status === 'SHOP';
+  var isError = !r.ok || (r.status||'').indexOf('Lỗi') >= 0 || (r.status||'').indexOf('Timeout') >= 0;
+  var status;
+  if (isShop) status = 'shop';
+  else if (isError) status = 'error';
+  else if (r.status === 'DELI') status = 'delivered';
+  else status = 'shipping';
+  return { status:status, sheet:(r.sheet||''), account:(r.account||'') };
+}
+
+// Build dimensionOptions với count
+function buildTrackFilterPills(){
+  if (!trackResults.length) return;
+  var counts = { status:{}, sheet:{}, account:{} };
+  trackResults.forEach(function(r){
+    var c = classifyTrackRow(r);
+    counts.status[c.status] = (counts.status[c.status]||0) + 1;
+    if (c.sheet) counts.sheet[c.sheet] = (counts.sheet[c.sheet]||0) + 1;
+    if (c.account) counts.account[c.account] = (counts.account[c.account]||0) + 1;
+  });
+  // Status: ordered
+  dimensionOptions.status = ['shipping','delivered','shop','error']
+    .filter(function(s){return counts.status[s];})
+    .map(function(s){return {value:s, label:STATUS_LABELS[s], count:counts.status[s]};});
+  // Sheet: alphabetical
+  dimensionOptions.sheet = Object.keys(counts.sheet).sort()
+    .map(function(s){return {value:s, label:s, count:counts.sheet[s]};});
+  // Account: shortened labels
+  dimensionOptions.account = Object.keys(counts.account).sort()
+    .map(function(a){return {value:a, label:a.replace('kok.comp_92','kok').replace('mi_844318','mi'), count:counts.account[a]};});
+  // Show filter bar + export + saved views
+  document.getElementById('filterBarRow').style.display = 'flex';
+  document.getElementById('btnExportTrack').style.display = 'inline-flex';
+  document.getElementById('savedViewsTabs').style.display = 'flex';
+  document.getElementById('svAddBtn').style.display = 'inline-flex';
+  renderSavedViewTabs();
+  renderActiveChips();
+}
+
+// Lookup label for a value in a dimension
+function getOptionLabel(dim, value){
+  if (dim === 'status') return STATUS_LABELS[value] || value;
+  if (dim === 'account') return value.replace('kok.comp_92','kok').replace('mi_844318','mi');
+  return value;
+}
+
+function getOptionCount(dim, value){
+  var found = (dimensionOptions[dim]||[]).find(function(o){return o.value === value;});
+  return found ? found.count : 0;
+}
+
+// === ACTIVE FILTER CHIPS ===
+function renderActiveChips(){
+  var chipsEl = document.getElementById('lfChips');
+  if (!chipsEl) return;
+  var chips = [];
+  FILTER_DIMENSIONS.forEach(function(d){
+    var values = trackFilters[d.key] || [];
+    if (values.length === 0) return;
+    var labelText = values.map(function(v){return getOptionLabel(d.key,v);}).join(', ');
+    var displayLabel = values.length > 2 
+      ? values.length + ' đã chọn'
+      : labelText;
+    chips.push(
+      '<div class="lf-chip">'
+      + '<span class="lf-chip-key">'+d.label+'</span>'
+      + '<span class="lf-chip-val" onclick="openDetailPopoverForDim(\''+d.key+'\')" title="'+labelText+'">'+displayLabel+'</span>'
+      + '<button class="lf-chip-x" onclick="clearDimension(\''+d.key+'\')" title="Xóa filter">×</button>'
+      + '</div>'
+    );
+  });
+  if (trackFilters.search) {
+    var s = trackFilters.search;
+    if (s.length > 18) s = s.slice(0,18)+'…';
+    chips.push(
+      '<div class="lf-chip">'
+      + '<span class="lf-chip-key">Search</span>'
+      + '<span class="lf-chip-val">"'+s+'"</span>'
+      + '<button class="lf-chip-x" onclick="clearTrackSearch()" title="Xóa search">×</button>'
+      + '</div>'
+    );
+  }
+  if (chips.length === 0) {
+    chipsEl.style.display = 'none';
+    chipsEl.innerHTML = '';
+  } else {
+    chipsEl.style.display = 'flex';
+    chipsEl.innerHTML = chips.join('') + '<button class="lf-chips-clear" onclick="resetTrackFilters()">Xóa tất cả</button>';
+  }
+}
+
+// === ADD FILTER POPOVER ===
+function toggleAddFilterPopover(){
+  var pop = document.getElementById('lfAddPopover');
+  var btn = document.getElementById('lfAddFilterBtn');
+  closeDetailPopover();
+  if (pop.style.display === 'block') {
+    pop.style.display = 'none';
+    btn.classList.remove('active');
+    return;
+  }
+  // Position popover bên dưới button
+  var rect = btn.getBoundingClientRect();
+  var card = btn.closest('.card');
+  var cardRect = card.getBoundingClientRect();
+  pop.style.top = (rect.bottom - cardRect.top + 6) + 'px';
+  pop.style.left = (rect.left - cardRect.left) + 'px';
+  pop.style.right = 'auto';
+  pop.style.display = 'block';
+  btn.classList.add('active');
+  renderAddPopover();
+  setTimeout(function(){
+    var s = document.getElementById('lfPopoverSearch');
+    if (s) { s.value=''; s.focus(); }
+  }, 50);
+}
+
+function renderAddPopover(query){
+  var listEl = document.getElementById('lfAddPopoverList');
+  var q = (query||'').toLowerCase().trim();
+  var items = FILTER_DIMENSIONS.filter(function(d){
+    return !q || d.label.toLowerCase().indexOf(q) >= 0;
+  }).map(function(d){
+    var activeCount = (trackFilters[d.key]||[]).length;
+    var meta = activeCount > 0 ? activeCount + ' đã chọn' : '';
+    return '<div class="lf-popover-item" onclick="openDetailPopoverForDim(\''+d.key+'\')">'
+      + '<span class="lf-popover-item-icon">'+d.icon+'</span>'
+      + '<span class="lf-popover-item-label">'+d.label+'</span>'
+      + (meta ? '<span class="lf-popover-item-meta">'+meta+'</span>' : '')
+      + '</div>';
+  });
+  listEl.innerHTML = items.length ? items.join('') : '<div class="lf-popover-empty">Không tìm thấy</div>';
+}
+
+function filterAddPopover(){
+  renderAddPopover(document.getElementById('lfPopoverSearch').value);
+}
+
+function closeAddPopover(){
+  document.getElementById('lfAddPopover').style.display = 'none';
+  document.getElementById('lfAddFilterBtn').classList.remove('active');
+}
+
+// === DETAIL POPOVER (chọn options trong 1 dimension) ===
+function openDetailPopoverForDim(dim){
+  closeAddPopover();
+  currentDetailDimension = dim;
+  var dimConfig = FILTER_DIMENSIONS.find(function(d){return d.key===dim;});
+  if (!dimConfig) return;
+  var pop = document.getElementById('lfDetailPopover');
+  var btn = document.getElementById('lfAddFilterBtn');
+  document.getElementById('lfDetailTitle').textContent = dimConfig.label;
+  // Position popover
+  var rect = btn.getBoundingClientRect();
+  var card = btn.closest('.card');
+  var cardRect = card.getBoundingClientRect();
+  pop.style.top = (rect.bottom - cardRect.top + 6) + 'px';
+  pop.style.left = (rect.left - cardRect.left) + 'px';
+  pop.style.display = 'block';
+  renderDetailPopover();
+  updateDetailClearBtn();
+  setTimeout(function(){
+    var s = document.getElementById('lfDetailSearch');
+    if (s) { s.value=''; s.focus(); }
+  }, 50);
+}
+
+function renderDetailPopover(query){
+  var dim = currentDetailDimension;
+  if (!dim) return;
+  var listEl = document.getElementById('lfDetailList');
+  var options = dimensionOptions[dim] || [];
+  var q = (query||'').toLowerCase().trim();
+  if (q) {
+    options = options.filter(function(o){return o.label.toLowerCase().indexOf(q) >= 0;});
+  }
+  var selected = trackFilters[dim] || [];
+  var html = options.map(function(o){
+    var checked = selected.indexOf(o.value) >= 0;
+    return '<div class="lf-popover-item'+(checked?' active':'')+'" onclick="toggleDimensionValue(\''+dim+'\',\''+String(o.value).replace(/'/g,"\\'")+'\')">'
+      + '<span class="lf-popover-item-check'+(checked?' checked':'')+'"></span>'
+      + '<span class="lf-popover-item-label">'+o.label+'</span>'
+      + '<span class="lf-popover-item-meta">'+o.count+'</span>'
+      + '</div>';
+  }).join('');
+  listEl.innerHTML = html || '<div class="lf-popover-empty">Không có option</div>';
+}
+
+function filterDetailPopover(){
+  renderDetailPopover(document.getElementById('lfDetailSearch').value);
+}
+
+function closeDetailPopover(){
+  document.getElementById('lfDetailPopover').style.display = 'none';
+  currentDetailDimension = null;
+}
+
+function toggleDimensionValue(dim, value){
+  var arr = trackFilters[dim] || [];
+  var idx = arr.indexOf(value);
+  if (idx >= 0) arr.splice(idx, 1);
+  else arr.push(value);
+  trackFilters[dim] = arr;
+  applyTrackFilter();
+  renderDetailPopover(document.getElementById('lfDetailSearch').value);
+  updateDetailClearBtn();
+}
+
+function clearDimension(dim){
+  trackFilters[dim] = [];
+  applyTrackFilter();
+}
+
+function clearCurrentDimension(){
+  if (!currentDetailDimension) return;
+  trackFilters[currentDetailDimension] = [];
+  applyTrackFilter();
+  renderDetailPopover(document.getElementById('lfDetailSearch').value);
+  updateDetailClearBtn();
+}
+
+function updateDetailClearBtn(){
+  var dim = currentDetailDimension;
+  var btn = document.getElementById('lfDetailClear');
+  if (!dim || !btn) return;
+  btn.style.display = (trackFilters[dim]||[]).length > 0 ? 'inline-block' : 'none';
+}
+
+// === SEARCH ===
+function onSearchInput(){
+  trackFilters.search = document.getElementById('tfbSearch').value.trim().toLowerCase();
+  document.getElementById('tfbClearBtn').style.display = trackFilters.search ? 'flex' : 'none';
+  renderTrackTable();
+  renderActiveChips();
+  renderSavedViewTabs();
+}
+
+function clearTrackSearch(){
+  document.getElementById('tfbSearch').value = '';
+  trackFilters.search = '';
+  document.getElementById('tfbClearBtn').style.display = 'none';
+  renderTrackTable();
+  renderActiveChips();
+  renderSavedViewTabs();
+}
+
+function resetTrackFilters(){
+  trackFilters = { status:[], sheet:[], account:[], search:'' };
+  document.getElementById('tfbSearch').value = '';
+  document.getElementById('tfbClearBtn').style.display = 'none';
+  closeAddPopover();
+  closeDetailPopover();
+  renderTrackTable();
+  renderActiveChips();
+  renderSavedViewTabs();
+}
+
+function applyTrackFilter(){
+  renderTrackTable();
+  renderActiveChips();
+  renderSavedViewTabs();
+}
+
+function filterTrackResults(){
+  return trackResults.filter(function(r){
+    var c = classifyTrackRow(r);
+    if ((trackFilters.status||[]).length && trackFilters.status.indexOf(c.status) < 0) return false;
+    if ((trackFilters.sheet||[]).length && trackFilters.sheet.indexOf(c.sheet) < 0) return false;
+    if ((trackFilters.account||[]).length && trackFilters.account.indexOf(c.account) < 0) return false;
+    if (trackFilters.search) {
+      var hay = ((r.tracking||'')+' '+(r.orderId||'')+' '+(r.sp||'')+' '+(r.kho||'')).toLowerCase();
+      if (hay.indexOf(trackFilters.search) < 0) return false;
+    }
+    return true;
+  });
+}
+
+// ╔══════════════ SAVED VIEWS (Shopify Admin pattern) ══════════════╗
+var SAVED_VIEWS_KEY = 'koktrack_saved_views_v1';
+
+function loadSavedViews(){
+  try {
+    var raw = localStorage.getItem(SAVED_VIEWS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){ return []; }
+}
+
+function saveSavedViews(views){
+  try { localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(views)); }
+  catch(e){}
+}
+
+function isFilterEmpty(f){
+  return (!f.status||!f.status.length) && (!f.sheet||!f.sheet.length) && (!f.account||!f.account.length) && !f.search;
+}
+
+function filtersEqual(a, b){
+  function arrEq(x,y){ x=x||[];y=y||[]; if(x.length!==y.length)return false; var sx=x.slice().sort(),sy=y.slice().sort(); for(var i=0;i<sx.length;i++)if(sx[i]!==sy[i])return false; return true;}
+  return arrEq(a.status,b.status) && arrEq(a.sheet,b.sheet) && arrEq(a.account,b.account) && (a.search||'')===(b.search||'');
+}
+
+function getActiveSavedViewId(){
+  var views = loadSavedViews();
+  for (var i=0;i<views.length;i++){
+    if (filtersEqual(views[i].filters, trackFilters)) return views[i].id;
+  }
+  return null;
+}
+
+function renderSavedViewTabs(){
+  var listEl = document.getElementById('svTabsList');
+  if (!listEl) return;
+  var views = loadSavedViews();
+  var allCount = trackResults.length;
+  var allActive = isFilterEmpty(trackFilters);
+  var activeId = getActiveSavedViewId();
+  var html = '<button class="sv-tab '+(allActive?'active':'')+'" onclick="applySavedView(null)">'
+    + '<span>Tất cả</span>'
+    + '<span class="sv-tab-count">'+allCount+'</span>'
+    + '</button>';
+  views.forEach(function(v){
+    // Tính count nhanh: temporarily apply filter
+    var saved = trackFilters;
+    trackFilters = v.filters;
+    var count = filterTrackResults().length;
+    trackFilters = saved;
+    var isActive = activeId === v.id;
+    html += '<button class="sv-tab '+(isActive?'active':'')+'" onclick="applySavedView(\''+v.id+'\')">'
+      + '<span>'+escapeHtml(v.name)+'</span>'
+      + '<span class="sv-tab-count">'+count+'</span>'
+      + '<button class="sv-tab-x" onclick="event.stopPropagation();deleteSavedView(\''+v.id+'\')" title="Xóa view">×</button>'
+      + '</button>';
+  });
+  listEl.innerHTML = html;
+  // Show "Lưu view" button khi có filter active KHÔNG match saved view nào
+  var saveBtn = document.getElementById('svAddBtn');
+  if (saveBtn) saveBtn.style.display = (!allActive && !activeId) ? 'inline-flex' : 'none';
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
+}
+
+function applySavedView(id){
+  if (id === null) {
+    // "Tất cả" - reset
+    resetTrackFilters();
+    return;
+  }
+  var views = loadSavedViews();
+  var v = views.find(function(x){return x.id===id;});
+  if (!v) return;
+  trackFilters = JSON.parse(JSON.stringify(v.filters));
+  document.getElementById('tfbSearch').value = trackFilters.search || '';
+  document.getElementById('tfbClearBtn').style.display = trackFilters.search ? 'flex' : 'none';
+  closeAddPopover();
+  closeDetailPopover();
+  applyTrackFilter();
+}
+
+function saveCurrentView(){
+  if (isFilterEmpty(trackFilters)) {
+    showToast({type:'warn',title:'Chưa có filter',msg:'Áp dụng filter trước khi lưu'});
+    return;
+  }
+  var name = prompt('Đặt tên cho view này:\n\nVD: "Hàng kok đang giao tháng 4"');
+  if (!name || !name.trim()) return;
+  name = name.trim().slice(0, 40);
+  var views = loadSavedViews();
+  if (views.length >= 12) {
+    showToast({type:'warn',title:'Tối đa 12 view',msg:'Xóa bớt view cũ trước'});
+    return;
+  }
+  var view = {
+    id: 'v_' + Date.now(),
+    name: name,
+    filters: JSON.parse(JSON.stringify(trackFilters)),
+    createdAt: new Date().toISOString()
+  };
+  views.push(view);
+  saveSavedViews(views);
+  showToast({type:'ok',title:'Đã lưu view',msg:name});
+  renderSavedViewTabs();
+}
+
+function deleteSavedView(id){
+  var views = loadSavedViews();
+  var v = views.find(function(x){return x.id===id;});
+  if (!v) return;
+  if (!confirm('Xóa view "'+v.name+'"?')) return;
+  views = views.filter(function(x){return x.id !== id;});
+  saveSavedViews(views);
+  showToast({type:'info',title:'Đã xóa view'});
+  renderSavedViewTabs();
+}
+
+// === KEYBOARD SHORTCUTS ===
+document.addEventListener('keydown', function(e){
+  // Cmd+K / Ctrl+K → focus search box (chỉ khi tab Tracking đang mở)
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    var trackVisible = document.getElementById('trackContent').style.display !== 'none';
+    if (trackVisible) {
+      e.preventDefault();
+      var s = document.getElementById('tfbSearch');
+      if (s) s.focus();
+    }
+  }
+  // Esc → đóng popover
+  if (e.key === 'Escape') {
+    closeAddPopover();
+    closeDetailPopover();
+  }
+});
+
+// Click outside → đóng popover
+document.addEventListener('click', function(e){
+  var addPop = document.getElementById('lfAddPopover');
+  var detPop = document.getElementById('lfDetailPopover');
+  var addBtn = document.getElementById('lfAddFilterBtn');
+  if (addPop && addPop.style.display === 'block' && !addPop.contains(e.target) && !addBtn.contains(e.target)) {
+    // Cho phép click vào chip để mở detail mà không bị đóng
+    if (!e.target.closest('.lf-chip-val')) closeAddPopover();
+  }
+  if (detPop && detPop.style.display === 'block' && !detPop.contains(e.target) && !addBtn.contains(e.target)) {
+    if (!e.target.closest('.lf-chip-val')) closeDetailPopover();
+  }
+});
+
 function renderTrackTable(){
   var tbody=document.getElementById('trackTableBody');
   if(!trackResults.length){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:12px">Chưa có dữ liệu</td></tr>';
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:12px">Chưa có dữ liệu</td></tr>';
+    document.getElementById('trackFilterBar').style.display = 'none';
+    var fbr=document.getElementById('filterBarRow'); if(fbr) fbr.style.display='none';
+    if(typeof closeAllFilterPanels==='function') closeAllFilterPanels();
+    document.getElementById('trackCountFilter').style.display = 'none';
     return;
   }
-  // Sort: chua giao len truoc
-  var sorted=trackResults.slice().sort(function(a,b){
-    // 1. eBay len truoc, Shop xuong duoi
+  // Build filter pills nếu chưa
+  buildTrackFilterPills();
+  // Apply filter
+  var filtered = filterTrackResults();
+  // Update counter
+  var hasFilter = (trackFilters.status||[]).length || (trackFilters.sheet||[]).length || (trackFilters.account||[]).length || trackFilters.search;
+  document.getElementById('trackCountFilter').style.display = hasFilter ? 'inline' : 'none';
+  document.getElementById('trackVisibleN').textContent = filtered.length;
+  // Empty filter result
+  if (!filtered.length) {
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-3)"><div style="font-size:12px;margin-bottom:6px">Không có đơn nào khớp với filter hiện tại</div><button onclick="resetTrackFilters()" style="background:var(--primary);color:#fff;border:none;padding:5px 14px;border-radius:5px;font-size:11px;cursor:pointer">↻ Reset filter</button></td></tr>';
+    return;
+  }
+  // Sort
+  var sorted=filtered.slice().sort(function(a,b){
     var aShop = a.isShop || a.status === 'SHOP' ? 1 : 0;
     var bShop = b.isShop || b.status === 'SHOP' ? 1 : 0;
     if (aShop !== bShop) return aShop - bShop;
-    // 2. Don chua giao len truoc (chi cho eBay)
     if (a.delivered !== b.delivered) return a.delivered - b.delivered;
-    // 3. Sort orderId giam dan (moi nhat truoc)
     var oa = String(a.orderId||''), ob = String(b.orderId||'');
     return ob > oa ? 1 : ob < oa ? -1 : 0;
   });
-  // Render voi divider giua eBay va Shop
+  // Render
   var html = '';
   var lastIsShop = null;
   sorted.forEach(function(r){
@@ -1599,7 +2204,6 @@ function renderTrackTable(){
     var isShop = khoNorm.indexOf('shop') >= 0 || !isEbayFormat || r.isShop || r.status === 'SHOP';
     var isError = !r.ok || (r.status||'').indexOf('Lỗi') >= 0 || (r.status||'').indexOf('Timeout') >= 0;
     
-    // Divider khi chuyen tu eBay sang Shop - clean style
     if (lastIsShop === false && isShop) {
       var shopCount = sorted.filter(function(x){
         var k = (x.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -1610,7 +2214,6 @@ function renderTrackTable(){
     }
     lastIsShop = isShop;
     
-    // Status pill phang KiotViet style
     var statusTag, pillBg, pillColor;
     if (isShop) {
       statusTag = 'Shop'; pillBg = 'var(--warning-soft)'; pillColor = 'var(--warning)';
@@ -1650,15 +2253,18 @@ function renderTrackTable(){
 
 function exportTrackCSV(){
   if(!trackResults.length)return;
-  var csv='Tracking,Sheet,San pham,Trang thai,Du kien giao,Da giao\n';
-  csv+=trackResults.map(function(r){
-    return [r.tracking,r.sheet,r.sp,r.status,r.estDelivery,r.actDelivery]
-      .map(function(v){return '"'+(v||'')+'"';}).join(',');
+  var rows = filterTrackResults();
+  if(!rows.length){alert('Không có đơn nào để xuất!');return;}
+  var csv='Tracking,Sheet,Kho,Account,San pham,Trang thai,Du kien giao,Da giao\n';
+  csv+=rows.map(function(r){
+    return [r.tracking,r.sheet,r.kho||'',r.account||'',r.sp,r.status,r.estDelivery,r.actDelivery]
+      .map(function(v){return '"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');
   }).join('\n');
   var a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
   a.download='tracking_'+new Date().toLocaleDateString('vi-VN').replace(/\//g,'-')+'.csv';
   a.click();
+  showToast({type:'ok',title:'Đã xuất CSV',msg:rows.length+' đơn'});
 }
 
 async function loadDash(){
@@ -2038,7 +2644,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.10.1</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.11.2</div>
 
 </body>
 </html>
