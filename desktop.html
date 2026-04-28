@@ -366,6 +366,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .dash-stat-debt .dash-stat-num{color:#d97706}
 .dash-stat-total .dash-stat-num{color:var(--success);font-weight:700}
 
+
+.dash-capital-total{margin-top:8px;padding:18px 20px;background:linear-gradient(135deg,#e0f2fe 0%,#dbeafe 100%);border:2px solid var(--primary);border-radius:12px;text-align:center}
+.dash-capital-total-lbl{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px}
+.dash-capital-total-num{font-size:30px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em}
+.dash-capital-total-sub{font-size:11px;color:var(--text-2);margin-top:5px;font-weight:500}
+
 /* ╔══ TRACKING SCAM WARNING ══╗ */
 .scam-warn{background:#dc2626 !important;color:#fff !important;animation:scamPulse 2s ease-in-out infinite}
 @keyframes scamPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 0 0 4px rgba(220,38,38,0)}}
@@ -971,23 +977,30 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
           </div>
         </div>
 
-        <!-- ╔══ TỔNG VỐN DOANH NGHIỆP ══╗ -->
+        <!-- ╔══ VỐN LƯU ĐỘNG (Working Capital - chuẩn IFRS/KTQT) ══╗ -->
+        <!-- WC = Hàng tồn + Hàng đang về + Công nợ phải thu -->
         <div class="dash-stats-3 dash-capital">
           <div class="dash-stat dash-stat-cap">
-            <div class="dash-stat-label">💵 Đã thu</div>
+            <div class="dash-stat-label">📦 Hàng tồn kho</div>
             <div class="dash-stat-num" id="dCapPaid">—</div>
-            <div class="dash-stat-sub">Tiền mặt + CK</div>
+            <div class="dash-stat-sub" id="dCapPaidSub">— máy</div>
+          </div>
+          <div class="dash-stat dash-stat-cap">
+            <div class="dash-stat-label">🚚 Hàng đang về</div>
+            <div class="dash-stat-num" id="dCapTransit">—</div>
+            <div class="dash-stat-sub" id="dCapTransitSub">— máy</div>
           </div>
           <div class="dash-stat dash-stat-cap dash-stat-debt">
             <div class="dash-stat-label">📝 Công nợ phải thu</div>
             <div class="dash-stat-num" id="dCapOwed">—</div>
             <div class="dash-stat-sub" id="dCapOwedSub">— khách</div>
           </div>
-          <div class="dash-stat dash-stat-cap dash-stat-total">
-            <div class="dash-stat-label">💼 Tổng vốn doanh nghiệp</div>
-            <div class="dash-stat-num" id="dCapTotal">—</div>
-            <div class="dash-stat-sub">Đã thu + Công nợ</div>
-          </div>
+        </div>
+        <!-- TỔNG VỐN LƯU ĐỘNG - card lớn full width -->
+        <div class="dash-capital-total">
+          <div class="dash-capital-total-lbl">💎 TỔNG VỐN LƯU ĐỘNG</div>
+          <div class="dash-capital-total-num" id="dCapTotal">—</div>
+          <div class="dash-capital-total-sub">Hàng tồn + Đang về + Công nợ phải thu (Working Capital)</div>
         </div>
       </div>
       
@@ -3341,26 +3354,39 @@ function renderDash(){
   document.getElementById('dVon').textContent=fmtN(von)+' đ';
   document.getElementById('dMargin').textContent=(marginPct>=0?'+':'')+marginPct+'%';
 
-  // ╔══ TỔNG VỐN DOANH NGHIỆP ══╗
+  // ╔══ VỐN LƯU ĐỘNG (Working Capital - chuẩn IFRS/KTQT) ══╗
+  // WC = Hàng tồn (giá vốn) + Hàng đang về (giá vốn) + Công nợ phải thu (Receivables)
+  // Đây là "Working Capital" - tổng tài sản lưu động đang luân chuyển trong DN.
   try {
-    var capPaid = 0, capOwed = 0, owedCustomers = 0;
+    var stockOnHand = vonDaVe || 0;        // 📦 Hàng đã về kho (giá vốn)
+    var stockInTransit = vonChuaVe || 0;   // 🚚 Hàng đang về (giá vốn)
+    var capOwed = 0;                        // 📝 Công nợ phải thu (Accounts Receivable)
+    var owedCustomers = 0;
     if (typeof salesData !== 'undefined' && salesData) {
-      capPaid = salesData.reduce(function(s,x){return s+(parseFloat(x.total_paid)||0);},0);
       capOwed = salesData.reduce(function(s,x){return s+(parseFloat(x.total_owed)||0);},0);
-      if (typeof customersCache !== 'undefined' && customersCache) {
-        owedCustomers = customersCache.filter(function(c){return c.totalOwed>0;}).length;
-      }
     }
-    var capTotal = capPaid + capOwed;
+    if (typeof customersCache !== 'undefined' && customersCache) {
+      owedCustomers = customersCache.filter(function(c){return c.totalOwed>0;}).length;
+    }
+    var capTotal = stockOnHand + stockInTransit + capOwed;
+    var countOnHand = (typeof daVeList !== 'undefined' && daVeList) ? daVeList.length : 0;
+    var countInTransit = (typeof chuaVeList !== 'undefined' && chuaVeList) ? chuaVeList.length : 0;
+    // 4 elements: Tồn / Đang về (NEW) / Công nợ / Tổng
     var elPaid = document.getElementById('dCapPaid');
+    var elTransit = document.getElementById('dCapTransit');
     var elOwed = document.getElementById('dCapOwed');
     var elTotal = document.getElementById('dCapTotal');
+    var elPaidSub = document.getElementById('dCapPaidSub');
+    var elTransitSub = document.getElementById('dCapTransitSub');
     var elOwedSub = document.getElementById('dCapOwedSub');
-    if (elPaid) elPaid.textContent = fmtN(capPaid)+' đ';
+    if (elPaid) elPaid.textContent = fmtN(stockOnHand)+' đ';
+    if (elTransit) elTransit.textContent = fmtN(stockInTransit)+' đ';
     if (elOwed) elOwed.textContent = fmtN(capOwed)+' đ';
     if (elTotal) elTotal.textContent = fmtN(capTotal)+' đ';
+    if (elPaidSub) elPaidSub.textContent = countOnHand + ' máy';
+    if (elTransitSub) elTransitSub.textContent = countInTransit + ' máy';
     if (elOwedSub) elOwedSub.textContent = owedCustomers + ' khách';
-  } catch(e){ console.warn('Capital calc fail:', e); }
+  } catch(e){ console.warn('Working Capital calc fail:', e); }
 
   // Inventory split
   document.getElementById('dDaVe').textContent=daVeList.length;
@@ -3675,7 +3701,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.16.1</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.18.0</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
