@@ -625,7 +625,7 @@ function checkDashPass(){
 }
 
 renderH();
-// Init Dynamsoft - giữ config ổn định bản 2.6.4 (chỉ thêm beep + vibrate khi success)
+// Init Dynamsoft - bản 2.6.4 stable (chỉ thêm beep + vibrate khi success)
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
 Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
 
@@ -646,10 +646,7 @@ async function initScanner() {
   try {
     scanner = await Dynamsoft.DBR.BarcodeScanner.createInstance();
     var s = await scanner.getRuntimeSettings();
-    // Format: stable like bản 2.6.4 - chỉ format thường dùng
-    s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39 |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13;
+    s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 | Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39 | Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13;
     s.expectedBarcodesCount = 1;
     await scanner.updateRuntimeSettings(s);
     await scanner.setUIElement(document.getElementById('camModal'));
@@ -662,6 +659,7 @@ async function initScanner() {
     };
   } catch(e){ scanner = null; console.error('Scanner init fail:', e); }
 }
+initScanner();
 initScanner();
 
 // ===== TABS =====
@@ -1900,7 +1898,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.9.2</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.9.3</div>
 
 </body>
 </html>
