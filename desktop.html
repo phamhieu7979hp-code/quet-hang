@@ -220,6 +220,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .dash-page-head{padding:4px 2px 14px}
 .dash-page-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.02em;margin-bottom:4px}
 .dash-page-sub{font-size:12px;color:var(--text-3);font-weight:500}
+@keyframes syncPulse{0%,100%{opacity:.4}50%{opacity:1}}
 
 /* CAMERA */
 #camModal{display:none;position:fixed;inset:0;background:rgba(30,45,61,.6);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
@@ -416,10 +417,19 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
     <!-- Dashboard -->
     <div id="dashContent" style="display:none">
-      <!-- Page header -->
-      <div class="dash-page-head">
-        <div class="dash-page-title">Báo cáo kinh doanh</div>
-        <div class="dash-page-sub" id="dashPageSub">Tổng quan hiệu quả & tồn kho</div>
+      <!-- Page header với SWR indicators -->
+      <div class="dash-page-head" style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+        <div>
+          <div class="dash-page-title" style="display:flex;align-items:center;gap:8px">
+            Báo cáo kinh doanh
+            <span id="dSyncDot" title="Đang đồng bộ..." style="width:7px;height:7px;border-radius:50%;background:var(--success);opacity:0;transition:opacity .2s;animation:syncPulse 1.2s ease-in-out infinite"></span>
+          </div>
+          <div class="dash-page-sub" id="dashPageSub">Tổng quan hiệu quả & tồn kho</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding-bottom:2px">
+          <span id="dLastSync" style="font-size:11px;color:var(--text-3);font-weight:500;font-feature-settings:'tnum'"></span>
+          <button onclick="fetchDashSilent()" class="dash-reload" title="Tải lại ngay" style="padding:5px 10px">↻</button>
+        </div>
       </div>
       
       <!-- Hero metrics: Tổng lãi (huge) + 3 secondary -->
@@ -565,6 +575,11 @@ var BASE='https://script.google.com/macros/s/AKfycbzXbuPaltO2pitRdgW6BP844kYtBdE
 function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'';}
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
 var dAllData=[],dFilter='all',dashLoaded=false,dChartLai=null,dChartTon=null;
+// === SWR pattern state (Stripe + Vercel + Linear) ===
+var dashFetchedAt=null;        // Timestamp fetch cuối cùng
+var dashSyncing=false;         // Có đang fetch background không
+var dashPollTimer=null;        // Polling interval handle
+var DASH_TTL_MS=30000;         // 30s stale threshold + poll interval
 var curTab='nhap',scanner=null,camTab='';
 
 Dynamsoft.DBR.BarcodeReader.engineResourcePath='https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
@@ -611,9 +626,83 @@ function switchTab(t){
   document.getElementById('histBox').style.display=(t==='dash'||t==='track')?'none':'block';
   document.getElementById('dashContent').style.display=t==='dash'?'block':'none';
   document.getElementById('trackContent').style.display=t==='track'?'block':'none';
-  if(t==='dash'&&!dashLoaded)loadDash();
+  
+  // SWR: vào tab dash
+  if(t==='dash'){
+    if(!checkDashPass()){curTab='nhap';return;}
+    if(!dashLoaded){
+      loadDash();              // Lần đầu - show loading
+    }else{
+      // Có cache - revalidate nếu stale
+      if(isDashStale())fetchDashSilent();
+      updateLastSyncedLabel();
+    }
+    startDashPolling();
+  }else{
+    stopDashPolling();
+  }
+  
   setTimeout(function(){var ids={nhap:'inpNhap',ban:'inpBan',gia:'inpGia'};if(ids[t])document.getElementById(ids[t]).focus();},100);
 }
+
+// === SWR helper functions ===
+function isDashStale(){return !dashFetchedAt||(Date.now()-dashFetchedAt>DASH_TTL_MS);}
+
+async function fetchDashSilent(){
+  if(dashSyncing)return;
+  dashSyncing=true;
+  setSyncIndicator(true);
+  try{
+    var r=await fetch(BASE+'?action=getDashboard');
+    var d=await r.json();
+    if(d.ok){
+      dAllData=d.data;
+      dashFetchedAt=Date.now();
+      buildDFilter();
+      renderDash();
+      updateLastSyncedLabel();
+    }
+  }catch(e){/* silent fail - giữ data cũ */}
+  finally{
+    dashSyncing=false;
+    setSyncIndicator(false);
+  }
+}
+
+function startDashPolling(){
+  stopDashPolling();
+  dashPollTimer=setInterval(function(){
+    if(!document.hidden&&curTab==='dash')fetchDashSilent();
+  },DASH_TTL_MS);
+}
+function stopDashPolling(){if(dashPollTimer){clearInterval(dashPollTimer);dashPollTimer=null;}}
+
+function setSyncIndicator(syncing){
+  var el=document.getElementById('dSyncDot');
+  if(!el)return;
+  el.style.opacity=syncing?'1':'0';
+}
+
+function updateLastSyncedLabel(){
+  var el=document.getElementById('dLastSync');
+  if(!el||!dashFetchedAt)return;
+  var d=new Date(dashFetchedAt);
+  var t=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  el.textContent='Cập nhật '+t;
+}
+
+// === Page Visibility API + Focus (Linear, Notion pattern) ===
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    stopDashPolling();
+  }else if(curTab==='dash'){
+    if(isDashStale())fetchDashSilent();
+    startDashPolling();
+  }
+});
+window.addEventListener('focus',function(){
+  if(curTab==='dash'&&isDashStale())fetchDashSilent();
+});
 
 document.addEventListener('keydown',function(e){
   if(e.key!=='Enter')return;
@@ -1015,8 +1104,8 @@ async function loadDash(){
     var r=await fetch(BASE+'?action=getDashboard');
     var d=await r.json();
     if(!d.ok)throw new Error(d.error||'Lỗi');
-    dAllData=d.data;dashLoaded=true;
-    buildDFilter();renderDash();
+    dAllData=d.data;dashLoaded=true;dashFetchedAt=Date.now();
+    buildDFilter();renderDash();updateLastSyncedLabel();
     document.getElementById('dLoading').style.display='none';
     document.getElementById('dashContent').style.display='block';
     setStatus('Đã cập nhật', true);
@@ -1208,6 +1297,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.4.2</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.5.0</div>
 </body>
 </html>
