@@ -357,6 +357,22 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .debt-add-btn:hover{background:var(--primary);color:#fff}
 
 /* Payment method picker (3 nút lớn) */
+
+/* ╔══ TỔNG VỐN DOANH NGHIỆP - Capital row ══╗ */
+.dash-capital{margin-top:8px}
+.dash-stat-cap{background:linear-gradient(135deg,#f8f9fb 0%,#ffffff 100%);border:1px solid var(--border)}
+.dash-stat-debt{background:linear-gradient(135deg,#fff8e7 0%,#ffffff 100%);border-color:#f59e0b}
+.dash-stat-total{background:linear-gradient(135deg,#e8f5e9 0%,#ffffff 100%);border-color:var(--success)}
+.dash-stat-debt .dash-stat-num{color:#d97706}
+.dash-stat-total .dash-stat-num{color:var(--success);font-weight:700}
+
+/* ╔══ TRACKING SCAM WARNING ══╗ */
+.scam-warn{background:#dc2626 !important;color:#fff !important;animation:scamPulse 2s ease-in-out infinite}
+@keyframes scamPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 0 0 4px rgba(220,38,38,0)}}
+.scam-card{border-left:3px solid #dc2626 !important;position:relative}
+.scam-card::before{content:'⚠ NGHI SCAM';position:absolute;top:8px;right:10px;font-size:9px;font-weight:700;color:#dc2626;background:#fee2e2;padding:2px 6px;border-radius:3px;letter-spacing:.4px}
+.scam-days{display:inline-block;background:#dc2626;color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;margin-left:4px}
+
 .pay-methods{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
 .pay-method{padding:11px 8px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;transition:all .15s;text-align:center}
 .pay-method-icon{font-size:18px;line-height:1}
@@ -952,6 +968,25 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
             <div class="dash-stat-label">Margin %</div>
             <div class="dash-stat-num" id="dMargin">—</div>
             <div class="dash-stat-sub">Tỷ suất lợi nhuận</div>
+          </div>
+        </div>
+
+        <!-- ╔══ TỔNG VỐN DOANH NGHIỆP ══╗ -->
+        <div class="dash-stats-3 dash-capital">
+          <div class="dash-stat dash-stat-cap">
+            <div class="dash-stat-label">💵 Đã thu</div>
+            <div class="dash-stat-num" id="dCapPaid">—</div>
+            <div class="dash-stat-sub">Tiền mặt + CK</div>
+          </div>
+          <div class="dash-stat dash-stat-cap dash-stat-debt">
+            <div class="dash-stat-label">📝 Công nợ phải thu</div>
+            <div class="dash-stat-num" id="dCapOwed">—</div>
+            <div class="dash-stat-sub" id="dCapOwedSub">— khách</div>
+          </div>
+          <div class="dash-stat dash-stat-cap dash-stat-total">
+            <div class="dash-stat-label">💼 Tổng vốn doanh nghiệp</div>
+            <div class="dash-stat-num" id="dCapTotal">—</div>
+            <div class="dash-stat-sub">Đã thu + Công nợ</div>
           </div>
         </div>
       </div>
@@ -1957,6 +1992,11 @@ async function loadDebtData(force){
     rebuildCustomersCache();
     renderDebtView();
     updateDebtBadge();
+    if (typeof renderDashFromData === 'function' && typeof dashLoaded !== 'undefined' && dashLoaded) {
+      try { 
+        if (typeof dAllData !== 'undefined' && dAllData && dAllData.length) renderDashFromData();
+      } catch(e){}
+    }
   } catch(ex){
     console.error('Load debt fail:', ex);
     if (loading) loading.innerHTML = ''
@@ -2639,7 +2679,7 @@ var FILTER_DIMENSIONS = [
   { key:'account', label:'Account',    icon:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' }
 ];
 
-var STATUS_LABELS = { shipping:'Đang giao', delivered:'Đã giao', shop:'Shop', error:'Lỗi' };
+var STATUS_LABELS = { shipping:'Đang giao', delivered:'Đã giao', shop:'Shop', error:'Lỗi', scam:'⚠ Nghi scam' };
 
 // Cache options + counts (rebuild khi load tracking mới)
 var dimensionOptions = { status:[], sheet:[], account:[] };
@@ -2648,16 +2688,34 @@ var dimensionOptions = { status:[], sheet:[], account:[] };
 var currentDetailDimension = null;
 
 function classifyTrackRow(r){
+  // Status: 'shipping'|'delivered'|'shop'|'error'|'scam'
+  // 'scam' = eBay đơn quá 20 ngày chưa Delivered (cảnh báo seller scam)
   var khoNorm = (r.kho||'').toLowerCase().replace(/[^a-z0-9]/g,'');
   var isEbayFormat = /^\d{2}-\d{5}-\d{5}$/.test(String(r.orderId||'').trim());
   var isShop = khoNorm.indexOf('shop') >= 0 || !isEbayFormat || r.isShop || r.status === 'SHOP';
   var isError = !r.ok || (r.status||'').indexOf('Lỗi') >= 0 || (r.status||'').indexOf('Timeout') >= 0;
+  var isDelivered = r.status === 'DELI' || r.delivered;
+  
+  // Tính số ngày kể từ ngày khởi tạo tracking đến hôm nay
+  var daysSince = 0;
+  var dateRef = r.estDelivery || r.shipDate || r.ngay || r.createdAt;
+  if (dateRef) {
+    try {
+      var dt = new Date(dateRef);
+      if (!isNaN(dt.getTime())) {
+        daysSince = Math.floor((Date.now() - dt.getTime()) / (24*60*60*1000));
+      }
+    } catch(e){}
+  }
+  r._daysSince = daysSince;
+  
   var status;
   if (isShop) status = 'shop';
   else if (isError) status = 'error';
-  else if (r.status === 'DELI') status = 'delivered';
+  else if (isDelivered) status = 'delivered';
+  else if (daysSince > 20) status = 'scam'; // ⚠ eBay >20 ngày chưa giao
   else status = 'shipping';
-  return { status:status, sheet:(r.sheet||''), account:(r.account||'') };
+  return { status:status, sheet:(r.sheet||''), account:(r.account||''), daysSince:daysSince };
 }
 
 // Build dimensionOptions với count
@@ -2671,7 +2729,7 @@ function buildTrackFilterPills(){
     if (c.account) counts.account[c.account] = (counts.account[c.account]||0) + 1;
   });
   // Status: ordered
-  dimensionOptions.status = ['shipping','delivered','shop','error']
+  dimensionOptions.status = ['scam','shipping','delivered','shop','error']
     .filter(function(s){return counts.status[s];})
     .map(function(s){return {value:s, label:STATUS_LABELS[s], count:counts.status[s]};});
   // Sheet: alphabetical
@@ -3147,6 +3205,9 @@ function renderTrackTable(){
     var isEbayFormat = /^\d{2}-\d{5}-\d{5}$/.test(String(r.orderId||'').trim());
     var isShop = khoNorm.indexOf('shop') >= 0 || !isEbayFormat || r.isShop || r.status === 'SHOP';
     var isError = !r.ok || (r.status||'').indexOf('Lỗi') >= 0 || (r.status||'').indexOf('Timeout') >= 0;
+    var isDelivered = r.status === 'DELI' || r.delivered;
+    var daysSince = r._daysSince || 0;
+    var isScam = !isShop && !isError && !isDelivered && daysSince > 20;
     
     if (lastIsShop === false && isShop) {
       var shopCount = sorted.filter(function(x){
@@ -3163,7 +3224,9 @@ function renderTrackTable(){
       statusTag = 'Shop'; pillBg = 'var(--warning-soft)'; pillColor = 'var(--warning)';
     } else if (isError) {
       statusTag = 'Lỗi'; pillBg = 'var(--danger-soft)'; pillColor = 'var(--danger)';
-    } else if (r.status === 'DELI') {
+    } else if (isScam) {
+      statusTag = '⚠ NGHI SCAM '+daysSince+'d'; pillBg = '#dc2626'; pillColor = '#fff';
+    } else if (isDelivered) {
       statusTag = 'Đã giao'; pillBg = 'var(--success-soft)'; pillColor = 'var(--success)';
     } else {
       statusTag = 'Đang giao'; pillBg = 'var(--primary-soft)'; pillColor = 'var(--primary)';
@@ -3171,7 +3234,9 @@ function renderTrackTable(){
     
     var hideStatus = isShop || isError;
     var stCell;
-    if (hideStatus && isShop) {
+    if (isScam) {
+      stCell = '<span class="scam-warn" style="background:'+pillBg+';color:'+pillColor+';font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px">'+statusTag+'</span>';
+    } else if (hideStatus && isShop) {
       stCell = '<span style="background:'+pillBg+';color:'+pillColor+';font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px">'+statusTag+'</span>';
     } else if (hideStatus) {
       stCell = '<span style="color:var(--text-3);font-size:11px">—</span>';
@@ -3180,7 +3245,8 @@ function renderTrackTable(){
     }
     
     var accShort = (r.account||'').replace('kok.comp_92','kok').replace('mi_844318','mi');
-    html += '<tr style="border-bottom:1px solid var(--border)">'
+    var rowStyle = isScam ? 'border-bottom:1px solid var(--border);background:#fef2f2' : 'border-bottom:1px solid var(--border)';
+    html += '<tr style="'+rowStyle+'">'
       +'<td style="font-family:ui-monospace,monospace;font-size:11px;color:var(--text);font-weight:600">'+r.tracking+'</td>'
       +'<td style="font-size:11px;color:var(--text-3)">'+r.sheet+'</td>'
       +'<td style="font-size:11px;color:var(--text-2);font-weight:500">'+(r.kho||'')+'</td>'
@@ -3274,6 +3340,27 @@ function renderDash(){
   document.getElementById('dDT').textContent=fmtN(dt)+' đ';
   document.getElementById('dVon').textContent=fmtN(von)+' đ';
   document.getElementById('dMargin').textContent=(marginPct>=0?'+':'')+marginPct+'%';
+
+  // ╔══ TỔNG VỐN DOANH NGHIỆP ══╗
+  try {
+    var capPaid = 0, capOwed = 0, owedCustomers = 0;
+    if (typeof salesData !== 'undefined' && salesData) {
+      capPaid = salesData.reduce(function(s,x){return s+(parseFloat(x.total_paid)||0);},0);
+      capOwed = salesData.reduce(function(s,x){return s+(parseFloat(x.total_owed)||0);},0);
+      if (typeof customersCache !== 'undefined' && customersCache) {
+        owedCustomers = customersCache.filter(function(c){return c.totalOwed>0;}).length;
+      }
+    }
+    var capTotal = capPaid + capOwed;
+    var elPaid = document.getElementById('dCapPaid');
+    var elOwed = document.getElementById('dCapOwed');
+    var elTotal = document.getElementById('dCapTotal');
+    var elOwedSub = document.getElementById('dCapOwedSub');
+    if (elPaid) elPaid.textContent = fmtN(capPaid)+' đ';
+    if (elOwed) elOwed.textContent = fmtN(capOwed)+' đ';
+    if (elTotal) elTotal.textContent = fmtN(capTotal)+' đ';
+    if (elOwedSub) elOwedSub.textContent = owedCustomers + ' khách';
+  } catch(e){ console.warn('Capital calc fail:', e); }
 
   // Inventory split
   document.getElementById('dDaVe').textContent=daVeList.length;
@@ -3588,7 +3675,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.15.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.16.0</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
