@@ -625,18 +625,15 @@ function checkDashPass(){
 }
 
 renderH();
-// Init Dynamsoft - tune AGGRESSIVE cho nhận barcode tốt nhất
+// Init Dynamsoft - giữ config ổn định bản 2.6.4 (chỉ thêm beep + vibrate khi success)
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
 Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
 
-// Beep âm thanh khi quét thành công
 function scanBeep(){
   try{
     var ctx=new(window.AudioContext||window.webkitAudioContext)();
-    var osc=ctx.createOscillator();
-    var gain=ctx.createGain();
-    osc.frequency.value=1000;
-    osc.type='sine';
+    var osc=ctx.createOscillator();var gain=ctx.createGain();
+    osc.frequency.value=1000;osc.type='sine';
     osc.connect(gain);gain.connect(ctx.destination);
     gain.gain.setValueAtTime(0.15,ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
@@ -649,44 +646,12 @@ async function initScanner() {
   try {
     scanner = await Dynamsoft.DBR.BarcodeScanner.createInstance();
     var s = await scanner.getRuntimeSettings();
-    // Support tất cả format barcode 1D + 2D thường gặp
+    // Format: stable like bản 2.6.4 - chỉ format thường dùng
     s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 |
                         Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39 |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_93 |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13 |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_8 |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_UPC_A |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_UPC_E |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_ITF |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_QR_CODE |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_PDF417 |
-                        Dynamsoft.DBR.EnumBarcodeFormat.BF_DATAMATRIX;
-    // Tune aggressive cho barcode mờ/xa
-    s.expectedBarcodesCount = 0;  // auto detect any count
-    s.deblurLevel = 9;             // max deblur cho barcode mờ
-    s.timeout = 10000;             // 10s per frame
-    // Localization modes - scan all directions
-    if (s.furtherModes) {
-      s.furtherModes.localizationModes = [2,16,4,8,0,0,0,0]; // CONNECTED_BLOCKS + STATISTICS + LINES + SCAN_DIRECTLY
-    }
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13;
+    s.expectedBarcodesCount = 1;
     await scanner.updateRuntimeSettings(s);
-    // Tăng tần suất scan + camera HD
-    try{
-      var ss = scanner.getScanSettings ? await scanner.getScanSettings() : null;
-      if (ss) {
-        ss.intervalTime = 100;        // 100ms thay vì 300ms (3x faster)
-        ss.duplicateForgetTime = 3000;
-        await scanner.updateScanSettings(ss);
-      }
-    }catch(e){}
-    // Camera: ưu tiên back camera HD
-    try{
-      await scanner.updateVideoSettings({video:{
-        width:{ideal:1920},
-        height:{ideal:1080},
-        facingMode:{ideal:'environment'}
-      }});
-    }catch(e){}
     await scanner.setUIElement(document.getElementById('camModal'));
     scanner.onFrameRead = function(){};
     scanner.onUnduplicatedRead = function(txt){
@@ -1935,7 +1900,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.9.1</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.9.2</div>
 
 </body>
 </html>
