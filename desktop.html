@@ -12,16 +12,16 @@
   /* Shopify off-white + Linear typography + Stripe spacing */
   --bg: #f7f8fa;
   --surface: #ffffff;
-  --surface-2: var(--surface-2);
+  --surface-2: #fafbfc;
   --border: #e4e7eb;
   --border-strong: #d1d5db;
   --primary: #1565c0;
-  --primary-dark: var(--primary-dark);
+  --primary-dark: #0d47a1;
   --primary-soft: #e8f0fe;
   --text: #18232f;
   --text-2: #5a6873;
   --text-3: #8b97a3;
-  --success: var(--success);
+  --success: #137333;
   --success-soft: #e6f4ea;
   --warning: #b06000;
   --warning-soft: #fef7e0;
@@ -35,10 +35,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* TOP */
 .topbar{background:var(--primary-dark);padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.brand{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
-.brand .logo-img{width:34px;height:34px;border-radius:7px;display:block}
-.brand .name{display:flex;flex-direction:column;line-height:1.1}
-.brand .sub{font-size:11px;color:rgba(255,255,255,.7);font-weight:500;margin-top:2px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo-img{width:34px;height:34px;border-radius:7px;display:block;flex-shrink:0}
+.brand .name{display:flex;flex-direction:column;line-height:1.15;gap:1px}
+.brand .name>span:first-child{color:#fff!important;font-size:16px;font-weight:700;letter-spacing:-.3px}
+.brand .sub{font-size:11px;color:rgba(255,255,255,.75)!important;font-weight:500;letter-spacing:.1px}
 .status{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 12px}
 .sdot{width:7px;height:7px;border-radius:50%;background:var(--success)}
 .sdot.off{background:var(--text-3)}
@@ -124,29 +125,101 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .log-note{font-size:11px;color:var(--text-3);flex-shrink:0;margin:0 6px}
 .log-time{font-size:10px;color:var(--text-3);flex-shrink:0}
 
-/* DASHBOARD */
-.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.kpi{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px 16px;position:relative;overflow:hidden}
-.kpi-accent{position:absolute;top:0;left:0;width:100%;height:3px}
-.kpi-lbl{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-.kpi-val{font-size:22px;font-weight:700;color:var(--text);line-height:1}
-.kpi-sub{font-size:11px;color:var(--text-3);margin-top:4px}
-.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.chart-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px}
-.chart-ttl{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
-.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.data-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px;overflow:auto}
-.tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{color:var(--text-3);padding:6px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
-.tbl td{padding:8px 10px;border-bottom:1px solid #f0f2f5;color:var(--text-2)}
-.tbl tr:last-child td{border-bottom:none}
-.inv-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px;max-height:280px;overflow-y:auto}
-.inv-grp{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:5px 9px;border-radius:6px;margin-bottom:6px;display:flex;justify-content:space-between;color:#fff}
-.inv-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f2f5}
-.inv-row:last-child{border-bottom:none}
-.inv-name{font-size:12px;font-weight:500;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.inv-oid{font-size:10px;color:var(--text-3);font-family:monospace}
-.inv-price{font-size:11px;font-weight:700;color:var(--primary);flex-shrink:0}
+/* ============= DASHBOARD PRO ============= */
+/* Hero metrics row - Mercury Banking style */
+.dash-hero-row{display:grid;grid-template-columns:1.4fr 2fr;gap:12px;margin-bottom:14px}
+.dash-hero{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 22px;display:flex;flex-direction:column;justify-content:space-between;min-height:120px}
+.dash-hero-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.dash-hero-num{font-size:34px;font-weight:600;color:var(--text);line-height:1;letter-spacing:-.02em;font-feature-settings:'tnum';font-variant-numeric:tabular-nums}
+.dash-hero-num.pos{color:var(--success)}
+.dash-hero-num.neg{color:var(--danger)}
+.dash-hero-sub{font-size:12px;color:var(--text-2);margin-top:8px;font-weight:500}
+.dash-hero-trend{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;margin-left:6px}
+.dash-hero-trend.up{background:var(--success-soft);color:var(--success)}
+.dash-hero-trend.down{background:var(--danger-soft);color:var(--danger)}
+
+/* Secondary stats grid - Stripe style */
+.dash-stats-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dash-stat{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;min-height:120px}
+.dash-stat-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+.dash-stat-num{font-size:20px;font-weight:600;color:var(--text);line-height:1.1;letter-spacing:-.01em;font-feature-settings:'tnum';font-variant-numeric:tabular-nums}
+.dash-stat-sub{font-size:11px;color:var(--text-3);margin-top:6px;font-weight:500}
+
+/* Section wrapper */
+.dash-section{margin-bottom:14px}
+.dash-section-head{display:flex;align-items:baseline;justify-content:space-between;padding:0 2px 10px}
+.dash-section-head h3{font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.005em}
+.dash-section-sub{font-size:11px;color:var(--text-3);font-weight:500}
+
+/* Inventory split section - Linear style */
+.dash-inv-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 22px}
+.dash-inv-split{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0;align-items:stretch}
+.dash-inv-divider{background:var(--border)}
+.dash-inv-col{padding:4px 18px;display:flex;flex-direction:column;justify-content:center}
+.dash-inv-col:first-child{padding-left:0}
+.dash-inv-col:last-child{padding-right:0}
+.dash-inv-num{font-size:24px;font-weight:600;color:var(--text);line-height:1;letter-spacing:-.01em;font-feature-settings:'tnum';font-variant-numeric:tabular-nums}
+.dash-inv-num.success{color:var(--success)}
+.dash-inv-num.warning{color:var(--warning)}
+.dash-inv-num.primary{color:var(--primary)}
+.dash-inv-lbl{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-top:6px}
+.dash-inv-sub{font-size:11px;color:var(--text-2);margin-top:4px;font-weight:500;font-feature-settings:'tnum'}
+.dash-progress-wrap{margin-top:16px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;display:flex}
+.dash-progress-fill{height:100%;background:var(--success);transition:width .4s}
+.dash-progress-rest{flex:1;background:var(--warning);height:100%}
+.dash-progress-legend{display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--text-3);font-weight:500}
+
+/* Charts grid */
+.dash-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dash-chart-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+
+/* Tables grid */
+.dash-data-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dash-data-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;overflow:auto}
+.dash-data-card.scrollable{max-height:320px}
+
+/* Pro table - Stripe style */
+.dash-table{width:100%;border-collapse:collapse;font-size:12px}
+.dash-table th{color:var(--text-3);padding:8px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.dash-table th.r{text-align:right}
+.dash-table td{padding:11px 10px;border-bottom:1px solid var(--surface-2);color:var(--text-2);font-feature-settings:'tnum';font-variant-numeric:tabular-nums}
+.dash-table td.r{text-align:right;color:var(--text);font-weight:500}
+.dash-table td.r.pos{color:var(--success);font-weight:600}
+.dash-table td.r.neg{color:var(--danger);font-weight:600}
+.dash-table tr:hover td{background:var(--surface-2)}
+.dash-table tr:last-child td{border-bottom:none}
+.dash-table td.sheet-name{color:var(--text);font-weight:600}
+
+/* Inventory list - Notion clean */
+.dash-inv-grp{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface-2);border-radius:6px;margin-bottom:6px;font-size:11px;font-weight:600}
+.dash-inv-grp.success{background:var(--success-soft);color:var(--success)}
+.dash-inv-grp.warning{background:var(--warning-soft);color:var(--warning)}
+.dash-inv-grp-amt{font-feature-settings:'tnum'}
+.dash-inv-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface-2)}
+.dash-inv-row:last-child{border-bottom:none}
+.dash-inv-name{font-size:12px;font-weight:500;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-inv-oid{font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace;margin-top:2px}
+.dash-inv-price{font-size:12px;font-weight:600;color:var(--text);flex-shrink:0;font-feature-settings:'tnum'}
+
+/* Filter chips - Linear minimalist */
+.dash-filter-bar{display:flex;align-items:center;gap:14px;padding:0 2px 14px}
+.dash-filter-label{font-size:11px;color:var(--text-3);font-weight:500}
+.dash-filter-chips{display:flex;gap:6px;flex-wrap:wrap}
+.dash-chip{padding:5px 12px;border:1px solid var(--border);border-radius:14px;background:#fff;color:var(--text-2);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;letter-spacing:-.005em}
+.dash-chip:hover{border-color:var(--text-3);color:var(--text)}
+.dash-chip.active{background:var(--text);border-color:var(--text);color:#fff;font-weight:600}
+
+/* Reload button */
+.dash-reload{margin-left:auto;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--text-2);font-size:11px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.dash-reload:hover{border-color:var(--primary);color:var(--primary)}
+
+/* Loading state */
+.dash-loading{display:flex;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-3);font-size:13px;gap:8px}
+
+/* Page header */
+.dash-page-head{padding:4px 2px 14px}
+.dash-page-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.02em;margin-bottom:4px}
+.dash-page-sub{font-size:12px;color:var(--text-3);font-weight:500}
 
 /* CAMERA */
 #camModal{display:none;position:fixed;inset:0;background:rgba(30,45,61,.6);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
@@ -172,7 +245,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="KokTrack"/>
-<meta name="theme-color" content="var(--primary-dark)"/>
+<meta name="theme-color" content="#0d47a1"/>
 <link rel="manifest" href="manifest.json"/>
 </head>
 <body>
@@ -331,7 +404,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
           <button onclick="exportTrackCSV()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--primary);cursor:pointer;display:none" id="btnExportTrack">Xuất CSV</button>
         </div>
         <div style="overflow-x:auto">
-          <table class="tbl" id="trackTable">
+          <table class="dash-table" id="trackTable" style="font-size:11px">
             <thead><tr>
               <th>Tracking</th><th>Sheet</th><th>Kho</th><th>Acc</th><th>Sản phẩm</th><th>Trạng thái</th><th>Dự kiến giao</th><th>Đã giao</th>
             </tr></thead>
@@ -343,65 +416,120 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
     <!-- Dashboard -->
     <div id="dashContent" style="display:none">
-      <div class="kpi-grid">
-        <div class="kpi">
-          <div class="kpi-accent" style="background:var(--success)"></div>
-          <div class="kpi-lbl">Tổng lãi</div>
-          <div class="kpi-val" id="dLai">—</div>
-          <div class="kpi-sub" id="dLaiSub">0 đơn</div>
+      <!-- Page header -->
+      <div class="dash-page-head">
+        <div class="dash-page-title">Báo cáo kinh doanh</div>
+        <div class="dash-page-sub" id="dashPageSub">Tổng quan hiệu quả & tồn kho</div>
+      </div>
+      
+      <!-- Hero metrics: Tổng lãi (huge) + 3 secondary -->
+      <div class="dash-hero-row">
+        <div class="dash-hero">
+          <div>
+            <div class="dash-hero-label">Tổng lãi</div>
+            <div class="dash-hero-num" id="dLai">—</div>
+          </div>
+          <div class="dash-hero-sub" id="dLaiSub">— đơn đã bán</div>
         </div>
-        <div class="kpi">
-          <div class="kpi-accent" style="background:var(--primary)"></div>
-          <div class="kpi-lbl">Doanh thu</div>
-          <div class="kpi-val" id="dDT">—</div>
-          <div class="kpi-sub">Tổng giá bán</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-accent" style="background:var(--warning)"></div>
-          <div class="kpi-lbl">Vốn nhập</div>
-          <div class="kpi-val" id="dVon">—</div>
-          <div class="kpi-sub">Tổng giá nhập</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-accent" style="background:var(--danger)"></div>
-          <div class="kpi-lbl">Tồn kho</div>
-          <div class="kpi-val" id="dTon">—</div>
-          <div class="kpi-sub" id="dTonVon">—</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-accent" style="background:#00897b"></div>
-          <div class="kpi-lbl">Đã về kho</div>
-          <div class="kpi-val" id="dDaVe" style="color:#00897b">—</div>
-          <div class="kpi-sub" id="dDaVeVon">—</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-accent" style="background:var(--warning)"></div>
-          <div class="kpi-lbl">Chưa về kho</div>
-          <div class="kpi-val" id="dChuaVe" style="color:var(--warning)">—</div>
-          <div class="kpi-sub" id="dChuaVeVon">—</div>
+        <div class="dash-stats-3">
+          <div class="dash-stat">
+            <div class="dash-stat-label">Doanh thu</div>
+            <div class="dash-stat-num" id="dDT">—</div>
+            <div class="dash-stat-sub">Tổng giá bán</div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-label">Vốn nhập</div>
+            <div class="dash-stat-num" id="dVon">—</div>
+            <div class="dash-stat-sub">Tổng giá nhập</div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-label">Margin %</div>
+            <div class="dash-stat-num" id="dMargin">—</div>
+            <div class="dash-stat-sub">Tỷ suất lợi nhuận</div>
+          </div>
         </div>
       </div>
-      <div class="charts-grid">
-        <div class="chart-card">
-          <div class="chart-ttl">Lãi/Lỗ & % Margin</div>
-          <canvas id="dChartLai" height="200"></canvas>
+      
+      <!-- Inventory split section -->
+      <div class="dash-section">
+        <div class="dash-section-head">
+          <h3>Tồn kho</h3>
+          <span class="dash-section-sub" id="dTotalMay">— máy</span>
         </div>
-        <div class="chart-card">
-          <div class="chart-ttl">Tồn kho: Đã về / Chưa về</div>
-          <canvas id="dChartTon" height="200"></canvas>
+        <div class="dash-inv-card">
+          <div class="dash-inv-split">
+            <div class="dash-inv-col">
+              <div class="dash-inv-num success" id="dDaVe">—</div>
+              <div class="dash-inv-lbl">Đã về kho</div>
+              <div class="dash-inv-sub" id="dDaVeVon">— đ</div>
+            </div>
+            <div class="dash-inv-divider"></div>
+            <div class="dash-inv-col">
+              <div class="dash-inv-num warning" id="dChuaVe">—</div>
+              <div class="dash-inv-lbl">Chưa về kho</div>
+              <div class="dash-inv-sub" id="dChuaVeVon">— đ</div>
+            </div>
+            <div class="dash-inv-divider"></div>
+            <div class="dash-inv-col">
+              <div class="dash-inv-num primary" id="dTon">—</div>
+              <div class="dash-inv-lbl">Tổng vốn tồn</div>
+              <div class="dash-inv-sub" id="dTonVon">— đ</div>
+            </div>
+          </div>
+          <div class="dash-progress-wrap">
+            <div class="dash-progress-fill" id="dProgressDaVe" style="width:0%"></div>
+            <div class="dash-progress-rest"></div>
+          </div>
+          <div class="dash-progress-legend">
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--success);margin-right:5px"></span>Đã về</span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--warning);margin-right:5px"></span>Chưa về</span>
+          </div>
         </div>
       </div>
-      <div class="data-grid">
-        <div class="data-card">
-          <div class="chart-ttl">Chi tiết theo sheet</div>
-          <table class="tbl">
-            <thead><tr><th>Sheet</th><th style="text-align:right">Đơn</th><th style="text-align:right">Doanh thu</th><th style="text-align:right">Lãi</th></tr></thead>
-            <tbody id="dTable"></tbody>
-          </table>
+      
+      <!-- Charts -->
+      <div class="dash-section">
+        <div class="dash-charts-grid">
+          <div class="dash-chart-card">
+            <div class="dash-section-head" style="padding-bottom:14px">
+              <h3>Lãi/Lỗ theo sheet</h3>
+              <span class="dash-section-sub">% Margin</span>
+            </div>
+            <canvas id="dChartLai" height="180"></canvas>
+          </div>
+          <div class="dash-chart-card">
+            <div class="dash-section-head" style="padding-bottom:14px">
+              <h3>Phân bổ vốn tồn kho</h3>
+              <span class="dash-section-sub">triệu đồng</span>
+            </div>
+            <canvas id="dChartTon" height="180"></canvas>
+          </div>
         </div>
-        <div class="inv-card">
-          <div class="chart-ttl">Chi tiết tồn kho</div>
-          <div id="dTonList"></div>
+      </div>
+      
+      <!-- Detail tables -->
+      <div class="dash-section">
+        <div class="dash-data-grid">
+          <div class="dash-data-card">
+            <div class="dash-section-head" style="padding-bottom:8px">
+              <h3>Chi tiết theo sheet</h3>
+            </div>
+            <table class="dash-table">
+              <thead><tr>
+                <th>Sheet</th>
+                <th class="r">Đơn</th>
+                <th class="r">Doanh thu</th>
+                <th class="r">Lãi</th>
+              </tr></thead>
+              <tbody id="dTable"></tbody>
+            </table>
+          </div>
+          <div class="dash-data-card scrollable">
+            <div class="dash-section-head" style="padding-bottom:8px">
+              <h3>Chi tiết tồn kho</h3>
+            </div>
+            <div id="dTonList"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -672,10 +800,10 @@ async function findGia(orderId){
 var dashUnlocked = false;
 function checkDashPass(){
   if(dashUnlocked) return true;
-  var p=prompt('Nhap mat khau de xem Bao cao:');
+  var p=prompt('Nhập mật khẩu để xem Báo cáo:');
   if(p===null) return false;
   if(p==='1234'){dashUnlocked=true;return true;}
-  alert('Sai mat khau!'); return false;
+  alert('Sai mật khẩu!'); return false;
 }
 
 // ===== TRACKING AUTO =====
@@ -926,21 +1054,39 @@ function renderDash(){
   var chuaVeList=tonKho.filter(function(r){return !r.daVe;});
   var vonDaVe=daVeList.reduce(function(s,r){return s+r.giaNhap;},0);
   var vonChuaVe=chuaVeList.reduce(function(s,r){return s+r.giaNhap;},0);
+  var marginPct=von>0?Math.round(lai/von*1000)/10:0;
 
-  document.getElementById('dLai').textContent=(lai>=0?'+':'')+fmtN(lai)+' d';
-  document.getElementById('dLai').style.color=lai>=0?'var(--success)':'var(--danger)';
-  document.getElementById('dLaiSub').textContent=daBan.length+' đơn đã bán';
-  document.getElementById('dDT').textContent=fmtN(dt)+' d';
-  document.getElementById('dVon').textContent=fmtN(von)+' d';
-  document.getElementById('dTon').textContent=tonKho.length+' máy';
-  document.getElementById('dTonVon').textContent='Vốn: '+fmtN(vonTon)+' d';
-  document.getElementById('dDaVe').textContent=daVeList.length+' máy';
-  document.getElementById('dDaVeVon').textContent='Vốn: '+fmtN(vonDaVe)+' d';
-  document.getElementById('dChuaVe').textContent=chuaVeList.length+' máy';
-  document.getElementById('dChuaVeVon').textContent='Vốn: '+fmtN(vonChuaVe)+' d';
+  // Page sub - filter context
+  var pageSub=dFilter==='all'?'Tổng quan tất cả sheet':'Đang xem sheet: '+dFilter;
+  document.getElementById('dashPageSub').textContent=pageSub;
+
+  // Hero - Tổng lãi
+  var laiEl=document.getElementById('dLai');
+  laiEl.textContent=(lai>=0?'+':'')+fmtN(lai)+' đ';
+  laiEl.className='dash-hero-num '+(lai>=0?'pos':'neg');
+  document.getElementById('dLaiSub').textContent=daBan.length+' đơn đã bán · Margin '+(marginPct>=0?'+':'')+marginPct+'%';
+
+  // Secondary stats
+  document.getElementById('dDT').textContent=fmtN(dt)+' đ';
+  document.getElementById('dVon').textContent=fmtN(von)+' đ';
+  document.getElementById('dMargin').textContent=(marginPct>=0?'+':'')+marginPct+'%';
+
+  // Inventory split
+  document.getElementById('dDaVe').textContent=daVeList.length;
+  document.getElementById('dDaVeVon').textContent=fmtN(vonDaVe)+' đ';
+  document.getElementById('dChuaVe').textContent=chuaVeList.length;
+  document.getElementById('dChuaVeVon').textContent=fmtN(vonChuaVe)+' đ';
+  document.getElementById('dTon').textContent=fmtN(vonTon/1000000)+'M';
+  document.getElementById('dTonVon').textContent=tonKho.length+' máy';
+  document.getElementById('dTotalMay').textContent=tonKho.length+' máy · '+fmtN(vonTon)+' đ';
+  
+  // Progress bar
+  var pctDaVe=tonKho.length>0?Math.round(daVeList.length/tonKho.length*100):0;
+  document.getElementById('dProgressDaVe').style.width=pctDaVe+'%';
 
   Chart.defaults.color=cssVar('--text-3');
   Chart.defaults.borderColor=cssVar('--border');
+  Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,sans-serif";
 
   var mLai={};
   data.forEach(function(r){if(!mLai[r.sheet])mLai[r.sheet]=0;if(r.daBan)mLai[r.sheet]+=(r.lai||0);});
@@ -954,50 +1100,62 @@ function renderDash(){
   dChartLai=new Chart(document.getElementById('dChartLai'),{
     type:'bar',
     data:{labels:mKeys,datasets:[
-      {label:'Lai (M)',data:mVals,backgroundColor:mVals.map(function(v){return v>=0?'rgba(26,115,232,.7)':'rgba(234,67,53,.7)';}),borderRadius:6,yAxisID:'y'},
-      {label:'% Margin',data:pctVals,type:'line',borderColor:cssVar('--warning'),backgroundColor:'rgba(249,171,0,.1)',borderWidth:2,pointRadius:4,pointBackgroundColor:cssVar('--warning'),yAxisID:'y1'}
+      {label:'Lãi (M đ)',data:mVals,backgroundColor:mVals.map(function(v){return v>=0?'rgba(21,101,192,.85)':'rgba(179,38,30,.85)';}),borderRadius:4,yAxisID:'y',barThickness:24},
+      {label:'% Margin',data:pctVals,type:'line',borderColor:cssVar('--warning'),backgroundColor:'rgba(176,96,0,.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:cssVar('--warning'),yAxisID:'y1',tension:.3}
     ]},
-    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{callback:function(v){return v+'M';},font:{size:10}}},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:function(v){return v+'%';},font:{size:10}}}}}
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:8,boxHeight:8,padding:12}}},scales:{y:{ticks:{callback:function(v){return v+'M';},font:{size:10}},grid:{color:cssVar('--surface-2')}},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:function(v){return v+'%';},font:{size:10}}},x:{grid:{display:false}}}}
   });
 
   dChartTon=destroyChart(dChartTon);
   dChartTon=new Chart(document.getElementById('dChartTon'),{
     type:'doughnut',
     data:{
-      labels:['Đã về ('+daVeList.length+')','Chưa về ('+chuaVeList.length+')'],
-      datasets:[{data:[Math.round(vonDaVe/1000000*10)/10,Math.round(vonChuaVe/1000000*10)/10],backgroundColor:['#00897b',cssVar('--warning')],borderWidth:0}]
+      labels:['Đã về ('+daVeList.length+' máy)','Chưa về ('+chuaVeList.length+' máy)'],
+      datasets:[{data:[Math.round(vonDaVe/1000000*10)/10,Math.round(vonChuaVe/1000000*10)/10],backgroundColor:[cssVar('--success'),cssVar('--warning')],borderWidth:0,hoverOffset:6}]
     },
-    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
+    options:{responsive:true,cutout:'62%',plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:8,boxHeight:8,padding:12}},tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'M đ';}}}}}
   });
 
+  // Sheet table - pro style
   var mData={};
   data.forEach(function(r){if(!mData[r.sheet])mData[r.sheet]={don:0,dt:0,lai:0};if(r.daBan){mData[r.sheet].don++;mData[r.sheet].dt+=r.giaBan;mData[r.sheet].lai+=(r.lai||0);}});
   var html='';
   Object.keys(mData).sort().forEach(function(m){
-    var v=mData[m],c=v.lai>=0?'var(--success)':'var(--danger)';
-    html+='<tr><td style="font-weight:600;color:var(--text)">'+m+'</td><td style="text-align:right">'+v.don+'</td><td style="text-align:right">'+fmtN(v.dt)+'</td><td style="text-align:right;color:'+c+';font-weight:600">'+(v.lai>=0?'+':'')+fmtN(v.lai)+'</td></tr>';
+    var v=mData[m];
+    var laiCls=v.lai>=0?'pos':'neg';
+    var laiStr=(v.lai>=0?'+':'')+fmtN(v.lai);
+    html+='<tr>'+
+      '<td class="sheet-name">'+m+'</td>'+
+      '<td class="r">'+v.don+'</td>'+
+      '<td class="r">'+fmtN(v.dt)+'</td>'+
+      '<td class="r '+laiCls+'">'+laiStr+'</td>'+
+      '</tr>';
   });
-  document.getElementById('dTable').innerHTML=html||'<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--text-3)">Không có dữ liệu</td></tr>';
+  document.getElementById('dTable').innerHTML=html||'<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-3)">Không có dữ liệu</td></tr>';
 
-  if(!tonKho.length){document.getElementById('dTonList').innerHTML='<div style="text-align:center;padding:16px;color:var(--text-3);font-size:12px">Không có hàng tồn</div>';return;}
+  // Inventory list - clean Notion style
+  if(!tonKho.length){
+    document.getElementById('dTonList').innerHTML='<div style="text-align:center;padding:30px 16px;color:var(--text-3);font-size:12px">Không có hàng tồn kho</div>';
+    return;
+  }
   daVeList.sort(function(a,b){return b.giaNhap-a.giaNhap;});
   chuaVeList.sort(function(a,b){return b.giaNhap-a.giaNhap;});
-  function renderGroup(title,color,items){
+  function renderGroup(title,cssCls,items){
     if(!items.length)return '';
     var vonG=items.reduce(function(s,r){return s+r.giaNhap;},0);
-    var h='<div class="inv-grp" style="background:'+color+'">'+
+    var h='<div class="dash-inv-grp '+cssCls+'">'+
       '<span>'+title+' ('+items.length+')</span>'+
-      '<span>'+fmtN(vonG)+' d</span></div>';
+      '<span class="dash-inv-grp-amt">'+fmtN(vonG)+' đ</span></div>';
     items.forEach(function(r){
-      h+='<div class="inv-row">'+
+      h+='<div class="dash-inv-row">'+
         '<div style="flex:1;min-width:0">'+
-        '<div class="inv-name">'+(r.sp||'—')+'</div>'+
-        '<div class="inv-oid">'+(r.orderId||'')+'</div></div>'+
-        '<div class="inv-price">'+fmtN(r.giaNhap)+' d</div></div>';
+        '<div class="dash-inv-name">'+(r.sp||'—')+'</div>'+
+        '<div class="dash-inv-oid">'+(r.orderId||'')+'</div></div>'+
+        '<div class="dash-inv-price">'+fmtN(r.giaNhap)+' đ</div></div>';
     });
-    return h+'<div style="height:8px"></div>';
+    return h+'<div style="height:14px"></div>';
   }
-  document.getElementById('dTonList').innerHTML=renderGroup('Đã về — chưa bán','#00897b',daVeList)+renderGroup('Chưa về kho','var(--warning)',chuaVeList);
+  document.getElementById('dTonList').innerHTML=renderGroup('Đã về — chưa bán','success',daVeList)+renderGroup('Chưa về kho','warning',chuaVeList);
 }
 
 function addH(s,t,n){
@@ -1050,6 +1208,6 @@ function renderH(){
 
 document.getElementById('inpNhap').focus();
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.3.8</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.4.2</div>
 </body>
 </html>
