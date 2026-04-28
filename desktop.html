@@ -6,6 +6,7 @@
 <title>KokTrack</title>
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -301,6 +302,49 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 @keyframes cmdkFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes cmdkSlideIn{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 
+/* ╔════════════════════════════════════════════════════╗
+   ║  POS CART - Square/Shopify/Lightspeed grade         ║
+   ╚════════════════════════════════════════════════════╝ */
+.cart-panel{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(20,40,60,.04)}
+.cart-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+.cart-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.005em}
+.cart-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;background:var(--primary);color:#fff;font-size:11px;font-weight:700;border-radius:11px;font-variant-numeric:tabular-nums}
+.cart-clear{background:none;border:1px solid var(--border);color:var(--text-2);padding:5px 10px;border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s}
+.cart-clear:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
+.cart-list{max-height:380px;overflow-y:auto;padding:6px}
+.cart-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 14px;border-radius:8px;transition:background .12s;position:relative}
+.cart-item:hover{background:var(--surface-2)}
+.cart-item:hover .cart-item-x{opacity:1}
+.cart-item+.cart-item{border-top:1px solid var(--border)}
+.cart-item-info{min-width:0}
+.cart-item-sp{font-size:13px;font-weight:500;color:var(--text);letter-spacing:-.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.cart-item-meta{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.cart-item-meta .oid{font-family:ui-monospace,monospace;color:var(--text-2)}
+.cart-item-meta .sheet{padding:1px 6px;background:var(--primary-soft);color:var(--primary);border-radius:3px;font-weight:600;font-size:10px;letter-spacing:.3px}
+.cart-item-prices{text-align:right;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-variant-numeric:tabular-nums}
+.cart-item-gia{font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.01em}
+.cart-item-lai{font-size:11px;font-weight:500;margin-top:2px}
+.cart-item-lai.pos{color:var(--success)}
+.cart-item-lai.neg{color:var(--danger)}
+.cart-item-x{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:24px;height:24px;border:none;background:var(--danger-soft);color:var(--danger);border-radius:50%;cursor:pointer;font-size:14px;line-height:1;opacity:0;transition:opacity .12s,background .12s;display:flex;align-items:center;justify-content:center}
+.cart-item-x:hover{background:var(--danger);color:#fff}
+.cart-foot{padding:14px 16px;border-top:1px solid var(--border);background:var(--surface-2)}
+.cart-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--border)}
+.cart-stat{display:flex;flex-direction:column;gap:2px}
+.cart-stat span{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px}
+.cart-stat b{font-size:14px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.cart-stat b.cart-lai{font-size:16px;color:var(--success)}
+.cart-stat b.cart-lai.neg{color:var(--danger)}
+.cart-submit{width:100%;padding:13px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 2px 6px rgba(21,101,192,.25)}
+.cart-submit:hover:not(:disabled){box-shadow:0 4px 12px rgba(21,101,192,.35);transform:translateY(-1px)}
+.cart-submit:active{transform:translateY(0)}
+.cart-submit:disabled{background:var(--border);color:var(--text-3);cursor:not-allowed;box-shadow:none;transform:none}
+.cart-submit-icon{font-size:16px}
+.cart-submit-text{font-variant-numeric:tabular-nums}
+
+.btn-primary{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important}
+.btn-primary:hover{background:var(--primary-dark)!important}
+
 </style>
 
 <link rel="apple-touch-icon" href="data:image/png;base64,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"/>
@@ -401,7 +445,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
       <!-- BAN HANG -->
       <div class="sec" id="tab-ban">
-        <div class="hint">Súng USB / Camera / Nhập tay — Enter</div>
+        <div class="hint">Quét nhiều đơn liên tiếp — bấm BÁN để chốt thành hóa đơn</div>
         <div class="field">
           <div class="field-lbl">Order ID</div>
           <div class="irow">
@@ -419,11 +463,42 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
             <div class="field-lbl">So luong ban — <span id="slTonHint" style="color:var(--warning)">ton: ?</span></div>
             <div class="irow">
               <input type="number" id="slBan" value="1" min="1">
-              <button class="btn btn-sm" onclick="confirmBan()">Xác nhận</button>
+              <button class="btn btn-sm btn-primary" onclick="addToBanCart()">+ Thêm vào giỏ</button>
             </div>
           </div>
         </div>
         <div class="res" id="resBan"><div class="res-title" id="rtBan"></div><div class="res-body" id="rbBan"></div></div>
+
+        <!-- ╔══════════════════════════════════════╗ -->
+        <!-- ║   POS CART - Square/Shopify pattern  ║ -->
+        <!-- ╚══════════════════════════════════════╝ -->
+        <div class="cart-panel" id="banCartPanel">
+          <div class="cart-head">
+            <div class="cart-title">
+              <span>🛒 Giỏ hàng</span>
+              <span class="cart-count" id="banCartCount">0</span>
+            </div>
+            <button class="cart-clear" id="banCartClear" onclick="clearBanCart()" style="display:none">Xóa giỏ</button>
+          </div>
+          <div class="cart-list" id="banCartList">
+            <div class="empty-state" style="padding:32px 16px">
+              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+              <div class="empty-title">Giỏ trống</div>
+              <div class="empty-tip">Quét đơn hàng để bắt đầu — mỗi đơn 1 lần</div>
+            </div>
+          </div>
+          <div class="cart-foot" id="banCartFoot" style="display:none">
+            <div class="cart-stats">
+              <div class="cart-stat"><span>Doanh thu</span><b id="banCartDT">0 d</b></div>
+              <div class="cart-stat"><span>Vốn nhập</span><b id="banCartVon">0 d</b></div>
+              <div class="cart-stat"><span>Lãi</span><b id="banCartLai" class="cart-lai">0 d</b></div>
+            </div>
+            <button class="cart-submit" id="banCartSubmit" onclick="submitBanCart()">
+              <span class="cart-submit-icon">💵</span>
+              <span class="cart-submit-text">BÁN <span id="banCartSubmitN">0</span> ĐƠN</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- KIEM TRA -->
@@ -652,7 +727,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbygdD6nnD-ba12H-qj6wsT-dlvCF5ziuVJ2mMhQPUUUdLhmasOjcIN0R_VzFFYDIc_1/exec';
+var BASE='https://script.google.com/macros/s/AKfycbxTl5Nc993PT5fcxTs22dIde9WA6UOhBuKh3NxP6zZTUMtXXlvvM8OhVW8DXt4NA0zS/exec';
 // Helper: lay gia tri CSS variable cho Chart.js (Chart.js khong tu resolve var(--xxx))
 function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'';}
 var hist=JSON.parse(localStorage.getItem('khoHist')||'[]'),cT=null,cInfo=null,nT=null,nInfo=null,nNg=null,curOid='',curSp='';
@@ -665,21 +740,38 @@ var DASH_TTL_MS=30000;         // 30s stale threshold + poll interval
 var curTab='nhap',scanner=null,camTab='';
 
 Dynamsoft.DBR.BarcodeReader.engineResourcePath='https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
-Dynamsoft.DBR.BarcodeReader.productKeys='DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
+Dynamsoft.DBR.BarcodeReader.productKeys='DLS2eyJoYW5kc2hha2VDb2RlIjoiMTA1NDc1MzU0LU1UQTFORGMxTXpVMExYZGxZaTFVY21saGJGQnliMm8iLCJtYWluU2VydmVyVVJMIjoiaHR0cHM6Ly9tZGxzLmR5bmFtc29mdG9ubGluZS5jb20vIiwib3JnYW5pemF0aW9uSUQiOiIxMDU0NzUzNTQiLCJzdGFuZGJ5U2VydmVyVVJMIjoiaHR0cHM6Ly9zZGxzLmR5bmFtc29mdG9ubGluZS5jb20vIiwiY2hlY2tDb2RlIjo5ODk5MjI5Njl9';
+
+function scanBeep(){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var osc=ctx.createOscillator();var gain=ctx.createGain();
+    osc.frequency.value=1000;osc.type='sine';
+    osc.connect(gain);gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.15,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
+    osc.start();osc.stop(ctx.currentTime+0.12);
+  }catch(e){}
+}
 
 async function initScanner(){
   if(scanner)return;
   try{
     scanner=await Dynamsoft.DBR.BarcodeScanner.createInstance();
     var s=await scanner.getRuntimeSettings();
-    s.barcodeFormatIds=Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128|Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39|Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13;
+    s.barcodeFormatIds=Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128|Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39|Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13|Dynamsoft.DBR.EnumBarcodeFormat.BF_QR_CODE;
     s.expectedBarcodesCount=1;
     await scanner.updateRuntimeSettings(s);
     await scanner.setUIElement(document.getElementById('camModal'));
     scanner.onFrameRead=function(){};
-    scanner.onUnduplicatedRead=function(txt){closeCam();onScanned(txt.trim());};
-  }catch(e){scanner=null;}
+    scanner.onUnduplicatedRead=function(txt){
+      scanBeep();
+      if(navigator.vibrate)navigator.vibrate([60,30,60]);
+      closeCam();onScanned(txt.trim());
+    };
+  }catch(e){scanner=null;console.error('Scanner init fail:',e);}
 }
+initScanner();
 initScanner();
 
 async function openCam(tab){
@@ -693,11 +785,160 @@ function closeCam(){
   document.getElementById('camModal').classList.remove('show');
   if(scanner){try{scanner.close();}catch(e){}}
 }
+/* ╔═══════════════════════════════════════════════════════════════╗
+   ║  CARRIER DETECTOR PRO — UPS + FedEx + eBay Order ID           ║
+   ║  Industry-grade format detection + checksum validation         ║
+   ╚═══════════════════════════════════════════════════════════════╝ */
+
+function _upsCheckDigit(body){
+  // UPS MOD-10
+  var sumOdd=0, sumEven=0;
+  for (var i=0; i<body.length; i++){
+    var c = body.charCodeAt(i);
+    var v;
+    if (c >= 48 && c <= 57) v = c - 48;
+    else if (c >= 65 && c <= 90) v = (c - 63) % 10;
+    else return -1;
+    if (i % 2 === 0) sumOdd += v;
+    else sumEven += v;
+  }
+  var total = sumOdd + sumEven * 2;
+  return (10 - (total % 10)) % 10;
+}
+
+function _fedexGroundCheck(num15){
+  var weights=[1,3,7,1,3,7,1,3,7,1,3,7,1,3];
+  var sum=0;
+  for (var i=0; i<14; i++) sum += parseInt(num15[i],10) * weights[i];
+  var c = sum % 11;
+  if (c === 10) c = 0;
+  return c;
+}
+
+function _fedexExpressCheck(num12){
+  try{ return Number(BigInt(num12.slice(0,11)) % 7n); }
+  catch(e){
+    var rem = 0;
+    for (var i=0;i<11;i++) rem = (rem*10 + parseInt(num12[i],10)) % 7;
+    return rem;
+  }
+}
+
+function detectCarrier(raw){
+  if (!raw) return {carrier:'UNKNOWN', confidence:0, raw:''};
+  var s = String(raw).trim();
+  s = s.replace(/^[\x00-\x1f\x7f]+/, '');
+  s = s.replace(/^\[?\)>\s*[A-Z0-9]*/, '');
+  s = s.replace(/^\(00\)/, '');
+  s = s.replace(/^\(420\)\d{5,9}/, '');
+  s = s.replace(/^\(421\)\d{4,7}/, '');
+  s = s.replace(/[\s\-\(\)\.]/g, '');
+  s = s.replace(/^[#'"]+/, '');
+  var sUpper = s.toUpperCase();
+  var rawTrim = String(raw).trim().replace(/^[#'"]+/,'');
+
+  // eBay Order ID - flex format: cho phép space/dash bất kỳ, tự reformat
+  // Ví dụ: "12-14423-53078", "12 14423 53078", "1214423 53078", "1214423-53078"
+  var ebayCleaned = rawTrim.replace(/[\s\-_.]/g,'');
+  if (/^\d{12}$/.test(ebayCleaned)){
+    var ebFormatted = ebayCleaned.slice(0,2)+'-'+ebayCleaned.slice(2,7)+'-'+ebayCleaned.slice(7,12);
+    return {carrier:'EBAY', type:'order_id', confidence:100, tracking:ebFormatted, raw:raw};
+  }
+  // Shop Order ID - flex: "CA01-9914", "CA01 9914", "CA019914"
+  if (/^[A-Z]{2}\d{6}$/i.test(rawTrim.replace(/[\s\-_.]/g,''))){
+    var shCleaned = rawTrim.replace(/[\s\-_.]/g,'').toUpperCase();
+    return {carrier:'SHOP', type:'order_id', confidence:100, tracking:shCleaned.slice(0,4)+'-'+shCleaned.slice(4,8), raw:raw};
+  }
+
+  // UPS
+  if (/^1Z[0-9A-Z]{16}$/.test(sUpper)){
+    var body = sUpper.slice(2,17);
+    var checkActual = parseInt(sUpper[17],10);
+    if (_upsCheckDigit(body) === checkActual){
+      return {carrier:'UPS', type:'standard', confidence:100, tracking:sUpper, raw:raw};
+    }
+    return {carrier:'UPS', type:'standard', confidence:70, tracking:sUpper, raw:raw,
+            warning:'Checksum không khớp'};
+  }
+
+  // FedEx 96-prefix 22-digit
+  if (/^96\d{20}$/.test(sUpper)){
+    var last15 = sUpper.slice(-15);
+    if (_fedexGroundCheck(last15) === parseInt(last15[14],10)){
+      return {carrier:'FEDEX', type:'ground_22', confidence:100, tracking:last15, raw:raw};
+    }
+    var last12 = sUpper.slice(-12);
+    if (_fedexExpressCheck(last12) === parseInt(last12[11],10)){
+      return {carrier:'FEDEX', type:'express_22', confidence:100, tracking:last12, raw:raw};
+    }
+    return {carrier:'FEDEX', type:'sscc_22', confidence:70, tracking:last15, raw:raw,
+            warning:'Checksum không khớp'};
+  }
+
+  // FedEx Ground 15-digit
+  if (/^\d{15}$/.test(sUpper)){
+    if (_fedexGroundCheck(sUpper) === parseInt(sUpper[14],10)){
+      return {carrier:'FEDEX', type:'ground', confidence:100, tracking:sUpper, raw:raw};
+    }
+    return {carrier:'FEDEX', type:'ground', confidence:60, tracking:sUpper, raw:raw,
+            warning:'Checksum không khớp'};
+  }
+
+  // FedEx Express 12-digit
+  if (/^\d{12}$/.test(sUpper)){
+    if (_fedexExpressCheck(sUpper) === parseInt(sUpper[11],10)){
+      return {carrier:'FEDEX', type:'express', confidence:100, tracking:sUpper, raw:raw};
+    }
+    return {carrier:'FEDEX', type:'express', confidence:60, tracking:sUpper, raw:raw,
+            warning:'Checksum không khớp'};
+  }
+
+  // FedEx SmartPost
+  if (/^(02|03|92|93|94|95)\d{18,20}$/.test(sUpper)){
+    return {carrier:'FEDEX', type:'smartpost', confidence:80, tracking:sUpper, raw:raw};
+  }
+
+  // USPS
+  if (/^9\d{21}$/.test(sUpper)){
+    return {carrier:'USPS', type:'standard', confidence:75, tracking:sUpper, raw:raw};
+  }
+
+  return {carrier:'UNKNOWN', confidence:0, tracking:sUpper, raw:raw};
+}
+
+function carrierLabel(d){
+  if (!d) return 'Không xác định';
+  var labels = {
+    UPS:'UPS',
+    FEDEX:'FedEx '+(d.type==='express'?'Express':d.type==='ground'?'Ground':d.type==='ground_22'?'Ground SSCC':d.type==='express_22'?'Express SSCC':d.type==='smartpost'?'SmartPost':''),
+    USPS:'USPS',
+    EBAY:'eBay Order',
+    SHOP:'Shop Order',
+    UNKNOWN:'Không nhận diện'
+  };
+  return (labels[d.carrier]||d.carrier).trim();
+}
+
 function onScanned(t){
-  if(camTab==='nhap'){document.getElementById('inpNhap').value=t;doNhap();}
-  else if(camTab==='ban'){document.getElementById('inpBan').value=t;doBan();}
-  else if(camTab==='gia'){document.getElementById('inpGia').value=t;doGia();}
-  else if(camTab==='intem'){document.getElementById('inpInTem').value=t;inTemManual();}
+  // Pro: detect carrier trước
+  var det = detectCarrier(t);
+  var labelTxt = carrierLabel(det);
+
+  if (det.confidence >= 100){
+    showToast({type:'ok', title:'✓ '+labelTxt, msg:det.tracking});
+  }else if (det.confidence >= 60){
+    showToast({type:'warn', title:'⚠ '+labelTxt+' (checksum lỗi)',
+               msg:(det.warning||'Có thể đọc sai')+' — kiểm tra lại'});
+  }else{
+    showToast({type:'warn', title:'? Không nhận diện', msg:'Raw: '+t.substring(0,30)});
+  }
+
+  var useTxt = det.confidence >= 70 ? det.tracking : t;
+
+  if(camTab==='nhap'){document.getElementById('inpNhap').value=useTxt;doNhap();}
+  else if(camTab==='ban'){document.getElementById('inpBan').value=useTxt;doBan();}
+  else if(camTab==='gia'){document.getElementById('inpGia').value=useTxt;doGia();}
+  else if(camTab==='intem'){document.getElementById('inpInTem').value=useTxt;inTemManual();}
 }
 
 function switchTab(t){
@@ -813,9 +1054,72 @@ function showRes(id,type,title,body){
   document.getElementById('rb'+sfx).innerHTML=body;
 }
 
-function doNhap(){var v=document.getElementById('inpNhap').value.trim();if(v){document.getElementById('inpNhap').value='';findTracking(v);}}
+/* ╔════════════════════════════════════════════════════════╗
+   ║  TRACKING DETECTOR - Industry standards                 ║
+   ║  FedEx + UPS + USPS - based on official documentation   ║
+   ╚════════════════════════════════════════════════════════╝ */
+function detectTracking(raw){
+  if(!raw) return {carrier:'',tracking:'',confidence:'none',raw:''};
+  // Step 1: Clean - remove whitespace, control chars, normalize case
+  var s=String(raw).replace(/[\s\x00-\x1F\x7F]+/g,'').toUpperCase();
+  if(!s) return {carrier:'',tracking:'',confidence:'none',raw:raw};
+
+  // Step 2: UPS MaxiCode raw (2D scan có header [)>RS01GS...)
+  // Extract 1Z + 16 chars từ bất cứ đâu trong stream
+  if(s.indexOf('[)>')===0 || s.indexOf(']C0')===0 || s.indexOf('1Z')>=0){
+    var upsMatch=s.match(/1Z[A-Z0-9]{16}/);
+    if(upsMatch){
+      var hasMaxi=s.indexOf('[)>')===0 || s.length>20;
+      return {carrier: hasMaxi?'UPS MaxiCode':'UPS', tracking:upsMatch[0], confidence:'high', raw:raw};
+    }
+  }
+
+  // Step 3: UPS standard 1Z + 16 alphanumeric (18 chars)
+  if(/^1Z[A-Z0-9]{16}$/.test(s)) return {carrier:'UPS', tracking:s, confidence:'high', raw:raw};
+
+  // Step 4: USPS 22-digit (Priority/Express/SmartPost handoff)
+  // Bắt đầu bằng 91/92/93/94/95 + 20 số
+  if(/^9[1-5]\d{20}$/.test(s)) return {carrier:'USPS', tracking:s, confidence:'high', raw:raw};
+
+  // Step 5: FedEx Ground 34-digit (96-prefixed mở rộng)
+  // Format: 9622 + 30 chars routing/tracking. Tracking thực = 12 số cuối
+  if(/^96\d{32}$/.test(s)) return {carrier:'FedEx Ground', tracking:s.slice(-12), confidence:'high', raw:raw};
+
+  // Step 6: FedEx Ground 22-digit (96-prefixed cơ bản)
+  // Tracking 12 hoặc 15 số cuối tùy version. Lấy 12 số cuối là chuẩn nhất.
+  if(/^96\d{20}$/.test(s)) return {carrier:'FedEx Ground', tracking:s.slice(-12), confidence:'high', raw:raw};
+
+  // Step 7: FedEx SmartPost 20-22 digits (92/91 prefix)
+  if(/^9[12]\d{18,20}$/.test(s)) return {carrier:'FedEx SmartPost', tracking:s.slice(-12), confidence:'medium', raw:raw};
+
+  // Step 8: FedEx Ground standard 15 digits
+  if(/^\d{15}$/.test(s)) return {carrier:'FedEx Ground', tracking:s, confidence:'high', raw:raw};
+
+  // Step 9: FedEx Express 12 digits
+  if(/^\d{12}$/.test(s)) return {carrier:'FedEx Express', tracking:s, confidence:'high', raw:raw};
+
+  // Step 10: Numeric > 12 unknown carrier - lấy 12 cuối làm fallback
+  if(/^\d+$/.test(s) && s.length>12) return {carrier:'Unknown', tracking:s.slice(-12), confidence:'low', raw:raw};
+
+  // Step 11: Giữ nguyên
+  return {carrier:'Unknown', tracking:s, confidence:'low', raw:raw};
+}
+// Backwards compat - giữ tên cũ trả về string
+function normalizeTracking(raw){ return detectTracking(raw).tracking; }
+function doNhap(){
+  var raw=document.getElementById('inpNhap').value.trim();
+  if(!raw) return;
+  var det=detectTracking(raw);
+  document.getElementById('inpNhap').value='';
+  if(det.tracking!==raw && det.carrier){
+    showToast({type:'info', title:'📦 '+det.carrier, msg:raw.length+' ký tự → '+det.tracking});
+  }
+  findTracking(det.tracking);
+}
 
 async function findTracking(t){
+  // Auto-normalize: FedEx barcode dài → 12 số cuối; UPS giữ nguyên
+  t = normalizeTracking(t);
   var now=new Date(),ng=now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
   showRes('resNhap','warn','<span class="spin"></span>Dang tim...','Tracking: <b>'+t+'</b>');
   setStatus('Đang tìm...', true);
@@ -826,13 +1130,25 @@ async function findTracking(t){
       nT=t;nInfo=d;nNg=ng;curOid=d.orderId||'';curSp=d.sp||'';
       var spTxt=d.sp?'<br><b>SP:</b> '+d.sp:'';
       var slTxt=d.sl>1?'<br><b>SL sheet:</b> '+d.sl:'';
-      showRes('resNhap','info','Tìm thấy — Nhập phí ship & số lượng','<b>Tracking:</b> '+t+spTxt+slTxt+'<br><b>Sheet:</b> '+d.sheet+' · dong '+d.row);
+      // Báo cho bố biết tracking trùng + auto nhảy sang đơn tiếp
+      var dupTxt='';
+      if(d.totalMatched && d.totalMatched > 1){
+        dupTxt='<br><span style="color:var(--warning);font-weight:600">⚠ Tracking dùng chung '+d.totalMatched+' đơn — đã nhập '+d.alreadyClaimed+', đang xử lý đơn tiếp theo</span>';
+        showToast({type:'warn',title:'Tracking trùng '+d.totalMatched+' đơn',msg:'Đang nhập đơn thứ '+(d.alreadyClaimed+1)});
+      }
+      showRes('resNhap','info','Tìm thấy — Nhập phí ship & số lượng','<b>Tracking:</b> '+t+spTxt+slTxt+'<br><b>Sheet:</b> '+d.sheet+' · dong '+d.row+dupTxt);
       var sl=d.sl||1;
       document.getElementById('slVe').value=sl;
       document.getElementById('slVe').max=sl;
       document.getElementById('shipWrap').classList.add('show');
       document.getElementById('phiShip').focus();
       setStatus('Tim thay: '+t.substring(0,20), true);
+    }else if(d.allClaimed){
+      // Tất cả các đơn cùng tracking đã nhập kho rồi
+      showRes('resNhap','warn','Đã nhập kho hết','<b>'+t+'</b> dùng chung '+d.totalMatched+' đơn — đã về kho hết.');
+      showToast({type:'warn',title:'Đã nhập kho hết',msg:d.totalMatched+' đơn cùng tracking đã được xử lý'});
+      addH('warn',t,'Đã về hết');
+      setStatus('Đã về hết', true);
     }else{
       showRes('resNhap','err','Không tìm thấy','<b>'+t+'</b> — khong co trong sheet.');
       addH('err',t,'Không tìm thấy');
@@ -863,9 +1179,10 @@ async function confirmNhap(){
 }
 
 async function inTemManual(){
-  var v=document.getElementById('inpInTem').value.trim();
-  if(!v) return;
-  // Auto fetch SP từ backend để tem có đủ tên sản phẩm
+  var raw=document.getElementById('inpInTem').value.trim();
+  if(!raw) return;
+  var v=normalizeOrderId(raw);
+  if(v!==raw) document.getElementById('inpInTem').value=v;
   showToast({type:'info',title:'Đang tra cứu sản phẩm',msg:v});
   try{
     var r=await fetch(BASE+'?action=timMay&orderId='+encodeURIComponent(v));
@@ -873,7 +1190,6 @@ async function inTemManual(){
     if(d.found && d.sp){
       inTem(v,d.sp);
     }else{
-      // Không tìm thấy - vẫn in nhưng không có tên SP
       inTem(v,'');
       if(!d.found) showToast({type:'warn',title:'Không tìm thấy SP',msg:'In tem chỉ với Order ID'});
     }
@@ -885,40 +1201,40 @@ async function inTemManual(){
 
 function inTem(oid,sp){
   if(!oid){alert('Chua co Order ID!');return;}
+  // Tem 35×22mm NGANG: QR vuông bên TRÁI + Text bên PHẢI
   var W=330,H=208;
   var canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
   var ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-  if(sp){
-    ctx.fillStyle='#000';ctx.font='bold 15px Arial';ctx.textAlign='center';
-    var words=sp.split(' '),line='',lines=[];
-    for(var i=0;i<words.length;i++){var test=line+(line?' ':'')+words[i];if(ctx.measureText(test).width>W-16){if(line)lines.push(line);line=words[i];}else line=test;}
-    if(line)lines.push(line);
-    lines.slice(0,2).forEach(function(l,i){ctx.fillText(l,W/2,18+i*17);});
-  }
-  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.style.position='absolute';svg.style.left='-9999px';
-  document.body.appendChild(svg);
-  try{JsBarcode(svg,oid,{format:'CODE128',width:1.8,height:90,displayValue:false,margin:3});}
-  catch(e){document.body.removeChild(svg);alert('Loi barcode!');return;}
-  var svgData=new XMLSerializer().serializeToString(svg);
-  document.body.removeChild(svg);
-  var img=new Image();
-  var blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
-  var svgUrl=URL.createObjectURL(blob);
-  img.src=svgUrl;
-  img.onload=function(){
-    var top=sp?38:6;
-    ctx.drawImage(img,10,top,W-20,120);
-    URL.revokeObjectURL(svgUrl);
-    ctx.fillStyle='#000';ctx.font='14px monospace';ctx.textAlign='center';
-    ctx.fillText(oid.length>32?oid.substring(0,32)+'...':oid,W/2,top+130);
+  try{
+    var qrCanvas=document.createElement('canvas');
+    new QRious({
+      element:qrCanvas,
+      value:oid,
+      size:200,
+      level:'M',
+      background:'white',
+      foreground:'black',
+      padding:2
+    });
+    var qrSize=200, qrX=4, qrY=4;
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+    var textX=qrSize+14, textW=W-textX-4;
+    if(sp){
+      ctx.fillStyle='#000';ctx.font='bold 13px Arial';ctx.textAlign='left';
+      var words=sp.split(' '),line='',lines=[];
+      for(var i=0;i<words.length;i++){var test=line+(line?' ':'')+words[i];if(ctx.measureText(test).width>textW){if(line)lines.push(line);line=words[i];}else line=test;}
+      if(line)lines.push(line);
+      lines.slice(0,3).forEach(function(l,i){ctx.fillText(l,textX,22+i*16);});
+    }
+    ctx.fillStyle='#000';ctx.font='bold 12px monospace';ctx.textAlign='left';
+    ctx.fillText(oid.length>14?oid.substring(0,14):oid, textX, H-12);
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('temPreview').src=dataUrl;
     document.getElementById('temPopupOid').textContent=oid;
     document.getElementById('temPopup').classList.add('show');
     canvas.toBlob(function(b){window._temBlob=b;window._temOid=oid;},'image/png');
-  };
+  }catch(e){alert('Loi tao QR: '+e.message);}
 }
 
 function shareOrDownloadTem(){
@@ -927,7 +1243,29 @@ function shareOrDownloadTem(){
   document.getElementById('temPopup').classList.remove('show');
 }
 
-function doBan(){var v=document.getElementById('inpBan').value.trim();if(v)findBan(v);}
+function normalizeOrderId(raw){
+  var s=String(raw||'').trim().replace(/^[#'"]+/,'').replace(/[\s\-_.]/g,'').toUpperCase();
+  if(!s) return '';
+  // eBay: 12 chữ số → reformat XX-XXXXX-XXXXX
+  if(/^\d{12}$/.test(s)) return s.slice(0,2)+'-'+s.slice(2,7)+'-'+s.slice(7,12);
+  // Shop: AA + 6 chữ số → reformat AAXX-XXXX
+  if(/^[A-Z]{2}\d{6}$/.test(s)) return s.slice(0,4)+'-'+s.slice(4,8);
+  return raw.trim().toUpperCase();
+}
+function doBan(){
+  var raw=document.getElementById('inpBan').value.trim();
+  if(!raw) return;
+  var v=normalizeOrderId(raw);
+  if(v!==raw) document.getElementById('inpBan').value=v;
+  findBan(v);
+}
+function doGia(){
+  var raw=document.getElementById('inpGia').value.trim();
+  if(!raw) return;
+  var v=normalizeOrderId(raw);
+  if(v!==raw) document.getElementById('inpGia').value=v;
+  findGia(v);
+}
 
 async function findBan(orderId){
   showRes('resBan','warn','<span class="spin"></span>Dang tim...','Order ID: <b>'+orderId+'</b>');
@@ -950,29 +1288,155 @@ async function findBan(orderId){
   }catch(ex){showRes('resBan','err','Lỗi kết nối','Thu lai sau.');}
 }
 
-async function confirmBan(){
-  if(!cT||!cInfo)return;
-  var gb=raw('giaBan');if(!gb){alert('Chua nhap gia ban!');return;}
+// ╔══════════════════════════════════════════════════════╗
+// ║   POS CART LOGIC - Add multi-orders, submit as bill   ║
+// ╚══════════════════════════════════════════════════════╝
+var banCart = []; // [{orderId, sheet, row, sp, sl, slBan, giaNhap, giaBan, lai}]
+
+function addToBanCart(){
+  if(!cT||!cInfo){showToast({type:'err',title:'Chưa quét đơn nào'});return;}
+  var gb=raw('giaBan');
+  if(!gb){showToast({type:'warn',title:'Chưa nhập giá bán'});document.getElementById('giaBan').focus();return;}
   var slBan=parseInt(document.getElementById('slBan').value)||1;
-  showRes('resBan','warn','<span class="spin"></span>Dang cap nhat...','');
-  try{
-    var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(cT)+'&giaBan='+gb+'&slBan='+slBan+'&sheet='+encodeURIComponent(cInfo.sheet)+'&row='+cInfo.row);
-    var d=await r.json();
-    if(d.success){
-      var conLai=d.slTon>0?'<br><b style="color:var(--success)">Con lai: '+d.slTon+' may</b>':'<br><b style="color:var(--danger)">Đã bán het!</b>';
-      showRes('resBan','ok','Ban thanh cong','<b>'+cT+'</b><br><b>Gia:</b> '+gb.toLocaleString('vi')+' d · <b>SL:</b> '+slBan+conLai);
-      addH('ok',cT,'Ban ×'+slBan+' · '+gb.toLocaleString('vi')+'d');
-      setStatus('Ban thanh cong', true);
-      document.getElementById('pi').classList.remove('show');
-      document.getElementById('giaBan').value='';document.getElementById('inpBan').value='';
-      cT=null;cInfo=null;
-      document.getElementById('inpBan').focus();
-    }else if(d.daBan)showRes('resBan','err','Đã bán het','Đã bán het so luong.');
-    else showRes('resBan','err','Lỗi',d.error||'Khong cap nhat duoc.');
-  }catch(ex){showRes('resBan','err','Lỗi kết nối','Thu lai sau.');}
+  // Check duplicate
+  var dup=banCart.findIndex(function(it){return it.orderId===cT;});
+  if(dup>=0){
+    showToast({type:'warn',title:'Đã có trong giỏ',msg:cT+' — Xóa trước nếu muốn đổi giá'});
+    return;
+  }
+  // Validate stock
+  if(slBan>(cInfo.slTon||cInfo.sl||1)){
+    showToast({type:'err',title:'Vượt số lượng tồn',msg:'Tồn: '+(cInfo.slTon||cInfo.sl||1)+', muốn bán: '+slBan});
+    return;
+  }
+  // Calc lai (USD or VND - giả định gb là VND)
+  var giaNhap=cInfo.giaNhap||0;
+  var lai=gb-giaNhap*slBan;
+  banCart.push({
+    orderId:cT, sheet:cInfo.sheet, row:cInfo.row,
+    sp:cInfo.sp||'', sl:cInfo.sl||1, slBan:slBan,
+    giaNhap:giaNhap, giaBan:gb, lai:lai
+  });
+  showToast({type:'ok',title:'+ Đã thêm vào giỏ',msg:cInfo.sp||cT});
+  renderBanCart();
+  // Clear input để quét đơn tiếp theo
+  cT=null;cInfo=null;
+  document.getElementById('pi').classList.remove('show');
+  document.getElementById('giaBan').value='';
+  document.getElementById('inpBan').value='';
+  document.getElementById('inpBan').focus();
+  showRes('resBan','info','Sẵn sàng quét đơn tiếp theo','Giỏ có '+banCart.length+' đơn — bấm BÁN để chốt');
 }
 
-function doGia(){var v=document.getElementById('inpGia').value.trim();if(v)findGia(v);}
+function removeBanCart(idx){
+  var item=banCart[idx];if(!item)return;
+  banCart.splice(idx,1);
+  showToast({type:'info',title:'Đã xóa khỏi giỏ',msg:item.sp||item.orderId});
+  renderBanCart();
+}
+
+function clearBanCart(){
+  if(!banCart.length)return;
+  if(!confirm('Xóa toàn bộ giỏ hàng ('+banCart.length+' đơn)?'))return;
+  banCart=[];
+  showToast({type:'info',title:'Đã xóa giỏ'});
+  renderBanCart();
+}
+
+function renderBanCart(){
+  var list=document.getElementById('banCartList');
+  var foot=document.getElementById('banCartFoot');
+  var clrBtn=document.getElementById('banCartClear');
+  document.getElementById('banCartCount').textContent=banCart.length;
+  if(!banCart.length){
+    list.innerHTML='<div class="empty-state" style="padding:32px 16px"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg><div class="empty-title">Giỏ trống</div><div class="empty-tip">Quét đơn hàng để bắt đầu — mỗi đơn 1 lần</div></div>';
+    foot.style.display='none';
+    clrBtn.style.display='none';
+    return;
+  }
+  var html=banCart.map(function(it,i){
+    var laiCls=it.lai>=0?'pos':'neg';
+    var laiSign=it.lai>=0?'+':'';
+    var slTxt=it.slBan>1?' × '+it.slBan:'';
+    return '<div class="cart-item">'+
+      '<div class="cart-item-info">'+
+        '<div class="cart-item-sp">'+(it.sp||'(chưa có tên)')+slTxt+'</div>'+
+        '<div class="cart-item-meta">'+
+          '<span class="oid">'+it.orderId+'</span>'+
+          '<span class="sheet">'+it.sheet+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="cart-item-prices">'+
+        '<div class="cart-item-gia">'+Number(it.giaBan).toLocaleString('vi')+' d</div>'+
+        '<div class="cart-item-lai '+laiCls+'">'+laiSign+Number(it.lai).toLocaleString('vi')+' d</div>'+
+      '</div>'+
+      '<button class="cart-item-x" onclick="removeBanCart('+i+')" title="Xóa">×</button>'+
+    '</div>';
+  }).join('');
+  list.innerHTML=html;
+  // Stats
+  var totalDT=banCart.reduce(function(s,it){return s+it.giaBan;},0);
+  var totalVon=banCart.reduce(function(s,it){return s+it.giaNhap*it.slBan;},0);
+  var totalLai=banCart.reduce(function(s,it){return s+it.lai;},0);
+  document.getElementById('banCartDT').textContent=Number(totalDT).toLocaleString('vi')+' d';
+  document.getElementById('banCartVon').textContent=Number(totalVon).toLocaleString('vi')+' d';
+  var laiEl=document.getElementById('banCartLai');
+  laiEl.textContent=(totalLai>=0?'+':'')+Number(totalLai).toLocaleString('vi')+' d';
+  laiEl.classList.toggle('neg',totalLai<0);
+  document.getElementById('banCartSubmitN').textContent=banCart.length;
+  foot.style.display='block';
+  clrBtn.style.display='inline-block';
+}
+
+async function submitBanCart(){
+  if(!banCart.length)return;
+  var n=banCart.length;
+  var totalDT=banCart.reduce(function(s,it){return s+it.giaBan;},0);
+  var totalLai=banCart.reduce(function(s,it){return s+it.lai;},0);
+  // CONFIRM dialog - chỉ hiện DT, KHÔNG hiện lãi (đưa khách xem)
+  var msg='Xác nhận bán '+n+' đơn?\n\nTổng tiền: '+Number(totalDT).toLocaleString('vi')+' đ';
+  if(!confirm(msg))return;
+  var btn=document.getElementById('banCartSubmit');
+  btn.disabled=true;
+  btn.innerHTML='<span class="cart-submit-icon">⏳</span><span class="cart-submit-text">Đang bán...</span>';
+  var success=[],failed=[];
+  for(var i=0;i<banCart.length;i++){
+    var it=banCart[i];
+    try{
+      var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(it.orderId)+'&giaBan='+it.giaBan+'&slBan='+it.slBan+'&sheet='+encodeURIComponent(it.sheet)+'&row='+it.row);
+      var d=await r.json();
+      if(d.success){
+        success.push(it);
+        addH('ok',it.orderId,'Ban ×'+it.slBan+' · '+Number(it.giaBan).toLocaleString('vi')+'d');
+      }else{
+        failed.push(Object.assign({},it,{error:d.error||'Lỗi không rõ'}));
+      }
+    }catch(ex){
+      failed.push(Object.assign({},it,{error:'Lỗi kết nối'}));
+    }
+  }
+  // KẾT QUẢ - chỉ hiện DT (đưa khách xem được), KHÔNG hiện lãi
+  if(failed.length===0){
+    showToast({type:'ok',title:'✓ Đã bán '+success.length+' đơn',msg:'Tổng: '+Number(totalDT).toLocaleString('vi')+' đ',duration:5000});
+    showRes('resBan','ok','Hóa đơn '+success.length+' đơn đã chốt','<b>Tổng tiền: '+Number(totalDT).toLocaleString('vi')+' đ</b>');
+    setStatus('Bán thành công '+success.length+' đơn',true);
+    banCart=[];
+  }else if(success.length>0){
+    showToast({type:'warn',title:'Bán một phần',msg:'OK: '+success.length+', Lỗi: '+failed.length,duration:6000});
+    showRes('resBan','warn','Bán được '+success.length+' / '+(success.length+failed.length)+' đơn',
+      'Đơn lỗi giữ lại trong giỏ:<br>'+failed.map(function(f){return '• '+f.orderId+': '+f.error;}).join('<br>'));
+    banCart=failed;
+  }else{
+    showToast({type:'err',title:'Tất cả đơn đều lỗi',msg:failed[0].error,duration:6000});
+    showRes('resBan','err','Không bán được đơn nào',failed.map(function(f){return '• '+f.orderId+': '+f.error;}).join('<br>'));
+  }
+  btn.disabled=false;
+  btn.innerHTML='<span class="cart-submit-icon">💵</span><span class="cart-submit-text">BÁN <span id="banCartSubmitN">0</span> ĐƠN</span>';
+  renderBanCart();
+}
+
+// Backwards-compat wrapper
+async function confirmBan(){ addToBanCart(); }
 
 async function findGia(orderId){
   showRes('resGia','warn','<span class="spin"></span>Dang tim...','Order ID: <b>'+orderId+'</b>');
@@ -1574,7 +2038,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.7.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.10.1</div>
 
 </body>
 </html>
