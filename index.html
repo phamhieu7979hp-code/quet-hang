@@ -550,7 +550,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <script>
 var SUPA_URL = 'https://wpzyzgiokgvpfukzsfnz.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwenl6Z2lva2d2cGZ1a3pzZm56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNzEyMDAsImV4cCI6MjA5Mjg0NzIwMH0.TcukbXJk6j4zPUWSmAyPuDNwVw-MxWuV0dpP11bgWTM';
-var BASE = 'https://script.google.com/macros/s/AKfycbygdD6nnD-ba12H-qj6wsT-dlvCF5ziuVJ2mMhQPUUUdLhmasOjcIN0R_VzFFYDIc_1/exec';
+var BASE = 'https://script.google.com/macros/s/AKfycbxTl5Nc993PT5fcxTs22dIde9WA6UOhBuKh3NxP6zZTUMtXXlvvM8OhVW8DXt4NA0zS/exec';
 // Helper: lay gia tri CSS variable cho Chart.js (Chart.js khong tu resolve var(--xxx))
 function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'';}
 var hist = JSON.parse(localStorage.getItem('khoHist')||'[]'), cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
@@ -694,17 +694,197 @@ function closeCam() {
   document.getElementById('camModal').classList.remove('show');
   if (scanner){ try{ scanner.close(); }catch(e){} }
 }
+/* ╔═══════════════════════════════════════════════════════════════╗
+   ║  CARRIER DETECTOR PRO — UPS + FedEx + eBay Order ID           ║
+   ║  Industry-grade format detection + checksum validation         ║
+   ║                                                                ║
+   ║  Returns: {carrier, tracking, type, confidence, raw, warning?} ║
+   ║   carrier: UPS | FEDEX | EBAY | SHOP | UNKNOWN                ║
+   ║   confidence: 0-100 (100 = checksum verified)                  ║
+   ╚═══════════════════════════════════════════════════════════════╝ */
+
+function _upsCheckDigit(body){
+  // UPS MOD-10: body = 15 chars after "1Z"
+  var sumOdd=0, sumEven=0;
+  for (var i=0; i<body.length; i++){
+    var c = body.charCodeAt(i);
+    var v;
+    if (c >= 48 && c <= 57) v = c - 48;        // digit 0-9
+    else if (c >= 65 && c <= 90) v = (c - 63) % 10;   // A=2,B=3,...,I=0,J=1,...,Z=7
+    else return -1;
+    if (i % 2 === 0) sumOdd += v;
+    else sumEven += v;
+  }
+  var total = sumOdd + sumEven * 2;
+  return (10 - (total % 10)) % 10;
+}
+
+function _fedexGroundCheck(num15){
+  // FedEx Ground 15-digit MOD-11, weights: 1,3,7,1,3,7,1,3,7,1,3,7,1,3 (positions 1-14)
+  var weights=[1,3,7,1,3,7,1,3,7,1,3,7,1,3];
+  var sum=0;
+  for (var i=0; i<14; i++) sum += parseInt(num15[i],10) * weights[i];
+  var c = sum % 11;
+  if (c === 10) c = 0;
+  return c;
+}
+
+function _fedexExpressCheck(num12){
+  // FedEx Express 12-digit MOD-7: first 11 digits as integer mod 7
+  // Use BigInt (11 digits exceeds safe integer for some cases)
+  try{
+    var body = num12.slice(0,11);
+    return Number(BigInt(body) % 7n);
+  }catch(e){
+    // Fallback: classic mod-7 long division
+    var rem = 0;
+    for (var i=0;i<11;i++) rem = (rem*10 + parseInt(num12[i],10)) % 7;
+    return rem;
+  }
+}
+
+function detectCarrier(raw){
+  if (!raw) return {carrier:'UNKNOWN', confidence:0, raw:''};
+
+  // === Step 1: Clean the input ===
+  // Strip GS1 wrappers, control chars, whitespace, dashes, parens, leading hash/quote
+  var s = String(raw).trim();
+  // GS1-128 prefix [)>RS06GS or similar control sequences
+  s = s.replace(/^[\x00-\x1f\x7f]+/, '');                // control chars
+  s = s.replace(/^\[?\)>\s*[A-Z0-9]*/, '');               // [)>RS06 etc
+  s = s.replace(/^\(00\)/, '');                           // SSCC AI
+  s = s.replace(/^\(420\)\d{5,9}/, '');                   // ZIP routing AI
+  s = s.replace(/^\(421\)\d{4,7}/, '');                   // International ZIP AI
+  s = s.replace(/[\s\-\(\)\.]/g, '');                     // spaces, dashes, parens, dots
+  s = s.replace(/^[#'"]+/, '');                           // hash/quote prefix
+  var sUpper = s.toUpperCase();
+
+  // === Step 2: Order ID detection (KokTrack-specific, before carrier) ===
+  // eBay Order ID flex: cho phép space/dash bất kỳ, tự reformat về XX-XXXXX-XXXXX
+  var rawTrim = String(raw).trim().replace(/^[#'"]+/,'');
+  var ebayCleaned = rawTrim.replace(/[\s\-_.]/g,'');
+  if (/^\d{12}$/.test(ebayCleaned)){
+    var ebFormatted = ebayCleaned.slice(0,2)+'-'+ebayCleaned.slice(2,7)+'-'+ebayCleaned.slice(7,12);
+    return {carrier:'EBAY', type:'order_id', confidence:100, tracking:ebFormatted, raw:raw};
+  }
+  // Shop Order ID flex: AA00-0000 hoặc AA000000
+  if (/^[A-Z]{2}\d{6}$/i.test(rawTrim.replace(/[\s\-_.]/g,''))){
+    var shCleaned = rawTrim.replace(/[\s\-_.]/g,'').toUpperCase();
+    return {carrier:'SHOP', type:'order_id', confidence:100, tracking:shCleaned.slice(0,4)+'-'+shCleaned.slice(4,8), raw:raw};
+  }
+
+  // === Step 3: UPS Detection ===
+  if (/^1Z[0-9A-Z]{16}$/.test(sUpper)){
+    var body = sUpper.slice(2,17);                        // 15 chars
+    var checkActual = parseInt(sUpper[17],10);
+    var checkExpected = _upsCheckDigit(body);
+    if (checkExpected === checkActual){
+      return {carrier:'UPS', type:'standard', confidence:100, tracking:sUpper, raw:raw};
+    }
+    // Format match nhưng checksum sai - có thể bị đọc sai 1 ký tự
+    return {carrier:'UPS', type:'standard', confidence:70, tracking:sUpper, raw:raw,
+            warning:'Checksum không khớp - kiểm tra lại'};
+  }
+
+  // === Step 4: FedEx 22-digit (96-prefix SSCC) ===
+  // Format: 96XX...XX với 22 digits total. Tracking thật = 15 digits cuối
+  if (/^96\d{20}$/.test(sUpper)){
+    var last15 = sUpper.slice(-15);
+    var checkAct = parseInt(last15[14],10);
+    var checkExp = _fedexGroundCheck(last15);
+    if (checkExp === checkAct){
+      return {carrier:'FEDEX', type:'ground_22', confidence:100, tracking:last15, raw:raw};
+    }
+    // Try last 12 (express)
+    var last12 = sUpper.slice(-12);
+    if (_fedexExpressCheck(last12) === parseInt(last12[11],10)){
+      return {carrier:'FEDEX', type:'express_22', confidence:100, tracking:last12, raw:raw};
+    }
+    return {carrier:'FEDEX', type:'sscc_22', confidence:70, tracking:last15, raw:raw,
+            warning:'Checksum không khớp'};
+  }
+
+  // === Step 5: FedEx Ground 15-digit ===
+  if (/^\d{15}$/.test(sUpper)){
+    var checkAct2 = parseInt(sUpper[14],10);
+    var checkExp2 = _fedexGroundCheck(sUpper);
+    if (checkExp2 === checkAct2){
+      return {carrier:'FEDEX', type:'ground', confidence:100, tracking:sUpper, raw:raw};
+    }
+    return {carrier:'FEDEX', type:'ground', confidence:60, tracking:sUpper, raw:raw,
+            warning:'Checksum không khớp'};
+  }
+
+  // === Step 6: FedEx Express 12-digit ===
+  if (/^\d{12}$/.test(sUpper)){
+    var checkAct3 = parseInt(sUpper[11],10);
+    var checkExp3 = _fedexExpressCheck(sUpper);
+    if (checkExp3 === checkAct3){
+      return {carrier:'FEDEX', type:'express', confidence:100, tracking:sUpper, raw:raw};
+    }
+    return {carrier:'FEDEX', type:'express', confidence:60, tracking:sUpper, raw:raw,
+            warning:'Checksum không khớp'};
+  }
+
+  // === Step 7: FedEx SmartPost / USPS-like 20-22 digit ===
+  // Prefix 02, 03, 92, 93, 94, 95 thường là SmartPost
+  if (/^(02|03|92|93|94|95)\d{18,20}$/.test(sUpper)){
+    return {carrier:'FEDEX', type:'smartpost', confidence:80, tracking:sUpper, raw:raw};
+  }
+
+  // === Step 8: USPS standard ===
+  if (/^9\d{21}$/.test(sUpper)){
+    return {carrier:'USPS', type:'standard', confidence:75, tracking:sUpper, raw:raw};
+  }
+
+  // === Unknown - trả về raw đã clean ===
+  return {carrier:'UNKNOWN', confidence:0, tracking:sUpper, raw:raw};
+}
+
+function carrierLabel(d){
+  // Hiển thị thân thiện cho user
+  if (!d) return 'Không xác định';
+  var labels = {
+    UPS:'UPS '+(d.type==='standard'?'':'('+d.type+')'),
+    FEDEX:'FedEx '+(d.type==='express'?'Express':d.type==='ground'?'Ground':d.type==='ground_22'?'Ground SSCC':d.type==='express_22'?'Express SSCC':d.type==='smartpost'?'SmartPost':d.type),
+    USPS:'USPS',
+    EBAY:'eBay Order',
+    SHOP:'Shop Order',
+    UNKNOWN:'Không nhận diện'
+  };
+  return (labels[d.carrier]||d.carrier).trim();
+}
+
 function onScanned(t) {
   if (navigator.vibrate) navigator.vibrate(100);
-  if (camTab==='nhap') findTracking(t);
-  else if (camTab==='ban') findBan(t);
-  else if (camTab==='gia') findGia(t);
+  // === Pro: detect carrier trước khi xử lý ===
+  var det = detectCarrier(t);
+  var labelTxt = carrierLabel(det);
+
+  // Toast feedback - cho user biết quét thành công loại gì
+  if (det.confidence >= 100){
+    showToast({type:'ok', title:'✓ '+labelTxt, msg:det.tracking});
+  }else if (det.confidence >= 60){
+    showToast({type:'warn', title:'⚠ '+labelTxt+' (checksum lỗi)',
+               msg:(det.warning||'Có thể đọc sai')+' — kiểm tra lại'});
+  }else{
+    showToast({type:'warn', title:'? Không nhận diện', msg:'Tracking: '+t.substring(0,30)});
+  }
+
+  // Dùng tracking đã clean nếu confidence cao, không thì giữ raw
+  var useTxt = det.confidence >= 70 ? det.tracking : t;
+
+  if (camTab==='nhap') findTracking(useTxt);
+  else if (camTab==='ban') findBan(useTxt);
+  else if (camTab==='gia') findGia(useTxt);
 }
 
 // ===== IN TEM =====
 async function inTemManual(){
-  var v=document.getElementById('inpInTem').value.trim();
-  if(!v) return;
+  var raw=document.getElementById('inpInTem').value.trim();
+  if(!raw) return;
+  var v=normalizeOrderId(raw);
+  if(v!==raw) document.getElementById('inpInTem').value=v;
   showToast({type:'info',title:'Đang tra cứu sản phẩm',msg:v});
   try{
     var r=await fetch(BASE+'?action=timMay&orderId='+encodeURIComponent(v));
@@ -778,11 +958,50 @@ function shareOrDownloadTem() {
 }
 
 // ===== NHAP KHO =====
-function doNhap(){ var v=document.getElementById('inpNhap').value.trim(); if(v){document.getElementById('inpNhap').value='';findTracking(v);} }
+/* ╔════════════════════════════════════════════════════════╗
+   ║  TRACKING DETECTOR - Industry standards                 ║
+   ║  FedEx + UPS + USPS - based on official documentation   ║
+   ╚════════════════════════════════════════════════════════╝ */
+function detectTracking(raw){
+  if(!raw) return {carrier:'',tracking:'',confidence:'none',raw:''};
+  var s=String(raw).replace(/[\s\x00-\x1F\x7F]+/g,'').toUpperCase();
+  if(!s) return {carrier:'',tracking:'',confidence:'none',raw:raw};
+
+  // UPS MaxiCode raw 2D
+  if(s.indexOf('[)>')===0 || s.indexOf(']C0')===0 || s.indexOf('1Z')>=0){
+    var upsMatch=s.match(/1Z[A-Z0-9]{16}/);
+    if(upsMatch){
+      var hasMaxi=s.indexOf('[)>')===0 || s.length>20;
+      return {carrier: hasMaxi?'UPS MaxiCode':'UPS', tracking:upsMatch[0], confidence:'high', raw:raw};
+    }
+  }
+  if(/^1Z[A-Z0-9]{16}$/.test(s)) return {carrier:'UPS', tracking:s, confidence:'high', raw:raw};
+  if(/^9[1-5]\d{20}$/.test(s)) return {carrier:'USPS', tracking:s, confidence:'high', raw:raw};
+  if(/^96\d{32}$/.test(s)) return {carrier:'FedEx Ground', tracking:s.slice(-12), confidence:'high', raw:raw};
+  if(/^96\d{20}$/.test(s)) return {carrier:'FedEx Ground', tracking:s.slice(-12), confidence:'high', raw:raw};
+  if(/^9[12]\d{18,20}$/.test(s)) return {carrier:'FedEx SmartPost', tracking:s.slice(-12), confidence:'medium', raw:raw};
+  if(/^\d{15}$/.test(s)) return {carrier:'FedEx Ground', tracking:s, confidence:'high', raw:raw};
+  if(/^\d{12}$/.test(s)) return {carrier:'FedEx Express', tracking:s, confidence:'high', raw:raw};
+  if(/^\d+$/.test(s) && s.length>12) return {carrier:'Unknown', tracking:s.slice(-12), confidence:'low', raw:raw};
+  return {carrier:'Unknown', tracking:s, confidence:'low', raw:raw};
+}
+function normalizeTracking(raw){ return detectTracking(raw).tracking; }
+function doNhap(){
+  var raw=document.getElementById('inpNhap').value.trim();
+  if(!raw) return;
+  var det=detectTracking(raw);
+  document.getElementById('inpNhap').value='';
+  if(det.tracking!==raw && det.carrier){
+    showToast({type:'info', title:'📦 '+det.carrier, msg:raw.length+' ký tự → '+det.tracking});
+  }
+  findTracking(det.tracking);
+}
 document.getElementById('inpNhap').addEventListener('keydown',function(e){if(e.key==='Enter')doNhap();});
 document.getElementById('phiShip').addEventListener('keydown',function(e){if(e.key==='Enter')confirmNhap();});
 
 async function findTracking(t) {
+  // Auto-normalize: FedEx barcode dài → 12 số cuối; UPS giữ nguyên
+  t = normalizeTracking(t);
   var now=new Date(), ng=now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
   showRes('resNhap','warn','<span class="spin"></span>Dang tim...','Tracking: <b>'+t+'</b>');
   try {
@@ -792,12 +1011,21 @@ async function findTracking(t) {
       nT=t; nInfo=d; nNg=ng; curOid=d.orderId||''; curSp=d.sp||'';
       var spTxt=d.sp?'<br>SP: <b>'+d.sp+'</b>':'';
       var slTxt=d.sl>1?'<br>So luong trong sheet: <b>'+d.sl+'</b>':'';
-      showRes('resNhap','info','Tim thay! Nhap phi ship','Tracking: <b>'+t+'</b>'+spTxt+slTxt+'<br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b>');
+      var dupTxt='';
+      if(d.totalMatched && d.totalMatched > 1){
+        dupTxt='<br><span style="color:var(--warning);font-weight:600">⚠ Tracking dùng chung '+d.totalMatched+' đơn — đã nhập '+d.alreadyClaimed+', xử lý đơn tiếp</span>';
+        showToast({type:'warn',title:'Tracking trùng '+d.totalMatched+' đơn',msg:'Đang nhập đơn thứ '+(d.alreadyClaimed+1)});
+      }
+      showRes('resNhap','info','Tim thay! Nhap phi ship','Tracking: <b>'+t+'</b>'+spTxt+slTxt+'<br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b>'+dupTxt);
       var sl=d.sl||1;
       document.getElementById('slVe').value=sl;
       document.getElementById('slVe').max=sl;
       document.getElementById('shipWrap').style.display='block';
       document.getElementById('phiShip').focus();
+    } else if(d.allClaimed){
+      showRes('resNhap','warn','Đã nhập kho hết','<b>'+t+'</b> dùng chung '+d.totalMatched+' đơn — đã về kho hết.');
+      showToast({type:'warn',title:'Đã nhập kho hết',msg:d.totalMatched+' đơn cùng tracking đã xử lý xong'});
+      addH('warn',t,'Da ve het');
     } else { showRes('resNhap','err','Khong tim thay','<b>'+t+'</b> khong co.'); addH('err',t,'Khong tim thay'); }
   } catch(ex){ showRes('resNhap','err','Loi ket noi','Thu lai sau.'); }
 }
@@ -824,7 +1052,14 @@ async function confirmNhap() {
 }
 
 // ===== BAN HANG =====
-function doBan(){ var v=document.getElementById('inpBan').value.trim(); if(v) findBan(v); }
+function normalizeOrderId(raw){
+  var s=String(raw||'').trim().replace(/^[#'"]+/,'').replace(/[\s\-_.]/g,'').toUpperCase();
+  if(!s) return '';
+  if(/^\d{12}$/.test(s)) return s.slice(0,2)+'-'+s.slice(2,7)+'-'+s.slice(7,12);
+  if(/^[A-Z]{2}\d{6}$/.test(s)) return s.slice(0,4)+'-'+s.slice(4,8);
+  return raw.trim().toUpperCase();
+}
+function doBan(){ var v=document.getElementById('inpBan').value.trim(); if(v){var n=normalizeOrderId(v);if(n!==v)document.getElementById('inpBan').value=n;findBan(n);} }
 document.getElementById('inpBan').addEventListener('keydown',function(e){if(e.key==='Enter')doBan();});
 document.getElementById('giaBan').addEventListener('keydown',function(e){if(e.key==='Enter')confirmBan();});
 
@@ -872,7 +1107,7 @@ async function confirmBan() {
 }
 
 // ===== KIEM TRA GIA =====
-function doGia(){ var v=document.getElementById('inpGia').value.trim(); if(v) findGia(v); }
+function doGia(){ var v=document.getElementById('inpGia').value.trim(); if(v){var n=normalizeOrderId(v);if(n!==v)document.getElementById('inpGia').value=n;findGia(n);} }
 document.getElementById('inpGia').addEventListener('keydown',function(e){if(e.key==='Enter')doGia();});
 
 async function findGia(orderId) {
@@ -1485,7 +1720,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.7.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.8.0</div>
 
 </body>
 </html>
