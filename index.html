@@ -193,6 +193,38 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .ptr-indicator.show{transform:translateX(-50%) translateY(8px);opacity:1}
 .ptr-indicator.spinning{color:var(--primary)}
 
+/* ╔════════════════════════════════╗
+   ║  POS CART - Mobile compact      ║
+   ╚════════════════════════════════╝ */
+.cart-panel{margin:14px 0 0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cart-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+.cart-title{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text)}
+.cart-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;background:var(--primary);color:#fff;font-size:10px;font-weight:700;border-radius:10px;font-variant-numeric:tabular-nums}
+.cart-clear{background:none;border:1px solid var(--border);color:var(--text-2);padding:4px 9px;border-radius:5px;font-size:11px;font-weight:500}
+.cart-list{max-height:50vh;overflow-y:auto;padding:5px}
+.cart-item{position:relative;display:grid;grid-template-columns:1fr auto;gap:6px;padding:10px 12px;border-radius:7px}
+.cart-item+.cart-item{border-top:1px solid var(--border)}
+.cart-item-info{min-width:0}
+.cart-item-sp{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.cart-item-meta{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.cart-item-meta .oid{font-family:ui-monospace,monospace;color:var(--text-2)}
+.cart-item-meta .sheet{padding:1px 5px;background:var(--primary-soft);color:var(--primary);border-radius:3px;font-weight:600;font-size:9px}
+.cart-item-prices{text-align:right;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-variant-numeric:tabular-nums;padding-right:18px}
+.cart-item-gia{font-size:12px;font-weight:600;color:var(--text)}
+.cart-item-lai{font-size:10px;font-weight:500;margin-top:2px}
+.cart-item-lai.pos{color:var(--success)}
+.cart-item-lai.neg{color:var(--danger)}
+.cart-item-x{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:22px;height:22px;border:none;background:var(--danger-soft);color:var(--danger);border-radius:50%;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center}
+.cart-foot{padding:12px 14px;border-top:1px solid var(--border);background:var(--surface-2)}
+.cart-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;padding:9px 10px;background:var(--surface);border-radius:7px;border:1px solid var(--border)}
+.cart-stat{display:flex;flex-direction:column;gap:2px}
+.cart-stat span{font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px}
+.cart-stat b{font-size:12px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.cart-stat b.cart-lai{font-size:13px;color:var(--success)}
+.cart-stat b.cart-lai.neg{color:var(--danger)}
+.cart-submit{width:100%;padding:13px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 6px rgba(21,101,192,.25)}
+.cart-submit:disabled{background:var(--border);color:var(--text-3);box-shadow:none}
+
 /* Filter chips - Linear style */
 .d-filter{display:flex;gap:6px;flex-wrap:wrap;margin:8px 14px 12px}
 .d-ftab{padding:5px 12px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text-2);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;letter-spacing:-.005em}
@@ -352,8 +384,29 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <label>So luong ban (<span id="slTonHint" style="color:#2196F3">ton: ?</span>)</label>
     <input type="number" id="slBan" value="1" min="1">
   </div>
-  <button class="bc" id="bc" onclick="confirmBan()">Xac nhan ban</button>
+  <button class="bc" id="bc" onclick="addToBanCart()">+ Thêm vào giỏ</button>
   <div class="res" id="resBan"><div class="rt" id="rtBan"></div><div class="rb" id="rbBan"></div></div>
+
+  <!-- POS CART -->
+  <div class="cart-panel" id="banCartPanel">
+    <div class="cart-head">
+      <div class="cart-title"><span>🛒 Giỏ hàng</span><span class="cart-count" id="banCartCount">0</span></div>
+      <button class="cart-clear" id="banCartClear" onclick="clearBanCart()" style="display:none">Xóa</button>
+    </div>
+    <div class="cart-list" id="banCartList">
+      <div class="empty-state" style="padding:28px 16px"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg><div class="empty-title">Giỏ trống</div><div class="empty-tip">Quét đơn để thêm</div></div>
+    </div>
+    <div class="cart-foot" id="banCartFoot" style="display:none">
+      <div class="cart-stats">
+        <div class="cart-stat"><span>Doanh thu</span><b id="banCartDT">0d</b></div>
+        <div class="cart-stat"><span>Vốn</span><b id="banCartVon">0d</b></div>
+        <div class="cart-stat"><span>Lãi</span><b id="banCartLai" class="cart-lai">0d</b></div>
+      </div>
+      <button class="cart-submit" id="banCartSubmit" onclick="submitBanCart()">
+        <span>💵</span><span>BÁN <span id="banCartSubmitN">0</span> ĐƠN</span>
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- KIEM TRA GIA -->
@@ -572,22 +625,77 @@ function checkDashPass(){
 }
 
 renderH();
-// Init Dynamsoft
+// Init Dynamsoft - tune AGGRESSIVE cho nhận barcode tốt nhất
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
 Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
+
+// Beep âm thanh khi quét thành công
+function scanBeep(){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.frequency.value=1000;
+    osc.type='sine';
+    osc.connect(gain);gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.15,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
+    osc.start();osc.stop(ctx.currentTime+0.12);
+  }catch(e){}
+}
 
 async function initScanner() {
   if (scanner) return;
   try {
     scanner = await Dynamsoft.DBR.BarcodeScanner.createInstance();
     var s = await scanner.getRuntimeSettings();
-    s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 | Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39 | Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13;
-    s.expectedBarcodesCount = 1;
+    // Support tất cả format barcode 1D + 2D thường gặp
+    s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39 |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_93 |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13 |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_8 |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_UPC_A |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_UPC_E |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_ITF |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_QR_CODE |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_PDF417 |
+                        Dynamsoft.DBR.EnumBarcodeFormat.BF_DATAMATRIX;
+    // Tune aggressive cho barcode mờ/xa
+    s.expectedBarcodesCount = 0;  // auto detect any count
+    s.deblurLevel = 9;             // max deblur cho barcode mờ
+    s.timeout = 10000;             // 10s per frame
+    // Localization modes - scan all directions
+    if (s.furtherModes) {
+      s.furtherModes.localizationModes = [2,16,4,8,0,0,0,0]; // CONNECTED_BLOCKS + STATISTICS + LINES + SCAN_DIRECTLY
+    }
     await scanner.updateRuntimeSettings(s);
+    // Tăng tần suất scan + camera HD
+    try{
+      var ss = scanner.getScanSettings ? await scanner.getScanSettings() : null;
+      if (ss) {
+        ss.intervalTime = 100;        // 100ms thay vì 300ms (3x faster)
+        ss.duplicateForgetTime = 3000;
+        await scanner.updateScanSettings(ss);
+      }
+    }catch(e){}
+    // Camera: ưu tiên back camera HD
+    try{
+      await scanner.updateVideoSettings({video:{
+        width:{ideal:1920},
+        height:{ideal:1080},
+        facingMode:{ideal:'environment'}
+      }});
+    }catch(e){}
     await scanner.setUIElement(document.getElementById('camModal'));
     scanner.onFrameRead = function(){};
-    scanner.onUnduplicatedRead = function(txt){ closeCam(); onScanned(txt.trim()); };
-  } catch(e){ scanner = null; }
+    scanner.onUnduplicatedRead = function(txt){
+      scanBeep();
+      if(navigator.vibrate) navigator.vibrate([60,30,60]);
+      closeCam();
+      onScanned(txt.trim());
+    };
+  } catch(e){ scanner = null; console.error('Scanner init fail:', e); }
 }
 initScanner();
 
@@ -1083,28 +1191,135 @@ async function findBan(orderId) {
   } catch(ex){ showRes('resBan','err','Loi ket noi','Thu lai sau.'); }
 }
 
-async function confirmBan() {
-  if (!cT||!cInfo) return;
+// ===== POS CART =====
+var banCart=[];
+
+function addToBanCart(){
+  if(!cT||!cInfo){showToast({type:'err',title:'Chưa quét đơn nào'});return;}
   var gb=raw('giaBan');
-  if (!gb){ alert('Chua nhap gia ban!'); return; }
+  if(!gb){showToast({type:'warn',title:'Chưa nhập giá bán'});document.getElementById('giaBan').focus();return;}
   var slBan=parseInt(document.getElementById('slBan').value)||1;
-  showRes('resBan','warn','<span class="spin"></span>Dang cap nhat...','');
-  try {
-    var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(cT)+'&giaBan='+gb+'&slBan='+slBan+'&sheet='+encodeURIComponent(cInfo.sheet)+'&row='+cInfo.row);
-    var d=await r.json();
-    if (d.success) {
-      var conLai=d.slTon>0?'<br>Con lai: <b>'+d.slTon+' may</b>':'<br><span style="color:#C62828">Da ban het!</span>';
-      showRes('resBan','ok','Ban thanh cong!','Order ID: <b>'+cT+'</b><br>Gia ban: <b>'+gb.toLocaleString('vi')+' d</b><br>SL ban: <b>'+slBan+'</b>'+conLai);
-      addH('ok',cT,'Ban '+slBan+' may | '+gb.toLocaleString('vi')+' d');
-      if (navigator.vibrate) navigator.vibrate([80,40,80]);
-      document.getElementById('pi').style.display='none';
-      document.getElementById('bc').style.display='none';
-      document.getElementById('giaBan').value=''; document.getElementById('inpBan').value='';
-      cT=null; cInfo=null;
-    } else if (d.daBan) showRes('resBan','err','Da ban het!','Order ID nay da ban het so luong ton.');
-    else showRes('resBan','err','Loi',d.error||'Khong cap nhat duoc.');
-  } catch(ex){ showRes('resBan','err','Loi ket noi','Thu lai sau.'); }
+  var dup=banCart.findIndex(function(it){return it.orderId===cT;});
+  if(dup>=0){showToast({type:'warn',title:'Đã có trong giỏ',msg:cT});return;}
+  if(slBan>(cInfo.slTon||cInfo.sl||1)){
+    showToast({type:'err',title:'Vượt SL tồn',msg:'Tồn: '+(cInfo.slTon||cInfo.sl||1)});
+    return;
+  }
+  var giaNhap=cInfo.giaNhap||0;
+  var lai=gb-giaNhap*slBan;
+  banCart.push({
+    orderId:cT,sheet:cInfo.sheet,row:cInfo.row,sp:cInfo.sp||'',
+    sl:cInfo.sl||1,slBan:slBan,giaNhap:giaNhap,giaBan:gb,lai:lai
+  });
+  showToast({type:'ok',title:'+ Thêm vào giỏ',msg:cInfo.sp||cT});
+  if(navigator.vibrate)navigator.vibrate(40);
+  renderBanCart();
+  cT=null;cInfo=null;
+  document.getElementById('pi').style.display='none';
+  document.getElementById('bc').style.display='none';
+  document.getElementById('giaBan').value='';
+  document.getElementById('inpBan').value='';
+  document.getElementById('inpBan').focus();
+  showRes('resBan','info','Sẵn sàng quét đơn tiếp','Giỏ: '+banCart.length+' đơn');
 }
+
+function removeBanCart(idx){
+  var it=banCart[idx];if(!it)return;
+  banCart.splice(idx,1);
+  showToast({type:'info',title:'Đã xóa',msg:it.sp||it.orderId});
+  renderBanCart();
+}
+
+function clearBanCart(){
+  if(!banCart.length)return;
+  if(!confirm('Xóa giỏ '+banCart.length+' đơn?'))return;
+  banCart=[];
+  showToast({type:'info',title:'Đã xóa giỏ'});
+  renderBanCart();
+}
+
+function renderBanCart(){
+  var list=document.getElementById('banCartList');
+  var foot=document.getElementById('banCartFoot');
+  var clrBtn=document.getElementById('banCartClear');
+  document.getElementById('banCartCount').textContent=banCart.length;
+  if(!banCart.length){
+    list.innerHTML='<div class="empty-state" style="padding:28px 16px"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg><div class="empty-title">Giỏ trống</div><div class="empty-tip">Quét đơn để thêm</div></div>';
+    foot.style.display='none';clrBtn.style.display='none';return;
+  }
+  var html=banCart.map(function(it,i){
+    var laiCls=it.lai>=0?'pos':'neg';
+    var laiSign=it.lai>=0?'+':'';
+    var slTxt=it.slBan>1?' × '+it.slBan:'';
+    return '<div class="cart-item">'+
+      '<div class="cart-item-info">'+
+        '<div class="cart-item-sp">'+(it.sp||'(chưa có tên)')+slTxt+'</div>'+
+        '<div class="cart-item-meta"><span class="oid">'+it.orderId+'</span><span class="sheet">'+it.sheet+'</span></div>'+
+      '</div>'+
+      '<div class="cart-item-prices">'+
+        '<div class="cart-item-gia">'+Number(it.giaBan).toLocaleString('vi')+'d</div>'+
+        '<div class="cart-item-lai '+laiCls+'">'+laiSign+Number(it.lai).toLocaleString('vi')+'d</div>'+
+      '</div>'+
+      '<button class="cart-item-x" onclick="removeBanCart('+i+')">×</button>'+
+    '</div>';
+  }).join('');
+  list.innerHTML=html;
+  var totalDT=banCart.reduce(function(s,it){return s+it.giaBan;},0);
+  var totalVon=banCart.reduce(function(s,it){return s+it.giaNhap*it.slBan;},0);
+  var totalLai=banCart.reduce(function(s,it){return s+it.lai;},0);
+  document.getElementById('banCartDT').textContent=Number(totalDT).toLocaleString('vi')+'d';
+  document.getElementById('banCartVon').textContent=Number(totalVon).toLocaleString('vi')+'d';
+  var laiEl=document.getElementById('banCartLai');
+  laiEl.textContent=(totalLai>=0?'+':'')+Number(totalLai).toLocaleString('vi')+'d';
+  laiEl.classList.toggle('neg',totalLai<0);
+  document.getElementById('banCartSubmitN').textContent=banCart.length;
+  foot.style.display='block';clrBtn.style.display='inline-block';
+}
+
+async function submitBanCart(){
+  if(!banCart.length)return;
+  var n=banCart.length;
+  var totalDT=banCart.reduce(function(s,it){return s+it.giaBan;},0);
+  var totalLai=banCart.reduce(function(s,it){return s+it.lai;},0);
+  // CONFIRM - chỉ DT, KHÔNG lãi (đưa khách xem)
+  var msg='Bán '+n+' đơn?\n\nTổng tiền: '+Number(totalDT).toLocaleString('vi')+' đ';
+  if(!confirm(msg))return;
+  var btn=document.getElementById('banCartSubmit');
+  btn.disabled=true;
+  btn.innerHTML='<span>⏳</span><span>Đang bán...</span>';
+  var success=[],failed=[];
+  for(var i=0;i<banCart.length;i++){
+    var it=banCart[i];
+    try{
+      var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(it.orderId)+'&giaBan='+it.giaBan+'&slBan='+it.slBan+'&sheet='+encodeURIComponent(it.sheet)+'&row='+it.row);
+      var d=await r.json();
+      if(d.success){
+        success.push(it);
+        addH('ok',it.orderId,'Ban '+it.slBan+'×'+Number(it.giaBan).toLocaleString('vi')+'d');
+      }else{failed.push(Object.assign({},it,{error:d.error||'Loi'}));}
+    }catch(ex){failed.push(Object.assign({},it,{error:'Loi ket noi'}));}
+  }
+  if(failed.length===0){
+    // Toast + Result CHỈ HIỆN DT, không hiện lãi
+    showToast({type:'ok',title:'✓ Bán '+success.length+' đơn',msg:'Tổng: '+Number(totalDT).toLocaleString('vi')+' đ',duration:5000});
+    if(navigator.vibrate)navigator.vibrate([80,40,80,40,80]);
+    showRes('resBan','ok','Hóa đơn '+success.length+' đơn đã chốt','<b>Tổng tiền: '+Number(totalDT).toLocaleString('vi')+' đ</b>');
+    banCart=[];
+  }else if(success.length>0){
+    showToast({type:'warn',title:'Bán một phần',msg:'OK '+success.length+' / Lỗi '+failed.length});
+    showRes('resBan','warn','OK '+success.length+' / Lỗi '+failed.length,failed.map(function(f){return '• '+f.orderId+': '+f.error;}).join('<br>'));
+    banCart=failed;
+  }else{
+    showToast({type:'err',title:'Tất cả lỗi',msg:failed[0].error});
+    showRes('resBan','err','Không bán được',failed.map(function(f){return '• '+f.orderId+': '+f.error;}).join('<br>'));
+  }
+  btn.disabled=false;
+  btn.innerHTML='<span>💵</span><span>BÁN <span id="banCartSubmitN">'+banCart.length+'</span> ĐƠN</span>';
+  renderBanCart();
+}
+
+// Backwards compat
+async function confirmBan(){ addToBanCart(); }
 
 // ===== KIEM TRA GIA =====
 function doGia(){ var v=document.getElementById('inpGia').value.trim(); if(v){var n=normalizeOrderId(v);if(n!==v)document.getElementById('inpGia').value=n;findGia(n);} }
@@ -1720,7 +1935,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.8.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.9.1</div>
 
 </body>
 </html>
