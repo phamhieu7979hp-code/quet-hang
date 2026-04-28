@@ -129,6 +129,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .d-page-head{padding:14px 14px 4px}
 .d-page-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.02em;margin-bottom:3px}
 .d-page-sub{font-size:11px;color:var(--text-3);font-weight:500}
+@keyframes syncPulse{0%,100%{opacity:.4}50%{opacity:1}}
 
 /* Filter chips - Linear style */
 .d-filter{display:flex;gap:6px;flex-wrap:wrap;margin:8px 14px 12px}
@@ -316,10 +317,19 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <span class="spin"></span>Bấm để tải dữ liệu...
   </div>
   <div id="dContent" style="display:none">
-    <!-- Page header -->
-    <div class="d-page-head">
-      <div class="d-page-title">Báo cáo kinh doanh</div>
-      <div class="d-page-sub" id="dashPageSub">Tổng quan tất cả sheet</div>
+    <!-- Page header với SWR indicators -->
+    <div class="d-page-head" style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+      <div style="min-width:0;flex:1">
+        <div class="d-page-title" style="display:flex;align-items:center;gap:7px">
+          Báo cáo
+          <span id="dSyncDot" title="Đang đồng bộ" style="width:6px;height:6px;border-radius:50%;background:var(--success);opacity:0;transition:opacity .2s;animation:syncPulse 1.2s ease-in-out infinite"></span>
+        </div>
+        <div class="d-page-sub" id="dashPageSub">Tổng quan tất cả sheet</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span id="dLastSync" style="font-size:10px;color:var(--text-3);font-weight:500;font-feature-settings:'tnum';white-space:nowrap"></span>
+        <button onclick="fetchDashSilent()" title="Tải lại" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:13px;color:var(--text-2);cursor:pointer">↻</button>
+      </div>
     </div>
 
     <!-- Hero - Tổng lãi -->
@@ -468,6 +478,12 @@ function cssVar(n){return getComputedStyle(document.documentElement).getProperty
 var hist = JSON.parse(localStorage.getItem('khoHist')||'[]'), cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
 var camTab = '', scanner = null;
 var dAllData = [], dFilter = 'all', dashLoaded = false, dChartLai = null, dChartTon = null;
+// === SWR pattern state (Stripe + Vercel + Linear) ===
+var dashFetchedAt = null;
+var dashSyncing = false;
+var dashPollTimer = null;
+var currentTab = 'nhap';
+var DASH_TTL_MS = 30000;
 var dashUnlocked = false;
 function checkDashPass(){
   if(dashUnlocked) return true;
@@ -499,14 +515,81 @@ initScanner();
 
 // ===== TABS =====
 function switchTab(t) {
+  currentTab = t;
   document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('active',['nhap','ban','gia','track','dash'][i]===t); });
   document.querySelectorAll('.sec').forEach(function(s){ s.classList.remove('active'); });
   document.getElementById('tab-'+t).classList.add('active');
   if (t==='dash') {
-    if(!checkDashPass()) return;
-    if(!dashLoaded) loadDash();
+    if(!checkDashPass()){currentTab='nhap';return;}
+    if(!dashLoaded){
+      loadDash();
+    }else{
+      if(isDashStale())fetchDashSilent();
+      updateLastSyncedLabel();
+    }
+    startDashPolling();
+  }else{
+    stopDashPolling();
   }
 }
+
+// === SWR helper functions (Stripe + Vercel pattern) ===
+function isDashStale(){return !dashFetchedAt || (Date.now()-dashFetchedAt > DASH_TTL_MS);}
+
+async function fetchDashSilent(){
+  if(dashSyncing)return;
+  dashSyncing=true;
+  setSyncIndicator(true);
+  try{
+    var r=await fetch(BASE+'?action=getDashboard');
+    var d=await r.json();
+    if(d.ok){
+      dAllData=d.data;
+      dashFetchedAt=Date.now();
+      buildDFilter();
+      renderDash();
+      updateLastSyncedLabel();
+    }
+  }catch(e){/* silent fail */}
+  finally{
+    dashSyncing=false;
+    setSyncIndicator(false);
+  }
+}
+
+function startDashPolling(){
+  stopDashPolling();
+  dashPollTimer=setInterval(function(){
+    if(!document.hidden && currentTab==='dash')fetchDashSilent();
+  },DASH_TTL_MS);
+}
+function stopDashPolling(){if(dashPollTimer){clearInterval(dashPollTimer);dashPollTimer=null;}}
+
+function setSyncIndicator(syncing){
+  var el=document.getElementById('dSyncDot');
+  if(el)el.style.opacity=syncing?'1':'0';
+}
+
+function updateLastSyncedLabel(){
+  var el=document.getElementById('dLastSync');
+  if(!el||!dashFetchedAt)return;
+  var d=new Date(dashFetchedAt);
+  var t=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  el.textContent='Cập nhật '+t;
+}
+
+// Page Visibility API (Linear, Notion pattern)
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    stopDashPolling();
+  }else if(currentTab==='dash'){
+    if(isDashStale())fetchDashSilent();
+    startDashPolling();
+  }
+});
+window.addEventListener('focus',function(){
+  if(currentTab==='dash'&&isDashStale())fetchDashSilent();
+});
 
 // ===== HELPERS =====
 function fmt(el){ var v=el.value.replace(/[^0-9]/g,''); el.value=v?Number(v).toLocaleString('vi-VN'):''; }
@@ -918,18 +1001,19 @@ function exportTrackCSV(){
 async function loadDash() {
   document.getElementById('dLoading').style.display='block';
   document.getElementById('dContent').style.display='none';
-  document.getElementById('dLoading').innerHTML='<span class="spin"></span>Dang tai du lieu...';
+  document.getElementById('dLoading').innerHTML='<span class="spin"></span>Đang tải dữ liệu...';
   try {
     var r=await fetch(BASE+'?action=getDashboard');
     var d=await r.json();
-    if (!d.ok) throw new Error(d.error||'Loi');
-    dAllData=d.data; dashLoaded=true;
+    if (!d.ok) throw new Error(d.error||'Lỗi');
+    dAllData=d.data; dashLoaded=true; dashFetchedAt=Date.now();
     buildDFilter();
     renderDash();
+    updateLastSyncedLabel();
     document.getElementById('dLoading').style.display='none';
     document.getElementById('dContent').style.display='block';
   } catch(e) {
-    document.getElementById('dLoading').innerHTML='<div style="color:#C62828">Loi: '+e.message+'</div>';
+    document.getElementById('dLoading').innerHTML='<div style="color:var(--danger);text-align:center;padding:20px;font-size:13px">Lỗi: '+e.message+'</div>';
   }
 }
 
@@ -1120,6 +1204,6 @@ function renderH(){
   }).join('');
 }
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.4.3</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.5.0</div>
 </body>
 </html>
