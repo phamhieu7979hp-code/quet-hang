@@ -3247,7 +3247,7 @@ function renderTrackTable(){
     var accShort = (r.account||'').replace('kok.comp_92','kok').replace('mi_844318','mi');
     var rowStyle = isScam ? 'border-bottom:1px solid var(--border);background:#fef2f2' : 'border-bottom:1px solid var(--border)';
     html += '<tr style="'+rowStyle+'">'
-      +'<td style="font-family:ui-monospace,monospace;font-size:11px;color:var(--text);font-weight:600">'+r.tracking+'</td>'
+      +'<td style="font-family:ui-monospace,monospace;font-size:11px;color:var(--text);font-weight:600;line-height:1.4">'+r.tracking+'<div style="color:var(--text-3);font-size:10px;font-weight:400;margin-top:1px;opacity:.7">#'+(r.orderId||'')+'</div></td>'
       +'<td style="font-size:11px;color:var(--text-3)">'+r.sheet+'</td>'
       +'<td style="font-size:11px;color:var(--text-2);font-weight:500">'+(r.kho||'')+'</td>'
       +'<td style="font-size:11px;color:var(--text-2);font-weight:500">'+accShort+'</td>'
@@ -3675,7 +3675,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.16.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.16.1</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
