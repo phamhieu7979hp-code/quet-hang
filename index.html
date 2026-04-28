@@ -627,7 +627,7 @@ function checkDashPass(){
 renderH();
 // Init Dynamsoft - bản 2.6.4 stable (chỉ thêm beep + vibrate khi success)
 Dynamsoft.DBR.BarcodeReader.engineResourcePath = 'https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/';
-Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
+Dynamsoft.DBR.BarcodeReader.productKeys = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMTA1NDc1MzU0LU1UQTFORGMxTXpVMExYZGxZaTFVY21saGJGQnliMm8iLCJtYWluU2VydmVyVVJMIjoiaHR0cHM6Ly9tZGxzLmR5bmFtc29mdG9ubGluZS5jb20vIiwib3JnYW5pemF0aW9uSUQiOiIxMDU0NzUzNTQiLCJzdGFuZGJ5U2VydmVyVVJMIjoiaHR0cHM6Ly9zZGxzLmR5bmFtc29mdG9ubGluZS5jb20vIiwiY2hlY2tDb2RlIjo5ODk5MjI5Njl9';
 
 function scanBeep(){
   try{
@@ -994,7 +994,7 @@ function inTem(oid,sp) {
   var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.style.position='absolute'; svg.style.left='-9999px';
   document.body.appendChild(svg);
-  try{ JsBarcode(svg,oid,{format:'CODE128',width:1.8,height:90,displayValue:false,margin:3}); }
+  try{ JsBarcode(svg,oid,{format:'CODE128',width:2.5,height:100,displayValue:false,margin:10}); }
   catch(e){ document.body.removeChild(svg); alert('Loi barcode!'); return; }
   var svgData=new XMLSerializer().serializeToString(svg);
   document.body.removeChild(svg);
@@ -1898,7 +1898,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.9.3</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.9.5</div>
 
 </body>
 </html>
