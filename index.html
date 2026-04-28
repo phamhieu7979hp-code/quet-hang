@@ -7,6 +7,7 @@
 <title>KokTrack</title>
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -646,7 +647,7 @@ async function initScanner() {
   try {
     scanner = await Dynamsoft.DBR.BarcodeScanner.createInstance();
     var s = await scanner.getRuntimeSettings();
-    s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 | Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39 | Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13;
+    s.barcodeFormatIds = Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_128 | Dynamsoft.DBR.EnumBarcodeFormat.BF_CODE_39 | Dynamsoft.DBR.EnumBarcodeFormat.BF_EAN_13 | Dynamsoft.DBR.EnumBarcodeFormat.BF_QR_CODE;
     s.expectedBarcodesCount = 1;
     await scanner.updateRuntimeSettings(s);
     await scanner.setUIElement(document.getElementById('camModal'));
@@ -975,45 +976,49 @@ document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.
 
 function inTem(oid,sp) {
   if (!oid){ alert('Chua co Order ID!'); return; }
+  // Tem 35×22mm NGANG: QR vuông bên TRÁI (full chiều cao) + Text bên PHẢI
   var W=330,H=208;
   var canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
   var ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  if (sp) {
-    ctx.fillStyle='#000'; ctx.font='bold 15px Arial'; ctx.textAlign='center';
-    var words=sp.split(' '),line='',lines=[];
-    for(var i=0;i<words.length;i++){
-      var test=line+(line?' ':'')+words[i];
-      if(ctx.measureText(test).width>W-16){if(line)lines.push(line);line=words[i];}
-      else line=test;
+  // Generate QR code 200×200 — fit chiều cao tem 22mm
+  try{
+    var qrCanvas=document.createElement('canvas');
+    new QRious({
+      element:qrCanvas,
+      value:oid,
+      size:200,
+      level:'M',
+      background:'white',
+      foreground:'black',
+      padding:2
+    });
+    var qrSize=200, qrX=4, qrY=4;
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+    // TEXT AREA bên phải QR
+    var textX=qrSize+14, textW=W-textX-4;
+    // SP name: top, 13px bold, max 3 dòng
+    if(sp){
+      ctx.fillStyle='#000'; ctx.font='bold 13px Arial'; ctx.textAlign='left';
+      var words=sp.split(' '),line='',lines=[];
+      for(var i=0;i<words.length;i++){
+        var test=line+(line?' ':'')+words[i];
+        if(ctx.measureText(test).width>textW){if(line)lines.push(line);line=words[i];}
+        else line=test;
+      }
+      if(line)lines.push(line);
+      lines=lines.slice(0,3);
+      lines.forEach(function(l,i){ctx.fillText(l, textX, 22+i*16);});
     }
-    if(line)lines.push(line);
-    lines=lines.slice(0,2);
-    lines.forEach(function(l,i){ctx.fillText(l,W/2,18+i*17);});
-  }
-  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.style.position='absolute'; svg.style.left='-9999px';
-  document.body.appendChild(svg);
-  try{ JsBarcode(svg,oid,{format:'CODE128',width:2.5,height:100,displayValue:false,margin:10}); }
-  catch(e){ document.body.removeChild(svg); alert('Loi barcode!'); return; }
-  var svgData=new XMLSerializer().serializeToString(svg);
-  document.body.removeChild(svg);
-  var img=new Image();
-  var blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
-  var svgUrl=URL.createObjectURL(blob);
-  img.src=svgUrl;
-  img.onload=function(){
-    var top=sp?38:6;
-    ctx.drawImage(img,10,top,W-20,120);
-    URL.revokeObjectURL(svgUrl);
-    ctx.fillStyle='#000'; ctx.font='14px monospace'; ctx.textAlign='center';
-    ctx.fillText(oid.length>32?oid.substring(0,32)+'...':oid, W/2, top+130);
+    // Order ID: bottom right, 12px monospace
+    ctx.fillStyle='#000'; ctx.font='bold 12px monospace'; ctx.textAlign='left';
+    ctx.fillText(oid.length>14?oid.substring(0,14):oid, textX, H-12);
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('temPreview').src=dataUrl;
     document.getElementById('temPopupOid').textContent=oid;
     document.getElementById('temPopup').classList.add('show');
     canvas.toBlob(function(pngBlob){ window._temBlob=pngBlob; window._temOid=oid; },'image/png');
-  };
+  }catch(e){ alert('Loi tao QR: '+e.message); }
 }
 
 function shareOrDownloadTem() {
@@ -1898,7 +1903,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.9.5</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.10.1</div>
 
 </body>
 </html>
