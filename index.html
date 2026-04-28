@@ -131,6 +131,68 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .d-page-sub{font-size:11px;color:var(--text-3);font-weight:500}
 @keyframes syncPulse{0%,100%{opacity:.4}50%{opacity:1}}
 
+/* ╔════════════════════════════════════════════════════╗
+   ║  COMBO UX/UI PRO - Toast + Skeleton + Empty + Cmd+K ║
+   ╚════════════════════════════════════════════════════╝ */
+
+/* Toast notifications mobile */
+.toast-stack{position:fixed;top:calc(env(safe-area-inset-top,0) + 14px);left:14px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{pointer-events:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;box-shadow:0 8px 24px rgba(20,40,60,.15);display:flex;align-items:flex-start;gap:10px;animation:toastIn .25s cubic-bezier(.2,.9,.3,1.2)}
+.toast.removing{animation:toastOut .2s ease-in forwards}
+.toast-icon{width:18px;height:18px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;margin-top:1px}
+.toast-icon.ok{background:var(--success)}
+.toast-icon.err{background:var(--danger)}
+.toast-icon.warn{background:var(--warning)}
+.toast-icon.info{background:var(--primary)}
+.toast-body{flex:1;min-width:0}
+.toast-title{font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.005em}
+.toast-msg{font-size:12px;color:var(--text-2);margin-top:2px;line-height:1.4}
+.toast-close{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px;padding:0 0 0 4px;line-height:1}
+@keyframes toastIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-12px)}}
+
+/* Skeleton */
+.skeleton{background:linear-gradient(90deg,var(--surface-2) 0%,#f0f2f5 50%,var(--surface-2) 100%);background-size:200% 100%;animation:skShine 1.4s ease-in-out infinite;border-radius:6px}
+@keyframes skShine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk-line{height:14px;margin:8px 0}
+.sk-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin:0 14px 10px}
+
+/* Empty states */
+.empty-state{text-align:center;padding:36px 16px;color:var(--text-3)}
+.empty-icon{width:44px;height:44px;margin:0 auto 10px;opacity:.4}
+.empty-title{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:4px}
+.empty-tip{font-size:11px;color:var(--text-3);max-width:260px;margin:0 auto;line-height:1.5}
+
+/* Cmd+K modal cho mobile (full bottom sheet) */
+#cmdk-overlay{position:fixed;inset:0;background:rgba(20,40,60,.45);backdrop-filter:blur(4px);z-index:9998;display:none;align-items:flex-start;justify-content:center;animation:fadeIn .15s}
+#cmdk-overlay.show{display:flex}
+.cmdk-modal{background:var(--surface);width:100%;max-width:560px;max-height:85vh;margin-top:8vh;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.18);overflow:hidden;display:flex;flex-direction:column;animation:cmdkSlide .2s cubic-bezier(.2,.9,.3,1.1)}
+.cmdk-search{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px}
+.cmdk-search input{flex:1;border:none;background:none;font-size:15px;color:var(--text);outline:none;font-family:inherit;letter-spacing:-.01em;-webkit-appearance:none}
+.cmdk-search input::placeholder{color:var(--text-3)}
+.cmdk-kbd{font-family:ui-monospace,monospace;font-size:10px;color:var(--text-3);padding:3px 7px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px}
+.cmdk-list{flex:1;overflow-y:auto;padding:6px;-webkit-overflow-scrolling:touch}
+.cmdk-section{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px;padding:10px 12px 4px}
+.cmdk-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:6px;cursor:pointer}
+.cmdk-item.active{background:var(--primary);color:#fff}
+.cmdk-item.active .cmdk-it-sub{color:rgba(255,255,255,.8)}
+.cmdk-it-icon{width:22px;text-align:center;font-size:14px;flex-shrink:0}
+.cmdk-it-text{flex:1;min-width:0}
+.cmdk-it-title{font-size:13px;font-weight:500;color:inherit;letter-spacing:-.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdk-it-sub{font-size:11px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdk-empty{padding:36px 20px;text-align:center;color:var(--text-3);font-size:13px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes cmdkSlide{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+
+/* FAB - Floating action button cho mobile mở Cmd+K */
+.fab-cmdk{position:fixed;bottom:20px;right:18px;width:48px;height:48px;border-radius:24px;background:var(--primary);color:#fff;border:none;box-shadow:0 6px 16px rgba(21,101,192,.3);font-size:18px;cursor:pointer;z-index:90;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.fab-cmdk:active{transform:scale(.92)}
+
+/* Pull-to-refresh */
+.ptr-indicator{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-100%);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:11px;color:var(--text-2);font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:50;transition:transform .2s,opacity .2s;opacity:0;pointer-events:none}
+.ptr-indicator.show{transform:translateX(-50%) translateY(8px);opacity:1}
+.ptr-indicator.spinning{color:var(--primary)}
+
 /* Filter chips - Linear style */
 .d-filter{display:flex;gap:6px;flex-wrap:wrap;margin:8px 14px 12px}
 .d-ftab{padding:5px 12px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text-2);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;letter-spacing:-.005em}
@@ -212,6 +274,22 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <link rel="manifest" href="manifest.json"/>
 </head>
 <body>
+<!-- ===== COMBO UX/UI: Toast + Cmd+K + FAB + PTR ===== -->
+<div class="toast-stack" id="toastStack"></div>
+<div class="ptr-indicator" id="ptrIndicator">↓ Kéo để tải lại</div>
+<button class="fab-cmdk" onclick="openCmdK()" aria-label="Tìm kiếm nhanh">⌘</button>
+
+<div id="cmdk-overlay" onclick="if(event.target===this)closeCmdK()">
+  <div class="cmdk-modal" role="dialog">
+    <div class="cmdk-search">
+      <span style="color:var(--text-3)">🔍</span>
+      <input type="text" id="cmdkInput" placeholder="Tìm tracking, lệnh, trang..." autocomplete="off"/>
+      <button class="toast-close" onclick="closeCmdK()" aria-label="Đóng">×</button>
+    </div>
+    <div class="cmdk-list" id="cmdkList"></div>
+  </div>
+</div>
+
 
 <div class="top">
   <div style="display:flex;align-items:center;gap:12px">
@@ -472,7 +550,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <script>
 var SUPA_URL = 'https://wpzyzgiokgvpfukzsfnz.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwenl6Z2lva2d2cGZ1a3pzZm56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNzEyMDAsImV4cCI6MjA5Mjg0NzIwMH0.TcukbXJk6j4zPUWSmAyPuDNwVw-MxWuV0dpP11bgWTM';
-var BASE = 'https://script.google.com/macros/s/AKfycbzXbuPaltO2pitRdgW6BP844kYtBdEVz1V_SoVI6H6xeSknOyGnoB98Ka2d9nSk6QO1/exec';
+var BASE = 'https://script.google.com/macros/s/AKfycbygdD6nnD-ba12H-qj6wsT-dlvCF5ziuVJ2mMhQPUUUdLhmasOjcIN0R_VzFFYDIc_1/exec';
 // Helper: lay gia tri CSS variable cho Chart.js (Chart.js khong tu resolve var(--xxx))
 function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'';}
 var hist = JSON.parse(localStorage.getItem('khoHist')||'[]'), cT = null, cInfo = null, nT = null, nInfo = null, nNg = null, curOid = '', curSp = '';
@@ -999,9 +1077,8 @@ function exportTrackCSV(){
 
 // ===== DASHBOARD =====
 async function loadDash() {
-  document.getElementById('dLoading').style.display='block';
+  showDashSkeleton();
   document.getElementById('dContent').style.display='none';
-  document.getElementById('dLoading').innerHTML='<span class="spin"></span>Đang tải dữ liệu...';
   try {
     var r=await fetch(BASE+'?action=getDashboard');
     var d=await r.json();
@@ -1013,7 +1090,8 @@ async function loadDash() {
     document.getElementById('dLoading').style.display='none';
     document.getElementById('dContent').style.display='block';
   } catch(e) {
-    document.getElementById('dLoading').innerHTML='<div style="color:var(--danger);text-align:center;padding:20px;font-size:13px">Lỗi: '+e.message+'</div>';
+    document.getElementById('dLoading').innerHTML='<div class="empty-state"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div class="empty-title">Không tải được dữ liệu</div><div class="empty-tip">'+e.message+'<br>Kéo xuống để thử lại.</div></div>';
+    showToast({type:'err', title:'Lỗi tải dữ liệu', msg:e.message});
   }
 }
 
@@ -1126,11 +1204,11 @@ function renderDash() {
       '<td class="r '+laiCls+'">'+laiStr+'</td>'+
       '</tr>';
   });
-  document.getElementById('dTable').innerHTML=html||'<tr><td colspan="4" style="text-align:center;color:var(--text-3);padding:20px">Không có dữ liệu</td></tr>';
+  document.getElementById('dTable').innerHTML=html||'<tr><td colspan="4"><div class="empty-state"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M8 11h8M8 15h5"/></svg><div class="empty-title">Không có dữ liệu</div><div class="empty-tip">Chưa có đơn nào</div></div></td></tr>';
 
   // Tồn kho chi tiết
   if (!tonKho.length) {
-    document.getElementById('dTonList').innerHTML='<div style="text-align:center;padding:30px 16px;color:var(--text-3);font-size:12px">Không có hàng tồn kho</div>';
+    document.getElementById('dTonList').innerHTML='<div class="empty-state"><svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><div class="empty-title">Đã bán hết hàng tồn</div><div class="empty-tip">Tuyệt vời!</div></div>';
     return;
   }
   daVeList.sort(function(a,b){return b.giaNhap-a.giaNhap;});
@@ -1203,7 +1281,194 @@ function renderH(){
     return '<div class="hi"><div class="dot '+h.s+'"></div><div class="hin"><div class="htr">'+h.t+'</div><div class="hn">'+h.n+'</div></div><div class="htm">'+h.time+'</div></div>';
   }).join('');
 }
+
+/* ╔══════════════════════════════════════════════════════╗
+   ║  COMBO UX/UI PRO MOBILE - Toast + Cmd+K + PTR + Skel ║
+   ╚══════════════════════════════════════════════════════╝ */
+
+// ===== TOAST + HAPTIC =====
+var TOAST_ICONS = {ok:'✓', err:'✕', warn:'!', info:'i'};
+function showToast(opts){
+  opts = opts || {};
+  var type = opts.type || 'info';
+  var stack = document.getElementById('toastStack');
+  if (!stack) return;
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = '<div class="toast-icon '+type+'">'+(TOAST_ICONS[type]||'i')+'</div>'+
+    '<div class="toast-body"><div class="toast-title">'+(opts.title||'')+'</div>'+
+    (opts.msg ? '<div class="toast-msg">'+opts.msg+'</div>' : '')+'</div>'+
+    '<button class="toast-close">×</button>';
+  t.querySelector('.toast-close').onclick = function(){ removeToast(t); };
+  stack.appendChild(t);
+  // Haptic - quan trọng cho mobile
+  try{
+    if (navigator.vibrate) {
+      navigator.vibrate(type==='err' ? [60,40,60] : type==='ok' ? [40] : 25);
+    }
+  }catch(e){}
+  var dur = opts.duration || (type==='err' ? 5000 : 3000);
+  setTimeout(function(){ removeToast(t); }, dur);
+}
+function removeToast(t){
+  if(!t || !t.parentNode) return;
+  t.classList.add('removing');
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 200);
+}
+
+// ===== CMD+K MOBILE =====
+var cmdkOpen = false;
+var cmdkActive = 0;
+var cmdkResults = [];
+
+var CMDK_ACTIONS = [
+  {section:'ĐIỀU HƯỚNG', icon:'📦', title:'Nhập kho', sub:'Quét tracking nhập hàng', go:function(){switchTab('nhap');}},
+  {section:'ĐIỀU HƯỚNG', icon:'💰', title:'Bán hàng', sub:'Quét order ID bán', go:function(){switchTab('ban');}},
+  {section:'ĐIỀU HƯỚNG', icon:'🔍', title:'Kiểm tra', sub:'Tra cứu đơn hàng', go:function(){switchTab('gia');}},
+  {section:'ĐIỀU HƯỚNG', icon:'📍', title:'Tracking', sub:'Theo dõi vận chuyển', go:function(){switchTab('track');}},
+  {section:'ĐIỀU HƯỚNG', icon:'📊', title:'Báo cáo', sub:'Dashboard kinh doanh', go:function(){switchTab('dash');}},
+  {section:'HÀNH ĐỘNG', icon:'↻', title:'Tải lại Báo cáo', sub:'Refresh dashboard ngay', go:function(){if(typeof fetchDashSilent==='function'){fetchDashSilent();showToast({type:'info',title:'Đang đồng bộ'});}}}
+];
+
+function openCmdK(){
+  cmdkOpen = true;
+  document.getElementById('cmdk-overlay').classList.add('show');
+  var inp = document.getElementById('cmdkInput');
+  inp.value = '';
+  cmdkActive = 0;
+  renderCmdK('');
+  setTimeout(function(){ inp.focus(); }, 50);
+}
+function closeCmdK(){
+  cmdkOpen = false;
+  document.getElementById('cmdk-overlay').classList.remove('show');
+}
+function renderCmdK(query){
+  var q = (query||'').toLowerCase().trim();
+  cmdkResults = [];
+  CMDK_ACTIONS.forEach(function(a){
+    if (!q || a.title.toLowerCase().indexOf(q)>=0 || a.sub.toLowerCase().indexOf(q)>=0) cmdkResults.push(a);
+  });
+  if (q.length >= 3 && typeof dAllData !== 'undefined' && dAllData && dAllData.length) {
+    dAllData.forEach(function(r){
+      var oid = (r.orderId||'').toLowerCase();
+      var tr = (r.tracking||'').toLowerCase();
+      var sp = (r.sp||'').toLowerCase();
+      if (oid.indexOf(q)>=0 || tr.indexOf(q)>=0 || sp.indexOf(q)>=0) {
+        if (cmdkResults.length < 25) {
+          cmdkResults.push({
+            section:'TRACKING',
+            icon: r.daBan?'✓':(r.daVe?'📦':'⏳'),
+            title: r.tracking || r.orderId || (r.sp||'').substring(0,40),
+            sub: (r.daBan?'Đã bán':(r.daVe?'Đã về':'Chưa về'))+' · '+r.sheet+' · '+(r.sp||'').substring(0,30),
+            go: function(){ showToast({type:'info', title:r.tracking||r.orderId, msg:r.sheet+' · '+(r.daBan?'Đã bán':(r.daVe?'Đã về':'Chưa về'))}); switchTab('dash'); }
+          });
+        }
+      }
+    });
+  }
+  var html = '';
+  if (!cmdkResults.length) {
+    html = '<div class="cmdk-empty">Không tìm thấy gì với "'+(query||'')+'"</div>';
+  } else {
+    var lastSec = '';
+    cmdkResults.forEach(function(item, i){
+      if (item.section !== lastSec) {
+        html += '<div class="cmdk-section">'+item.section+'</div>';
+        lastSec = item.section;
+      }
+      html += '<div class="cmdk-item'+(i===cmdkActive?' active':'')+'" onclick="cmdkSelect('+i+')">'+
+        '<div class="cmdk-it-icon">'+item.icon+'</div>'+
+        '<div class="cmdk-it-text">'+
+          '<div class="cmdk-it-title">'+item.title+'</div>'+
+          (item.sub ? '<div class="cmdk-it-sub">'+item.sub+'</div>' : '')+
+        '</div>'+
+      '</div>';
+    });
+  }
+  document.getElementById('cmdkList').innerHTML = html;
+}
+function cmdkSelect(i){
+  var item = cmdkResults[i];
+  if (!item) return;
+  closeCmdK();
+  setTimeout(function(){ try{ item.go(); }catch(e){} }, 50);
+}
+document.getElementById('cmdkInput').addEventListener('input', function(e){
+  cmdkActive = 0;
+  renderCmdK(e.target.value);
+});
+document.addEventListener('keydown', function(e){
+  if ((e.metaKey||e.ctrlKey) && (e.key==='k'||e.key==='K')) {
+    e.preventDefault();
+    if (cmdkOpen) closeCmdK(); else openCmdK();
+    return;
+  }
+  if (!cmdkOpen) return;
+  if (e.key==='Escape') closeCmdK();
+});
+
+// ===== SKELETON helper cho dashboard =====
+function showDashSkeleton(){
+  var dl = document.getElementById('dLoading');
+  if (!dl) return;
+  dl.innerHTML =
+    '<div style="padding:14px 14px 4px"><div class="sk-line skeleton" style="height:24px;width:50%"></div><div class="sk-line skeleton" style="height:11px;width:70%"></div></div>'+
+    '<div class="sk-card"><div class="sk-line skeleton" style="height:10px;width:30%"></div><div class="sk-line skeleton" style="height:32px;width:60%"></div><div class="sk-line skeleton" style="height:11px;width:40%"></div></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 14px 10px">'+
+      '<div class="sk-card" style="margin:0;padding:12px"><div class="sk-line skeleton" style="height:9px"></div><div class="sk-line skeleton" style="height:14px;width:80%"></div></div>'+
+      '<div class="sk-card" style="margin:0;padding:12px"><div class="sk-line skeleton" style="height:9px"></div><div class="sk-line skeleton" style="height:14px;width:80%"></div></div>'+
+      '<div class="sk-card" style="margin:0;padding:12px"><div class="sk-line skeleton" style="height:9px"></div><div class="sk-line skeleton" style="height:14px;width:80%"></div></div>'+
+    '</div>'+
+    '<div class="sk-card" style="height:140px"></div>';
+  dl.style.display='block';
+}
+
+// ===== PULL-TO-REFRESH (mobile native) =====
+(function(){
+  var startY = 0, pulling = false, ptrEl = document.getElementById('ptrIndicator');
+  var THRESHOLD = 70;
+  document.addEventListener('touchstart', function(e){
+    if (currentTab !== 'dash') return;
+    if (window.scrollY > 5) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+  }, {passive:true});
+  document.addEventListener('touchmove', function(e){
+    if (!pulling) return;
+    var dy = e.touches[0].clientY - startY;
+    if (dy > 30 && dy < THRESHOLD) {
+      ptrEl.textContent = '↓ Kéo để tải lại';
+      ptrEl.classList.add('show');
+      ptrEl.classList.remove('spinning');
+    } else if (dy >= THRESHOLD) {
+      ptrEl.textContent = '↑ Thả ra để tải lại';
+      ptrEl.classList.add('show', 'spinning');
+    }
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if (!pulling) return;
+    pulling = false;
+    var endY = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientY : 0;
+    if (endY - startY >= THRESHOLD && currentTab === 'dash') {
+      ptrEl.textContent = '⟳ Đang tải lại...';
+      if (typeof fetchDashSilent === 'function') {
+        fetchDashSilent();
+        showToast({type:'info', title:'Đang đồng bộ dữ liệu'});
+      }
+      setTimeout(function(){ ptrEl.classList.remove('show','spinning'); }, 800);
+    } else {
+      ptrEl.classList.remove('show','spinning');
+    }
+  });
+})();
+
+// Welcome toast
+setTimeout(function(){
+  showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
+}, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.5.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.7.0</div>
+
 </body>
 </html>
