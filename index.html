@@ -499,7 +499,7 @@ initScanner();
 
 // ===== TABS =====
 function switchTab(t) {
-  document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('active',['nhap','ban','gia','dash'][i]===t); });
+  document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('active',['nhap','ban','gia','track','dash'][i]===t); });
   document.querySelectorAll('.sec').forEach(function(s){ s.classList.remove('active'); });
   document.getElementById('tab-'+t).classList.add('active');
   if (t==='dash') {
@@ -1120,6 +1120,6 @@ function renderH(){
   }).join('');
 }
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.4.1</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.4.3</div>
 </body>
 </html>
