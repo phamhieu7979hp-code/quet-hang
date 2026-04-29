@@ -2398,11 +2398,38 @@ async function loadDebtData(force){
   var loading = document.getElementById('debtLoading');
   if (loading) loading.style.display='block';
   try {
+    // 1. Fetch sales (immutable - giá trị lúc bán)
     var r = await fetch(SUPA_URL+'/rest/v1/sales?select=*&order=ngay.desc&limit=500', {
       headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY }
     });
     if (!r.ok) throw new Error('HTTP '+r.status);
     salesData = await r.json();
+    
+    // 2. Fetch payments từ audit_log (events thanh toán - tách riêng khỏi sales)
+    window._paymentsByKhach = {};
+    try {
+      var paymentActions = 'payment,unpaid,bulk_payment_to_paid,bulk_payment_to_debt';
+      var rPay = await fetch(SUPA_URL + '/rest/v1/audit_log?action=in.(' + paymentActions + ')&order=created_at.asc&limit=5000', {
+        headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY }
+      });
+      if (rPay.ok) {
+        var payments = await rPay.json();
+        payments.forEach(function(p){
+          if (!p.khach) return;
+          var k = p.khach;
+          var amt = parseFloat(p.amount) || 0;
+          if (!window._paymentsByKhach[k]) window._paymentsByKhach[k] = 0;
+          // 'payment' và 'bulk_payment_to_paid' = trả tiền (giảm nợ)
+          // 'unpaid' và 'bulk_payment_to_debt' = chuyển sang nợ (tăng nợ)
+          if (p.action === 'payment' || p.action === 'bulk_payment_to_paid') {
+            window._paymentsByKhach[k] += amt;
+          } else {
+            window._paymentsByKhach[k] -= amt;
+          }
+        });
+      }
+    } catch(e) { console.warn('payments fetch fail:', e); }
+    
     window._debtCachedAt = Date.now();
     rebuildCustomersCache();
     renderDebtView();
@@ -2433,7 +2460,11 @@ async function loadDebtData(force){
 }
 
 function rebuildCustomersCache(){
-  // Group by khach để autocomplete + view "theo khách"
+  // Group by khach + adjust theo payments từ audit_log
+  // Logic mới: 
+  //   sale.total_owed = nợ TẠI THỜI ĐIỂM BÁN (immutable)
+  //   payments = trừ thêm vào nợ tổng của khách (event-based)
+  //   customer.totalOwed = sum(sale.total_owed) - sum(payments của khách)
   var map = {};
   salesData.forEach(function(s){
     var k = s.khach || 'Khách lẻ';
@@ -2445,6 +2476,17 @@ function rebuildCustomersCache(){
     map[k].sales.push(s);
     if (!map[k].lastDate || s.ngay > map[k].lastDate) map[k].lastDate = s.ngay;
   });
+  
+  // Adjust theo payments
+  var paymentsByKhach = window._paymentsByKhach || {};
+  Object.keys(map).forEach(function(k){
+    var c = map[k];
+    var paid = paymentsByKhach[k] || 0;
+    // Trả thêm sau khi bán → giảm nợ, tăng đã trả
+    c.totalPaid += paid;
+    c.totalOwed = Math.max(0, c.totalOwed - paid);
+  });
+  
   customersCache = Object.values(map).sort(function(a,b){
     // Còn nợ lên đầu, rồi theo lastDate desc
     if ((a.totalOwed>0) !== (b.totalOwed>0)) return b.totalOwed>0 ? 1 : -1;
@@ -2856,45 +2898,21 @@ async function bulkToggleDayDebt(date, mode) {
   if (!confirm(msg)) return;
   
   try {
-    // Batch update Supabase
-    await Promise.all(sales.map(function(s){
-      var body;
-      if (mode === 'to_debt') {
-        body = {
-          total_paid: 0,
-          total_owed: parseFloat(s.total_dt) || 0,
-          status: 'pending',
-          paid_at: null
-        };
-      } else {
-        body = {
-          total_paid: parseFloat(s.total_dt) || 0,
-          total_owed: 0,
-          status: 'paid',
-          paid_at: new Date().toISOString()
-        };
-      }
-      return fetch(SUPA_URL + '/rest/v1/sales?id=eq.' + s.id, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPA_KEY,
-          'Authorization': 'Bearer ' + SUPA_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(body)
-      });
-    }));
-    
-    // Log từng sale
+    // Logic mới: KHÔNG PATCH sales — chỉ log bulk events vào audit_log
     for (var i = 0; i < sales.length; i++) {
       var s = sales[i];
+      var saleOwed = parseFloat(s.total_owed) || 0;
+      var saleDt = parseFloat(s.total_dt) || 0;
+      // Bulk to_paid: log amount = nợ thực tế của sale (saleOwed)
+      // Bulk to_debt: log amount = đã trả của sale (= total_dt)
+      var amt = mode === 'to_debt' ? saleDt : saleOwed;
+      if (amt <= 0) continue; // skip nếu không có gì để chuyển
       await logPaymentEvent({
         type: mode === 'to_debt' ? 'bulk_to_debt' : 'bulk_to_paid',
         saleId: s.id,
         khach: s.khach,
-        amount: parseFloat(s.total_dt) || 0,
-        remainingOwed: mode === 'to_debt' ? (parseFloat(s.total_dt)||0) : 0,
+        amount: amt,
+        remainingOwed: mode === 'to_debt' ? saleDt : 0,
         method: 'bulk',
         ghiChu: 'Ngày ' + dateStr
       });
@@ -2918,23 +2936,7 @@ async function markSaleUnpaid(saleId) {
   if (!s) return;
   if (!confirm('Chuyển đơn này thành CÔNG NỢ?\n\nKhách: ' + (s.khach||'') + '\nTổng: ' + Number(s.total_dt).toLocaleString('vi') + 'đ')) return;
   try {
-    var r = await fetch(SUPA_URL + '/rest/v1/sales?id=eq.' + saleId, {
-      method: 'PATCH',
-      headers: {
-        'apikey': SUPA_KEY,
-        'Authorization': 'Bearer ' + SUPA_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        total_paid: 0,
-        total_owed: parseFloat(s.total_dt) || 0,
-        status: 'pending',
-        paid_at: null
-      })
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    // Log unpaid - revert payment
+    // KHÔNG PATCH sale — chỉ log unpaid event
     await logPaymentEvent({
       type: 'unpaid',
       saleId: saleId,
@@ -3103,24 +3105,18 @@ async function confirmPayment(){
     showToast({type:'warn',title:'Cần nhập số tiền'});
     return;
   }
-  var owed = parseFloat(pdContext.total_owed)||0;
+  // Tính nợ tổng của khách (từ aggregate, không từ sale cụ thể)
+  // Sale immutable - chỉ log payment event
+  var customer = customersCache.find(function(c){return c.khach === pdContext.khach;});
+  var owed = customer ? (customer.totalOwed||0) : (parseFloat(pdContext.total_owed)||0);
   amt = Math.min(amt, owed);
-  var newPaid = (parseFloat(pdContext.total_paid)||0) + amt;
+  if (amt <= 0) {
+    showToast({type:'warn',title:'Khách không còn nợ'});
+    return;
+  }
   var newOwed = owed - amt;
-  var newStatus = newOwed === 0 ? 'paid' : 'partial';
   try {
-    var r = await fetch(SUPA_URL+'/rest/v1/sales?id=eq.'+pdContext.id, {
-      method:'PATCH',
-      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
-      body:JSON.stringify({
-        total_paid: newPaid,
-        total_owed: newOwed,
-        status: newStatus,
-        paid_at: newOwed === 0 ? new Date().toISOString() : null
-      })
-    });
-    if (!r.ok) throw new Error('HTTP '+r.status);
-    // Log payment
+    // KHÔNG PATCH sale — chỉ log payment event vào audit_log
     await logPaymentEvent({
       type: 'payment',
       saleId: pdContext.id,
@@ -3129,40 +3125,35 @@ async function confirmPayment(){
       remainingOwed: newOwed,
       method: 'manual'
     });
-    showToast({type:'ok',title:'✓ Đã cập nhật',msg:pdContext.khach+' trả '+Number(amt).toLocaleString('vi')+'đ'+(newOwed>0?' · còn '+Number(newOwed).toLocaleString('vi')+'đ':' · ĐỦ')});
+    showToast({type:'ok',title:'✓ Ghi nhận thanh toán',msg:pdContext.khach+' trả '+Number(amt).toLocaleString('vi')+'đ'+(newOwed>0?' · còn '+Number(newOwed).toLocaleString('vi')+'đ':' · ĐỦ')});
     closePaymentDialog();
     loadDebtData(true);
   } catch(ex){
-    showToast({type:'err',title:'Lỗi cập nhật',msg:ex.message});
+    showToast({type:'err',title:'Lỗi ghi nhận',msg:ex.message});
   }
 }
 
 async function markSalePaid(saleId){
+  // ⚠ Logic mới: chỉ log payment cho đơn này, không PATCH sale
+  // Nợ giảm theo aggregate (sale immutable)
   var sale = salesData.find(function(s){return s.id===saleId;});
   if (!sale) return;
-  if (!confirm('Đánh dấu đơn này đã trả đủ?\n\nKhách: '+sale.khach+'\nCòn nợ: '+Number(sale.total_owed).toLocaleString('vi')+'đ')) return;
+  var saleOwed = parseFloat(sale.total_owed) || 0;
+  if (saleOwed <= 0) {
+    showToast({type:'info',title:'Đơn này không có nợ'});
+    return;
+  }
+  if (!confirm('Đánh dấu đơn này đã trả đủ?\n\nKhách: '+sale.khach+'\nNợ: '+Number(saleOwed).toLocaleString('vi')+'đ')) return;
   try {
-    var r = await fetch(SUPA_URL+'/rest/v1/sales?id=eq.'+saleId, {
-      method:'PATCH',
-      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
-      body:JSON.stringify({
-        total_paid: sale.total_dt,
-        total_owed: 0,
-        status: 'paid',
-        paid_at: new Date().toISOString()
-      })
-    });
-    if (!r.ok) throw new Error('HTTP '+r.status);
-    // Log payment - mark trả đủ
     await logPaymentEvent({
       type: 'payment',
       saleId: saleId,
       khach: sale.khach,
-      amount: parseFloat(sale.total_owed) || 0,
+      amount: saleOwed,
       remainingOwed: 0,
       method: 'mark_paid'
     });
-    showToast({type:'ok',title:'✓ Đã đánh dấu trả đủ'});
+    showToast({type:'ok',title:'✓ Đã ghi nhận trả đủ'});
     loadDebtData(true);
   } catch(ex){
     showToast({type:'err',title:'Lỗi',msg:ex.message});
@@ -5325,7 +5316,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.27.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.28.0</div>
 
 </body>
 </html>
