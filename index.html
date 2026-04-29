@@ -587,6 +587,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .debt-item-row1{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .debt-item-sp{flex:1;min-width:0;font-weight:500;color:var(--text);line-height:1.35;word-break:break-word;font-size:12px}
 .debt-item-price{flex-shrink:0;font-variant-numeric:tabular-nums;font-weight:700;color:var(--success);font-size:12px;letter-spacing:.2px}
+/* Price color theo status: nợ → warning (cam), đã trả → success (xanh) */
+.debt-item-price.owed{color:var(--warning)}
+.debt-item-price.partial{color:var(--warning)}
+
 .debt-item-row2{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:3px;font-size:10px;color:var(--text-3)}
 .debt-item-oid{font-family:ui-monospace,monospace;opacity:.65;letter-spacing:.2px}
 .debt-item-qty{flex-shrink:0;background:var(--surface-2);padding:1px 6px;border-radius:3px;font-weight:600;color:var(--text-2)}
@@ -2626,6 +2630,8 @@ async function toggleCustomerDetail(khach){
       + sales.map(function(s){
         var owed = parseFloat(s.total_owed)||0;
         // SP làm chính, Order ID mờ ở dưới
+        var saleHasOwed = (parseFloat(s.total_owed) || 0) > 0;
+        var priceClass = saleHasOwed ? 'debt-item-price owed' : 'debt-item-price';
         var itemLines = (s.items||[]).map(function(it){
           var spName = it.sp || '(không có tên SP)';
           var oid = it.orderId || '';
@@ -2634,7 +2640,7 @@ async function toggleCustomerDetail(khach){
           return '<div class="debt-item-line">'
             + '<div class="debt-item-row1">'
             +   '<div class="debt-item-sp">'+escapeHtml(spName)+'</div>'
-            +   '<div class="debt-item-price">'+Number(price).toLocaleString('vi')+'đ</div>'
+            +   '<div class="'+priceClass+'">'+Number(price).toLocaleString('vi')+'đ</div>'
             + '</div>'
             + '<div class="debt-item-row2">'
             +   '<span class="debt-item-oid">'+(oid ? '#'+escapeHtml(oid) : '')+'</span>'
@@ -2642,12 +2648,15 @@ async function toggleCustomerDetail(khach){
             + '</div>'
             + '</div>';
         }).join('');
-        // Per-sale: tổng + items + nút quick toggle (như bản cũ)
-        return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:11px">'
-          + '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--text-2);font-weight:500">'+formatDateShort(s.ngay)+'</span><b style="font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
+        // Per-sale: tổng + items + nút quick toggle - màu theo trạng thái nợ
+        var saleOwed = parseFloat(s.total_owed) || 0;
+        var hasDebt = saleOwed > 0;
+        var priceColor = hasDebt ? 'var(--danger)' : 'var(--success)';
+        return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;border-left:3px solid '+(hasDebt?'var(--danger)':'var(--success)')+';padding-left:8px;margin-bottom:4px">'
+          + '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--text-2);font-weight:500">'+formatDateShort(s.ngay)+'</span><b style="font-variant-numeric:tabular-nums;color:'+priceColor+'">'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
           + itemLines
           + '<div style="display:flex;justify-content:flex-end;margin-top:5px">'
-          +   (parseFloat(s.total_owed) > 0
+          +   (hasDebt
                 ? '<button class="debt-action danger" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();markSalePaid(\''+s.id+'\')">💰 Đã trả</button>'
                 : '<button style="padding:3px 8px;font-size:10px;background:none;border:1px solid var(--border);color:var(--text-3);border-radius:4px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();markSaleUnpaid(\''+s.id+'\')">↩ Đổi sang nợ</button>')
           + '</div>'
@@ -2743,6 +2752,8 @@ function renderDebtByDate(listEl, search){
       + '</div>'
       + g.sales.map(function(s){
         var owed = parseFloat(s.total_owed)||0;
+        var saleHasOwed = (parseFloat(s.total_owed) || 0) > 0;
+        var priceClass = saleHasOwed ? 'debt-item-price owed' : 'debt-item-price';
         var itemLines = (s.items||[]).map(function(it){
           var spName = it.sp || '(không có tên SP)';
           var oid = it.orderId || '';
@@ -2751,7 +2762,7 @@ function renderDebtByDate(listEl, search){
           return '<div class="debt-item-line">'
             + '<div class="debt-item-row1">'
             +   '<div class="debt-item-sp">'+escapeHtml(spName)+'</div>'
-            +   '<div class="debt-item-price">'+Number(price).toLocaleString('vi')+'đ</div>'
+            +   '<div class="'+priceClass+'">'+Number(price).toLocaleString('vi')+'đ</div>'
             + '</div>'
             + '<div class="debt-item-row2">'
             +   '<span class="debt-item-oid">'+(oid ? '#'+escapeHtml(oid) : '')+'</span>'
@@ -2759,14 +2770,17 @@ function renderDebtByDate(listEl, search){
             + '</div>'
             + '</div>';
         }).join('');
-        // Per-sale: hiện tổng + nút quick toggle (như bản cũ - cho phép sửa nhanh khi nhập nhầm)
-        return '<div class="debt-card">'
+        // Per-sale: hiện tổng + nút quick toggle - màu theo trạng thái nợ
+        var saleOwed = parseFloat(s.total_owed) || 0;
+        var hasDebt = saleOwed > 0;
+        var priceColor = hasDebt ? 'var(--danger)' : 'var(--success)';
+        return '<div class="debt-card '+(hasDebt?'has-debt':'paid')+'">'
           + '<div class="debt-card-head"><div class="debt-card-name">'+escapeHtml(s.khach||'Khách lẻ')+'</div>'
-          +   '<div style="font-weight:700;color:var(--text);font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</div>'
+          +   '<div style="font-weight:700;color:'+priceColor+';font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</div>'
           + '</div>'
           + '<div class="debt-card-items">'+itemLines+'</div>'
           + '<div class="debt-card-actions" style="margin-top:8px">'
-          +   (parseFloat(s.total_owed) > 0
+          +   (hasDebt
                 ? '<button class="debt-action primary" onclick="markSalePaid(\''+s.id+'\')">💰 Đánh dấu trả đủ</button>'
                 : '<button class="debt-action" style="background:none;border:1px solid var(--border);color:var(--text-3);font-size:11px;padding:5px 10px" onclick="markSaleUnpaid(\''+s.id+'\')">↩ Đổi sang nợ</button>')
           + '</div>'
@@ -3003,7 +3017,7 @@ async function markCustomerUnpaid(khach){
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  PAYMENT DIALOG (v3.30.1) - Hiển thị TỔNG NỢ KHÁCH              ║
+// ║  PAYMENT DIALOG (v3.30.2) - Hiển thị TỔNG NỢ KHÁCH              ║
 // ║  Logic ledger: nợ là aggregate level, không per-sale             ║
 // ║  pdContext giờ là { khach, customerOwed, customerTotalDt, sales }║
 // ╚══════════════════════════════════════════════════════════════╝
@@ -3150,7 +3164,7 @@ async function fetchAuditLog(khach) {
 // Backwards compat - fetchPaymentHistory giờ filter từ audit_log với action=payment-related
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  DEBT ACTIVITY FEED (v3.30.1) - hiện cuối tab Công nợ         ║
+// ║  DEBT ACTIVITY FEED (v3.30.2) - hiện cuối tab Công nợ         ║
 // ║  Hiện 15 sự kiện gần nhất từ audit_log: sale, return,         ║
 // ║  payment, manual_debt, expense                                  ║
 // ╚══════════════════════════════════════════════════════════════╝
@@ -5485,7 +5499,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.30.1</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.30.2</div>
 
 <!-- LICH SU - hiện ở cuối trang (sau tất cả các tabs) -->
 <div class="hist" style="margin-top:24px;padding-top:16px;border-top:2px solid var(--border)">
