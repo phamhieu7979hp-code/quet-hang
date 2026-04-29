@@ -3481,6 +3481,92 @@ function onRetRefundInput(el){
   el.value = raw ? Number(raw).toLocaleString('vi') : '';
 }
 
+
+// ╔════════════════════════════════════════════════════════════╗
+// ║  APPLY RETURN TO SALE: tự động trừ công nợ khi hoàn hàng    ║
+// ║  Logic kế toán chuẩn:                                         ║
+// ║  - Refund trừ vào CÔNG NỢ trước (nếu khách đang nợ)          ║
+// ║  - Còn lại trừ vào ĐÃ TRẢ (refund tiền cho khách)            ║
+// ║  - Tổng đơn (total_dt) giảm theo refund                       ║
+// ║  - Nếu refund = total_dt → status='returned' (return hết đơn)║
+// ╚════════════════════════════════════════════════════════════╝
+
+async function applyReturnToSale(returnRecord) {
+  if (!returnRecord || !returnRecord.order_id) return null;
+  var oid = String(returnRecord.order_id).trim();
+  var refund = parseFloat(returnRecord.refund_amount) || 0;
+  if (!oid || refund <= 0) return null;
+  
+  // Tìm sale có Order ID này trong items[]
+  // Ưu tiên: sale có status != 'returned' và total_dt > 0
+  var matchingSale = null;
+  for (var i = 0; i < salesData.length; i++) {
+    var s = salesData[i];
+    if (s.status === 'returned') continue;
+    if ((parseFloat(s.total_dt)||0) <= 0) continue;
+    var hasOrder = (s.items||[]).some(function(it){
+      return String(it.orderId||'').trim() === oid;
+    });
+    if (hasOrder) { matchingSale = s; break; }
+  }
+  
+  if (!matchingSale) {
+    console.log('applyReturnToSale: no matching sale for Order ID', oid);
+    return null;
+  }
+  
+  var oldDt = parseFloat(matchingSale.total_dt) || 0;
+  var oldPaid = parseFloat(matchingSale.total_paid) || 0;
+  var oldOwed = parseFloat(matchingSale.total_owed) || 0;
+  
+  // Cap refund không vượt quá tổng đơn
+  var actualRefund = Math.min(refund, oldDt);
+  
+  // Trừ vào công nợ trước, sau đó vào đã trả
+  var refundFromOwed = Math.min(actualRefund, oldOwed);
+  var refundFromPaid = Math.min(actualRefund - refundFromOwed, oldPaid);
+  
+  var newDt = oldDt - actualRefund;
+  var newOwed = oldOwed - refundFromOwed;
+  var newPaid = oldPaid - refundFromPaid;
+  
+  // Auto status
+  var newStatus = matchingSale.status || 'pending';
+  if (newDt <= 0) newStatus = 'returned';
+  else if (newOwed <= 0) newStatus = 'paid';
+  else if (newPaid > 0) newStatus = 'partial';
+  else newStatus = 'pending';
+  
+  try {
+    var r = await fetch(SUPA_URL + '/rest/v1/sales?id=eq.' + matchingSale.id, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        total_dt: newDt,
+        total_paid: newPaid,
+        total_owed: newOwed,
+        status: newStatus
+      })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return {
+      khach: matchingSale.khach,
+      refundedFromOwed: refundFromOwed,
+      refundedFromPaid: refundFromPaid,
+      newOwed: newOwed,
+      saleId: matchingSale.id
+    };
+  } catch(ex) {
+    console.error('applyReturnToSale fail:', ex);
+    return null;
+  }
+}
+
 async function confirmAddReturn(){
   var oid = document.getElementById('retOrderId').value.trim();
   if (!oid) { showToast({type:'warn',title:'Cần nhập Order ID'}); document.getElementById('retOrderId').focus(); return; }
@@ -3515,9 +3601,27 @@ async function confirmAddReturn(){
       var errTxt = await r.text();
       throw new Error('HTTP '+r.status+': '+errTxt);
     }
-    showToast({type:'ok',title:'✓ Đã ghi nhận hoàn',msg:oid+(refund>0?' · Hoàn '+Number(refund).toLocaleString('vi')+'đ':'')});
+    
+    // Auto trừ công nợ nếu match Order ID
+    var debtImpact = await applyReturnToSale(record);
+    
+    var toastMsg = oid + (refund>0 ? ' · Hoàn '+Number(refund).toLocaleString('vi')+'đ' : '');
+    if (debtImpact) {
+      var debtMsg = '';
+      if (debtImpact.refundedFromOwed > 0) {
+        debtMsg = '↓ Trừ nợ ' + Number(debtImpact.refundedFromOwed).toLocaleString('vi') + 'đ';
+      }
+      if (debtImpact.refundedFromPaid > 0) {
+        debtMsg += (debtMsg ? ' · ' : '') + '↓ Trả khách ' + Number(debtImpact.refundedFromPaid).toLocaleString('vi') + 'đ';
+      }
+      if (debtMsg) toastMsg += '\n' + (debtImpact.khach||'') + ': ' + debtMsg;
+    }
+    
+    showToast({type:'ok',title:'✓ Đã ghi nhận hoàn',msg:toastMsg});
     closeAddReturnDialog();
     loadReturnData(true);
+    // Refresh công nợ vì đã update sales
+    if (typeof loadDebtData === 'function') loadDebtData(true);
   } catch(ex) {
     console.error('Add return fail:', ex);
     var msg = ex.message;
@@ -4725,7 +4829,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.23.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.24.0</div>
 
 </body>
 </html>
