@@ -2323,13 +2323,32 @@ async function confirmSubmitCart(){
           'apikey':SUPA_KEY,
           'Authorization':'Bearer '+SUPA_KEY,
           'Content-Type':'application/json',
-          'Prefer':'return=minimal'
+          'Prefer':'return=minimal,return=representation'
         },
         body:JSON.stringify(saleRecord)
       });
       if (!supaResp.ok) {
         console.warn('Supabase save failed:', await supaResp.text());
         showToast({type:'warn',title:'Lưu Sheet OK',msg:'Nhưng Supabase fail — kiểm tra console'});
+      } else {
+        // Log audit: sale creation
+        var newSaleId = null;
+        try { var savedSale = await supaResp.json(); newSaleId = (Array.isArray(savedSale) && savedSale[0]) ? savedSale[0].id : null; } catch(e){}
+        await logAction({
+          action: 'sale',
+          khach: khach,
+          amount: saleRecord.total_dt,
+          saleId: newSaleId,
+          method: saleRecord.total_owed > 0 ? (saleRecord.total_paid > 0 ? 'partial_paid' : 'debt') : 'paid',
+          description: 'Bán ' + success.length + ' đơn · ' + Number(saleRecord.total_dt).toLocaleString('vi') + 'đ' + (saleRecord.total_owed > 0 ? ' · nợ ' + Number(saleRecord.total_owed).toLocaleString('vi') + 'đ' : ' · trả đủ'),
+          meta: {
+            items: saleRecord.items,
+            total_dt: saleRecord.total_dt,
+            total_paid: saleRecord.total_paid,
+            total_owed: saleRecord.total_owed,
+            ghi_chu: saleRecord.ghi_chu
+          }
+        });
       }
     } catch(ex){
       console.error('Supabase error:', ex);
@@ -2541,7 +2560,7 @@ function renderDebtByCustomer(listEl, search){
   }).join('');
 }
 
-function toggleCustomerDetail(khach){
+async function toggleCustomerDetail(khach){
   var id='dt_'+khach.replace(/[^a-z0-9]/gi,'_');
   var el=document.getElementById(id);
   if (!el) return;
@@ -2549,7 +2568,7 @@ function toggleCustomerDetail(khach){
     var c = customersCache.find(function(x){return x.khach===khach;});
     if (!c) return;
     var sales = c.sales.slice().sort(function(a,b){return new Date(b.ngay)-new Date(a.ngay);});
-    el.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Lịch sử '+sales.length+' đơn</div>'
+    var saleHtml = '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">📦 Lịch sử '+sales.length+' đơn</div>'
       + sales.map(function(s){
         var owed = parseFloat(s.total_owed)||0;
         // SP làm chính, Order ID mờ ở dưới
@@ -2582,10 +2601,48 @@ function toggleCustomerDetail(khach){
           + (s.ghi_chu?'<div style="color:var(--text-3);font-size:10px;margin-top:2px;font-style:italic">📝 '+escapeHtml(s.ghi_chu)+'</div>':'')
           + '</div>';
       }).join('');
+    
+    // Show sales first immediately
+    el.innerHTML = saleHtml + '<div id="' + id + '_pay" style="margin-top:10px;padding-top:10px;border-top:2px solid var(--border)"><div style="font-size:11px;color:var(--text-3);text-align:center;padding:8px">⏳ Đang tải lịch sử trả nợ...</div></div>';
     el.style.display='block';
+    
+    // Fetch + render payment history async
+    var payHtml = await renderPaymentHistory(khach);
+    var payEl = document.getElementById(id + '_pay');
+    if (payEl) payEl.innerHTML = payHtml;
   } else {
     el.style.display='none';
   }
+}
+
+// Render payment history HTML cho 1 khách
+async function renderPaymentHistory(khach){
+  var logs = await fetchPaymentHistory(khach);
+  if (!logs || !logs.length) {
+    return '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">💰 Lịch sử trả nợ (0)</div>'
+      + '<div style="text-align:center;font-size:11px;color:var(--text-3);padding:8px">Chưa có lịch sử trả nợ</div>';
+  }
+  var html = '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">💰 Lịch sử trả nợ ('+logs.length+')</div>';
+  html += logs.map(function(log){
+    var m = log._meta || {};
+    var amt = parseFloat(m.amount) || 0;
+    var rem = parseFloat(m.remaining_owed) || 0;
+    var typeLabel = '';
+    var typeIcon = '💵';
+    var typeColor = 'var(--success)';
+    if (m.type === 'unpaid') { typeLabel = 'Đổi sang nợ'; typeIcon = '↩'; typeColor = 'var(--warning)'; }
+    else if (m.type === 'bulk_to_paid') { typeLabel = 'Bulk: trả đủ'; typeIcon = '⚡'; typeColor = 'var(--success)'; }
+    else if (m.type === 'bulk_to_debt') { typeLabel = 'Bulk: chuyển nợ'; typeIcon = '⚡'; typeColor = 'var(--warning)'; }
+    else { typeLabel = m.method === 'mark_paid' ? 'Đánh dấu trả đủ' : 'Trả tiền'; }
+    return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:11px">'
+      + '<div style="flex:1;min-width:0">'
+      +   '<div style="color:'+typeColor+';font-weight:600">'+typeIcon+' '+typeLabel+'</div>'
+      +   '<div style="color:var(--text-3);font-size:10px;margin-top:1px">'+escapeHtml(log.thoi_gian||'')+(rem > 0 ? ' · còn nợ '+Number(rem).toLocaleString('vi')+'đ' : '')+'</div>'
+      + '</div>'
+      + '<div style="font-weight:700;color:'+typeColor+';font-variant-numeric:tabular-nums;flex-shrink:0">'+Number(amt).toLocaleString('vi')+'đ</div>'
+      + '</div>';
+  }).join('');
+  return html;
 }
 
 function renderDebtByDate(listEl, search){
@@ -2829,6 +2886,20 @@ async function bulkToggleDayDebt(date, mode) {
       });
     }));
     
+    // Log từng sale
+    for (var i = 0; i < sales.length; i++) {
+      var s = sales[i];
+      await logPaymentEvent({
+        type: mode === 'to_debt' ? 'bulk_to_debt' : 'bulk_to_paid',
+        saleId: s.id,
+        khach: s.khach,
+        amount: parseFloat(s.total_dt) || 0,
+        remainingOwed: mode === 'to_debt' ? (parseFloat(s.total_dt)||0) : 0,
+        method: 'bulk',
+        ghiChu: 'Ngày ' + dateStr
+      });
+    }
+    
     showToast({
       type: 'ok',
       title: '✓ Đã chuyển ' + sales.length + ' đơn',
@@ -2863,6 +2934,15 @@ async function markSaleUnpaid(saleId) {
       })
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
+    // Log unpaid - revert payment
+    await logPaymentEvent({
+      type: 'unpaid',
+      saleId: saleId,
+      khach: s.khach,
+      amount: parseFloat(s.total_dt) || 0,
+      remainingOwed: parseFloat(s.total_dt) || 0,
+      method: 'revert'
+    });
     showToast({type:'ok', title:'✓ Đã chuyển sang công nợ'});
     loadDebtData(true);
   } catch(ex) {
@@ -2921,6 +3001,101 @@ function updatePdRemain(){
   document.getElementById('pdRemain').style.color = remain>0 ? 'var(--warning)' : 'var(--success)';
 }
 
+
+
+// ╔════════════════════════════════════════════════════════════╗
+// ║  AUDIT LOG v1.0 - Source of truth cho mọi hành động         ║
+// ║  Lưu vào table audit_log (IMMUTABLE)                         ║
+// ╚════════════════════════════════════════════════════════════╝
+async function logAction(opts) {
+  // opts: {action, khach, amount, saleId, returnId, expenseId, method, description, meta}
+  try {
+    var rec = {
+      action: opts.action || 'unknown',
+      khach: opts.khach || null,
+      amount: parseFloat(opts.amount) || 0,
+      sale_id: opts.saleId || null,
+      return_id: opts.returnId || null,
+      expense_id: opts.expenseId || null,
+      method: opts.method || 'manual',
+      description: opts.description || '',
+      meta: opts.meta || {},
+      source: (typeof window !== 'undefined' && window.innerWidth > 1024) ? 'desktop' : 'mobile'
+    };
+    await fetch(SUPA_URL + '/rest/v1/audit_log', {
+      method: 'POST',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(rec)
+    });
+  } catch(e) { console.warn('logAction fail:', e); }
+}
+
+// Backwards compat - logPaymentEvent giờ chỉ wrap logAction
+async function logPaymentEvent(opts) {
+  var actionMap = {
+    'payment': 'payment',
+    'unpaid': 'unpaid',
+    'bulk_to_paid': 'bulk_payment_to_paid',
+    'bulk_to_debt': 'bulk_payment_to_debt'
+  };
+  var amt = parseFloat(opts.amount) || 0;
+  var rem = parseFloat(opts.remainingOwed) || 0;
+  var desc = '';
+  if (opts.type === 'unpaid') desc = 'Đổi sang nợ ' + Number(amt).toLocaleString('vi') + 'đ';
+  else if (opts.type === 'bulk_to_paid') desc = 'Bulk: trả đủ ' + Number(amt).toLocaleString('vi') + 'đ';
+  else if (opts.type === 'bulk_to_debt') desc = 'Bulk: chuyển nợ ' + Number(amt).toLocaleString('vi') + 'đ';
+  else desc = 'Trả ' + Number(amt).toLocaleString('vi') + 'đ' + (rem > 0 ? ' · còn ' + Number(rem).toLocaleString('vi') + 'đ' : ' · ĐỦ');
+  if (opts.ghiChu) desc += ' · ' + opts.ghiChu;
+  
+  await logAction({
+    action: actionMap[opts.type] || 'payment',
+    khach: opts.khach,
+    amount: amt,
+    saleId: opts.saleId,
+    method: opts.method || 'manual',
+    description: desc,
+    meta: { type: opts.type, remaining_owed: rem }
+  });
+}
+
+// Fetch audit log của 1 khách (mọi action liên quan)
+async function fetchAuditLog(khach) {
+  if (!khach) return [];
+  try {
+    var url = SUPA_URL + '/rest/v1/audit_log?khach=eq.' + encodeURIComponent(khach) + '&order=created_at.desc&limit=100';
+    var r = await fetch(url, { headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY } });
+    if (!r.ok) return [];
+    return await r.json();
+  } catch(e) { return []; }
+}
+
+// Backwards compat - fetchPaymentHistory giờ filter từ audit_log với action=payment-related
+async function fetchPaymentHistory(khach) {
+  if (!khach) return [];
+  try {
+    var paymentActions = 'payment,unpaid,bulk_payment_to_paid,bulk_payment_to_debt';
+    var url = SUPA_URL + '/rest/v1/audit_log?khach=eq.' + encodeURIComponent(khach) + '&action=in.(' + paymentActions + ')&order=created_at.desc&limit=100';
+    var r = await fetch(url, { headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY } });
+    if (!r.ok) return [];
+    var data = await r.json();
+    // Adapt format cho old renderPaymentHistory
+    return data.map(function(d){
+      return {
+        thoi_gian: d.created_at ? new Date(d.created_at).toLocaleString('vi-VN', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : '',
+        _meta: {
+          type: d.action === 'bulk_payment_to_paid' ? 'bulk_to_paid'
+              : d.action === 'bulk_payment_to_debt' ? 'bulk_to_debt'
+              : d.action === 'unpaid' ? 'unpaid'
+              : 'payment',
+          amount: d.amount,
+          remaining_owed: (d.meta && d.meta.remaining_owed) || 0,
+          method: d.method
+        }
+      };
+    });
+  } catch(e) { return []; }
+}
+
 async function confirmPayment(){
   if (!pdContext) return;
   var amt = parseInt(document.getElementById('pdAmount').value.replace(/[^\d]/g,'')||'0',10);
@@ -2945,6 +3120,15 @@ async function confirmPayment(){
       })
     });
     if (!r.ok) throw new Error('HTTP '+r.status);
+    // Log payment
+    await logPaymentEvent({
+      type: 'payment',
+      saleId: pdContext.id,
+      khach: pdContext.khach,
+      amount: amt,
+      remainingOwed: newOwed,
+      method: 'manual'
+    });
     showToast({type:'ok',title:'✓ Đã cập nhật',msg:pdContext.khach+' trả '+Number(amt).toLocaleString('vi')+'đ'+(newOwed>0?' · còn '+Number(newOwed).toLocaleString('vi')+'đ':' · ĐỦ')});
     closePaymentDialog();
     loadDebtData(true);
@@ -2969,6 +3153,15 @@ async function markSalePaid(saleId){
       })
     });
     if (!r.ok) throw new Error('HTTP '+r.status);
+    // Log payment - mark trả đủ
+    await logPaymentEvent({
+      type: 'payment',
+      saleId: saleId,
+      khach: sale.khach,
+      amount: parseFloat(sale.total_owed) || 0,
+      remainingOwed: 0,
+      method: 'mark_paid'
+    });
     showToast({type:'ok',title:'✓ Đã đánh dấu trả đủ'});
     loadDebtData(true);
   } catch(ex){
@@ -3115,6 +3308,15 @@ async function confirmAddDebt(){
       var errText = await r.text();
       throw new Error('HTTP ' + r.status + ': ' + errText);
     }
+    // Log audit: manual debt
+    await logAction({
+      action: 'manual_debt',
+      khach: khach,
+      amount: total,
+      method: paid > 0 ? 'partial' : 'debt',
+      description: 'Thêm công nợ thủ công · ' + Number(total).toLocaleString('vi') + 'đ' + (paid > 0 ? ' (đã trả ' + Number(paid).toLocaleString('vi') + 'đ)' : ''),
+      meta: { total: total, paid: paid, owed: total - paid, note: note }
+    });
     showToast({type:'ok',title:'✓ Đã lưu công nợ',msg:khach + ' · ' + (owed > 0 ? 'Nợ ' + Number(owed).toLocaleString('vi') + 'đ' : 'Đã trả đủ')});
     closeAddDebtDialog();
     loadDebtData(true);
@@ -3360,6 +3562,15 @@ async function confirmAddExpense(){
       var errTxt = await r.text();
       throw new Error('HTTP '+r.status+': '+errTxt);
     }
+    // Log audit: expense
+    await logAction({
+      action: 'expense',
+      khach: null,
+      amount: record.tong_tien,
+      method: currentExpType || 'khac',
+      description: 'Chi phí ' + (currentExpType||'khac') + ' · ' + ten + ' · ' + Number(record.tong_tien).toLocaleString('vi') + 'đ',
+      meta: record
+    });
     showToast({type:'ok',title:'✓ Đã lưu chi phí',msg:ten+' · '+Number(record.tong_tien).toLocaleString('vi')+'đ'});
     closeAddExpenseDialog();
     loadExpenseData(true);
@@ -3381,6 +3592,16 @@ async function deleteExpense(id){
       headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Prefer':'return=minimal' }
     });
     if (!r.ok) throw new Error('HTTP '+r.status);
+    // Log audit: expense delete
+    await logAction({
+      action: 'expense_delete',
+      khach: null,
+      amount: parseFloat(x.tong_tien) || 0,
+      expenseId: id,
+      method: 'manual',
+      description: 'Xóa chi phí · ' + (x.ten||'') + ' · ' + Number(x.tong_tien||0).toLocaleString('vi') + 'đ',
+      meta: x
+    });
     showToast({type:'ok',title:'✓ Đã xóa'});
     loadExpenseData(true);
   } catch(ex){
@@ -3836,6 +4057,16 @@ async function confirmAddReturn(){
       throw new Error('HTTP '+r.status+': '+errTxt);
     }
     
+    // Log audit: return creation
+    await logAction({
+      action: 'return',
+      khach: khach || null,
+      amount: refund,
+      method: currentRetType || 'wrong_sale',
+      description: 'Hoàn ' + oid + ' · ' + Number(refund).toLocaleString('vi') + 'đ' + (sp ? ' · ' + sp : ''),
+      meta: record
+    });
+    
     // Auto trừ công nợ + đồng bộ Supabase
     var debtImpact = await applyReturnToSale(record);
     
@@ -3899,6 +4130,16 @@ async function deleteReturn(id){
       headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Prefer':'return=minimal' }
     });
     if (!r.ok) throw new Error('HTTP '+r.status);
+    // Log audit: return delete
+    await logAction({
+      action: 'return_delete',
+      khach: x.khach || null,
+      amount: parseFloat(x.refund_amount) || 0,
+      returnId: id,
+      method: 'manual',
+      description: 'Xóa hoàn hàng · ' + (x.order_id||'') + ' · ' + Number(x.refund_amount||0).toLocaleString('vi') + 'đ',
+      meta: x
+    });
     showToast({type:'ok',title:'✓ Đã xóa'});
     loadReturnData(true);
   } catch(ex){
@@ -5084,7 +5325,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.25.5</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.27.0</div>
 
 </body>
 </html>
