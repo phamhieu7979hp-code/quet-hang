@@ -261,6 +261,44 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .d-capital-total-num{font-size:24px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em}
 .d-capital-total-sub{font-size:10px;color:var(--text-2);margin-top:4px;font-weight:500}
 
+
+
+/* ╔══ BAN SUB-TABS (Bán mới / Hoàn hàng) ══╗ */
+.ban-subtabs{display:flex;gap:4px;margin-bottom:12px;padding:3px;background:var(--surface-2);border-radius:9px}
+.ban-subtab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;background:none;border:none;border-radius:6px;color:var(--text-3);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.ban-subtab.active{background:var(--surface);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.ban-subtab span:first-child{font-size:14px;line-height:1}
+.ban-panel{display:none}
+.ban-panel.active{display:block;animation:fadeSlide .18s ease-out}
+
+/* ╔══ SUPER-TABS (Công nợ / Chi phí) ══╗ */
+.super-tabs{display:flex;gap:6px;margin-bottom:14px;padding:4px;background:var(--surface-2);border-radius:9px}
+.super-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;background:none;border:none;border-radius:6px;color:var(--text-3);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.super-tab.active{background:var(--surface);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.super-tab span:first-child{font-size:15px;line-height:1}
+.super-tab-badge{display:inline-block;min-width:14px;padding:0 5px;background:var(--danger);color:#fff;border-radius:8px;font-size:10px;font-weight:700;line-height:14px;font-variant-numeric:tabular-nums}
+.super-panel{display:none}
+.super-panel.active{display:block;animation:fadeSlide .18s ease-out}
+
+/* Expense type buttons */
+.exp-type-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.exp-type-btn{padding:11px 6px;background:var(--surface);border:1.5px solid var(--border);border-radius:7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--text-2);font-family:inherit;transition:all .15s}
+.exp-type-btn.active{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+
+/* Expense card */
+.exp-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 13px}
+.exp-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.exp-card-name{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;word-break:break-word}
+.exp-card-amt{font-size:13px;font-weight:700;color:var(--danger);font-variant-numeric:tabular-nums;flex-shrink:0}
+.exp-card-meta{display:flex;gap:8px;font-size:11px;color:var(--text-3);align-items:center;flex-wrap:wrap}
+.exp-card-type{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.3px}
+.exp-card-type.phu_kien{background:#dbeafe;color:#1e40af}
+.exp-card-type.sua_chua{background:#fef3c7;color:#92400e}
+.exp-card-type.khac{background:#e5e7eb;color:#374151}
+.exp-card-note{font-size:11px;color:var(--text-3);margin-top:4px;font-style:italic}
+.exp-card-del{background:none;border:none;color:var(--text-3);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit}
+.exp-card-del:hover{background:var(--danger-soft);color:var(--danger)}
+
 /* ╔══ TRACKING SCAM WARNING ══╗ */
 .scam-warn{background:#dc2626 !important;color:#fff !important;animation:scamPulse 2s ease-in-out infinite}
 @keyframes scamPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 0 0 4px rgba(220,38,38,0)}}
@@ -579,6 +617,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <label style="margin-top:6px">So luong ve</label>
     <div class="row">
       <input type="number" id="slVe" value="1" min="1" inputmode="numeric">
+    </div>
+    <label style="margin-top:6px">Ghi chú (không bắt buộc)</label>
+    <div class="row">
+      <input type="text" id="noteNhap" placeholder="VD: hàng cũ trầy nhẹ, mua chợ Nhật Tảo...">
       <button onclick="confirmNhap()">OK</button>
     </div>
   </div>
@@ -596,6 +638,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 <!-- BAN HANG -->
 <div class="sec" id="tab-ban">
+  <!-- ╔══ SUB-TABS: Bán mới / Hoàn hàng ══╗ -->
+  <div class="ban-subtabs">
+    <button class="ban-subtab active" data-bantab="sale" onclick="setBanTab('sale')">
+      <span>💵</span> Bán hàng
+    </button>
+    <button class="ban-subtab" data-bantab="return" onclick="setBanTab('return')">
+      <span>↩️</span> Hoàn hàng
+    </button>
+  </div>
+
+  <!-- ═══ PANEL: BÁN HÀNG ═══ -->
+  <div id="banPanelSale" class="ban-panel active">
   <div class="sbtn"><label onclick="openCam('ban')">Quét mã vạch Order ID</label></div>
   <div class="row">
     <input type="text" id="inpBan" placeholder="Nhập Order ID...">
@@ -630,6 +684,39 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       </button>
     </div>
   </div>
+  </div><!-- /banPanelSale -->
+
+  <!-- ═══ PANEL: HOÀN HÀNG ═══ -->
+  <div id="banPanelReturn" class="ban-panel">
+    <div class="debt-stats">
+      <div class="debt-stat">
+        <div class="debt-stat-lbl">Tổng hoàn</div>
+        <div class="debt-stat-val" id="retTotalAll">— đ</div>
+        <div class="debt-stat-sub" id="retTotalCount">0 lần</div>
+      </div>
+      <div class="debt-stat" style="background:#fef3c7;border-color:#f59e0b">
+        <div class="debt-stat-lbl">Tháng này</div>
+        <div class="debt-stat-val" id="retTotalMonth" style="color:#b45309">— đ</div>
+        <div class="debt-stat-sub" id="retMonthCount">0 lần</div>
+      </div>
+    </div>
+    <div class="debt-subtabs">
+      <button class="debt-subtab active" data-ret-type="all" onclick="setRetFilter('all')">Tất cả</button>
+      <button class="debt-subtab" data-ret-type="wrong_sale" onclick="setRetFilter('wrong_sale')">⚠ Bán nhầm</button>
+      <button class="debt-subtab" data-ret-type="customer_return" onclick="setRetFilter('customer_return')">↩ Khách trả</button>
+      <button class="debt-subtab" data-ret-type="defective" onclick="setRetFilter('defective')">⚠ Lỗi sp</button>
+      <button class="debt-add-btn" onclick="openAddReturnDialog()" title="Ghi nhận hoàn hàng">+ Hoàn</button>
+      <button class="debt-refresh" onclick="loadReturnData(true)" title="Tải lại">↻</button>
+    </div>
+    <div class="debt-search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="retSearch" placeholder="Tìm Order ID, khách, SP..." oninput="renderReturnView()">
+    </div>
+    <div id="retLoading" style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">
+      <span class="spin"></span> Đang tải hoàn hàng...
+    </div>
+    <div id="retList" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div><!-- /banPanelReturn -->
 </div>
 
 <!-- KIEM TRA GIA -->
@@ -897,6 +984,19 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <!-- ╔══════════════ TAB CÔNG NỢ ══════════════╗ -->
 <div class="sec" id="tab-debt">
   <div style="margin:0 14px">
+    <!-- ╔══ SUPER-TABS: Công nợ / Chi phí ══╗ -->
+    <div class="super-tabs">
+      <button class="super-tab active" data-stab="debt" onclick="setSuperTab('debt')">
+        <span>💰</span> Công nợ
+        <span class="super-tab-badge" id="superDebtBadge" style="display:none">0</span>
+      </button>
+      <button class="super-tab" data-stab="expense" onclick="setSuperTab('expense')">
+        <span>💸</span> Chi phí
+      </button>
+    </div>
+
+    <!-- ═══ SUPER PANEL: CÔNG NỢ ═══ -->
+    <div id="superPanelDebt" class="super-panel active">
     <!-- Stat cards -->
     <div class="debt-stats" id="debtStats">
       <div class="debt-stat">
@@ -952,6 +1052,50 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       </div>
       <div id="debtList" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
+    </div><!-- /super-panel-debt -->
+
+    <!-- ═══ SUPER PANEL: CHI PHÍ ═══ -->
+    <div id="superPanelExpense" class="super-panel">
+      <!-- Stat cards -->
+      <div class="debt-stats">
+        <div class="debt-stat">
+          <div class="debt-stat-lbl">Tổng chi phí</div>
+          <div class="debt-stat-val" id="expTotalAll">— đ</div>
+          <div class="debt-stat-sub" id="expTotalCount">0 khoản</div>
+        </div>
+        <div class="debt-stat" style="background:#fff7ed;border-color:#fb923c">
+          <div class="debt-stat-lbl">Tháng này</div>
+          <div class="debt-stat-val" id="expTotalMonth" style="color:#ea580c">— đ</div>
+          <div class="debt-stat-sub" id="expMonthCount">0 khoản</div>
+        </div>
+      </div>
+
+      <!-- Filter loại + Add button -->
+      <div class="debt-subtabs">
+        <button class="debt-subtab active" data-exp-type="all" onclick="setExpFilter('all')">Tất cả</button>
+        <button class="debt-subtab" data-exp-type="phu_kien" onclick="setExpFilter('phu_kien')">🔌 Phụ kiện</button>
+        <button class="debt-subtab" data-exp-type="sua_chua" onclick="setExpFilter('sua_chua')">🔧 Sửa chữa</button>
+        <button class="debt-subtab" data-exp-type="khac" onclick="setExpFilter('khac')">📋 Khác</button>
+        <button class="debt-add-btn" onclick="openAddExpenseDialog()" title="Thêm chi phí">+ Thêm</button>
+        <button class="debt-refresh" onclick="loadExpenseData(true)" title="Tải lại">↻</button>
+      </div>
+
+      <!-- Search -->
+      <div class="debt-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="expSearch" placeholder="Tìm tên, ghi chú..." oninput="renderExpenseView()">
+      </div>
+
+      <!-- Content -->
+      <div id="expLoading" style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">
+        <span class="spin"></span> Đang tải chi phí...
+      </div>
+      <div id="expList" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div><!-- /super-panel-expense -->
+
+    <!-- ═══ SUPER PANEL: HOÀN HÀNG ═══ -->
+    <div id="superPanelReturn" class="super-panel" style="display:none"><!-- Moved to tab-ban --></div>
+
   </div>
 </div>
 
@@ -1066,6 +1210,132 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="kd-foot">
       <button class="kd-btn kd-btn-cancel" onclick="closeAddDebtDialog()">Hủy</button>
       <button class="kd-btn kd-btn-confirm" id="adConfirmBtn" onclick="confirmAddDebt()">📝 LƯU CÔNG NỢ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════ DIALOG THÊM CHI PHÍ ══════════════╗ -->
+<div id="addExpenseDialog" class="koktrack-dialog" style="display:none">
+  <div class="kd-overlay" onclick="closeAddExpenseDialog()"></div>
+  <div class="kd-card">
+    <div class="kd-head">
+      <div class="kd-title">💸 Thêm chi phí</div>
+      <button class="kd-close" onclick="closeAddExpenseDialog()">×</button>
+    </div>
+    <div class="kd-body">
+      <div class="kd-field">
+        <label>Loại chi phí <span class="kd-req">*</span></label>
+        <div class="exp-type-row">
+          <button class="exp-type-btn active" data-type="phu_kien" onclick="setExpType('phu_kien')">
+            <span style="font-size:18px">🔌</span>
+            <span>Phụ kiện</span>
+          </button>
+          <button class="exp-type-btn" data-type="sua_chua" onclick="setExpType('sua_chua')">
+            <span style="font-size:18px">🔧</span>
+            <span>Sửa chữa</span>
+          </button>
+          <button class="exp-type-btn" data-type="khac" onclick="setExpType('khac')">
+            <span style="font-size:18px">📋</span>
+            <span>Khác</span>
+          </button>
+        </div>
+      </div>
+      <div class="kd-field">
+        <label>Tên / mô tả <span class="kd-req">*</span></label>
+        <input type="text" id="exTen" placeholder="VD: Dây sạc Type-C, Sửa main iPhone 14...">
+      </div>
+      <div class="kd-field" style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+        <div>
+          <label>Số lượng</label>
+          <input type="text" id="exSL" value="1" inputmode="numeric" oninput="onExSLInput(this)">
+        </div>
+        <div>
+          <label>Đơn giá (VNĐ) <span class="kd-req">*</span></label>
+          <input type="text" id="exGia" placeholder="VD: 150,000" oninput="onExGiaInput(this)" inputmode="numeric">
+        </div>
+      </div>
+      <div class="kd-debt-info" style="background:var(--primary-soft);border-color:var(--primary)">
+        <span class="kd-debt-label">Tổng tiền:</span>
+        <b class="kd-debt-val" id="exTong" style="color:var(--primary)">0 đ</b>
+      </div>
+      <div class="kd-field">
+        <label>Đơn liên quan (tùy chọn)</label>
+        <input type="text" id="exDon" placeholder="Order ID nếu sửa cho đơn cụ thể">
+      </div>
+      <div class="kd-field">
+        <label>Ghi chú</label>
+        <textarea id="exNote" placeholder="VD: thay pin máy 12-1442-5307" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="kd-foot">
+      <button class="kd-btn kd-btn-cancel" onclick="closeAddExpenseDialog()">Hủy</button>
+      <button class="kd-btn kd-btn-confirm" id="exConfirmBtn" onclick="confirmAddExpense()">💸 LƯU CHI PHÍ</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ╔══════════════ DIALOG GHI NHẬN HOÀN HÀNG ══════════════╗ -->
+<div id="addReturnDialog" class="koktrack-dialog" style="display:none">
+  <div class="kd-overlay" onclick="closeAddReturnDialog()"></div>
+  <div class="kd-card">
+    <div class="kd-head">
+      <div class="kd-title">🔄 Ghi nhận hoàn hàng</div>
+      <button class="kd-close" onclick="closeAddReturnDialog()">×</button>
+    </div>
+    <div class="kd-body">
+      <div class="kd-field">
+        <label>Loại hoàn <span class="kd-req">*</span></label>
+        <div class="exp-type-row">
+          <button class="exp-type-btn active" data-ret-type="wrong_sale" onclick="setRetType('wrong_sale')">
+            <span style="font-size:18px">⚠</span>
+            <span>Bán nhầm</span>
+          </button>
+          <button class="exp-type-btn" data-ret-type="customer_return" onclick="setRetType('customer_return')">
+            <span style="font-size:18px">↩</span>
+            <span>Khách trả</span>
+          </button>
+          <button class="exp-type-btn" data-ret-type="defective" onclick="setRetType('defective')">
+            <span style="font-size:18px">⚠</span>
+            <span>Lỗi SP</span>
+          </button>
+        </div>
+      </div>
+      <div class="kd-field">
+        <label>Order ID <span class="kd-req">*</span></label>
+        <input type="text" id="retOrderId" placeholder="VD: 12-1442-5307" oninput="onRetOrderInput()">
+        <div id="retOrderInfo" style="display:none;margin-top:6px;padding:8px 10px;background:var(--surface-2);border-radius:6px;font-size:11px;color:var(--text-2)"></div>
+      </div>
+      <div class="kd-field">
+        <label>Tên sản phẩm</label>
+        <input type="text" id="retSp" placeholder="Tự động điền nếu Order ID có trong sales">
+      </div>
+      <div class="kd-field">
+        <label>Tên khách (nếu khách trả)</label>
+        <input type="text" id="retKhach" placeholder="Tự động điền nếu có">
+      </div>
+      <div class="kd-field" style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+        <div>
+          <label>Số lượng</label>
+          <input type="text" id="retSL" value="1" inputmode="numeric">
+        </div>
+        <div>
+          <label>Tiền hoàn (VNĐ)</label>
+          <input type="text" id="retRefund" placeholder="0" oninput="onRetRefundInput(this)" inputmode="numeric">
+        </div>
+      </div>
+      <div class="kd-field" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="retRestock" checked style="width:auto;margin:0">
+        <label for="retRestock" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Nhập lại kho (hàng còn dùng được)</label>
+      </div>
+      <div class="kd-field">
+        <label>Ghi chú</label>
+        <textarea id="retNote" placeholder="VD: máy bị lỗi màn hình, khách yêu cầu refund..." rows="2"></textarea>
+      </div>
+    </div>
+    <div class="kd-foot">
+      <button class="kd-btn kd-btn-cancel" onclick="closeAddReturnDialog()">Hủy</button>
+      <button class="kd-btn kd-btn-confirm" id="retConfirmBtn" onclick="confirmAddReturn()">🔄 LƯU HOÀN HÀNG</button>
     </div>
   </div>
 </div>
@@ -1649,20 +1919,28 @@ async function findTracking(t) {
 async function confirmNhap() {
   if (!nT) return;
   var ps=raw('phiShip');
+  var noteEl = document.getElementById('noteNhap');
+  var note = noteEl ? (noteEl.value||'').trim() : '';
   document.getElementById('shipWrap').style.display='none';
   document.getElementById('phiShip').value='';
+  if (noteEl) noteEl.value='';
   var t=nT,d=nInfo,ng=nNg; nT=null;nInfo=null;nNg=null;
   try {
     var slVe=parseInt(document.getElementById('slVe').value)||1;
-    var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps+'&slVe='+slVe);
+    var url=BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps+'&slVe='+slVe;
+    if (note) url += '&note='+encodeURIComponent(note);
+    var r=await fetch(url);
     var res=await r.json();
     if (res.found) {
       curOid=res.orderId||t; curSp=res.sp||'';
       var psStr=ps>0?'<br>Phi ship: <b>'+ps.toLocaleString('vi')+' d</b>':'';
-      showRes('resNhap','ok','Cap nhat thanh cong!','Tracking: <b>'+t+'</b><br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b><br>Ngay ve: <b>'+ng+'</b>'+psStr);
+      var noteStr=note?'<br>Ghi chú: <i style="color:var(--text-3)">'+note+'</i>':'';
+      showRes('resNhap','ok','Cap nhat thanh cong!','Tracking: <b>'+t+'</b><br>Sheet: <b>'+d.sheet+'</b> dong <b>'+d.row+'</b><br>Ngay ve: <b>'+ng+'</b>'+psStr+noteStr);
       document.getElementById('temWrap').style.display='block'; document.getElementById('slVe').value=1;
-      addH('ok',t,'Nhap kho'+(ps>0?' | '+ps.toLocaleString('vi')+' d':''));
+      addH('ok',t,'Nhap kho'+(ps>0?' | '+ps.toLocaleString('vi')+' d':'')+(note?' | '+note.slice(0,30):''));
       if (navigator.vibrate) navigator.vibrate([80,40,80]);
+      // Auto-focus tracking input để nhập tiếp ngay (no reload needed)
+      setTimeout(function(){var inp=document.getElementById('inpNhap');if(inp){inp.value='';inp.focus();}},150);
     } else showRes('resNhap','err','Loi','Khong cap nhat duoc.');
   } catch(ex){ showRes('resNhap','err','Loi ket noi','Thu lai sau.'); }
 }
@@ -1804,6 +2082,9 @@ function openCustomerDialog(){
   document.getElementById('cdPaid').value='';
   document.getElementById('cdNote').value='';
   document.getElementById('cdSuggest').style.display='none';
+  // Reset confirm button (defensive)
+  var confirmBtn = document.getElementById('cdConfirmBtn');
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = '💵 BÁN'; }
   // Default = trả đủ
   setPayMethod('full');
   document.getElementById('customerDialog').style.display='flex';
@@ -1834,6 +2115,8 @@ function setPayMethod(method){
 function closeCustomerDialog(){
   document.getElementById('customerDialog').style.display='none';
   document.body.style.overflow='';
+  var btn = document.getElementById('cdConfirmBtn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '💵 BÁN'; }
 }
 
 function setPaidFull(){
@@ -1996,7 +2279,7 @@ async function confirmSubmitCart(){
     banCart=[];
     closeCustomerDialog();
     // Refresh debt cache để khách mới hiện luôn
-    setTimeout(loadDebtData, 500);
+    setTimeout(function(){loadDebtData(true);},500);
   } else if (success.length > 0) {
     showToast({type:'warn',title:'Bán một phần',msg:'OK '+success.length+' / Lỗi '+failed.length});
     showRes('resBan','warn','OK '+success.length+' / Lỗi '+failed.length,failed.map(function(f){return '• '+f.orderId+': '+f.error;}).join('<br>'));
@@ -2022,6 +2305,7 @@ var salesData = []; // raw từ Supabase
 var debtView = 'customer'; // 'customer'|'date'|'owed'
 
 async function loadDebtData(force){
+  if (force) { window._debtCachedAt = 0; } // force flush cache
   // Cache 1 phút
   if (!force && window._debtCachedAt && Date.now() - window._debtCachedAt < 60000) {
     return;
@@ -2086,12 +2370,15 @@ function rebuildCustomersCache(){
 function updateDebtBadge(){
   var owedCount = customersCache.filter(function(c){return c.totalOwed > 0;}).length;
   var badge = document.getElementById('debtBadge');
-  if (!badge) return;
-  if (owedCount > 0) {
-    badge.style.display='inline-block';
-    badge.textContent=owedCount;
-  } else {
-    badge.style.display='none';
+  if (badge) {
+    if (owedCount > 0) { badge.style.display='inline-block'; badge.textContent=owedCount; }
+    else { badge.style.display='none'; }
+  }
+  // Cũng update super-tab badge
+  var sBadge = document.getElementById('superDebtBadge');
+  if (sBadge) {
+    if (owedCount > 0) { sBadge.style.display='inline-block'; sBadge.textContent=owedCount; }
+    else { sBadge.style.display='none'; }
   }
 }
 
@@ -2369,6 +2656,9 @@ function closePaymentDialog(){
   document.getElementById('paymentDialog').style.display='none';
   document.body.style.overflow='';
   pdContext=null;
+  // Reset button state
+  var btns = document.querySelectorAll('#paymentDialog .kd-btn-confirm');
+  btns.forEach(function(b){ b.disabled = false; });
 }
 
 function onPdAmountInput(el){
@@ -2459,6 +2749,9 @@ function openAddDebtDialog(){
   document.getElementById('adPaid').value = '';
   document.getElementById('adNote').value = '';
   document.getElementById('adSuggest').style.display = 'none';
+  // Reset confirm button (defensive — đảm bảo lần mở mới luôn enable)
+  var confirmBtn = document.getElementById('adConfirmBtn');
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = '📝 LƯU CÔNG NỢ'; }
   updateAdDebtPreview();
   document.getElementById('addDebtDialog').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -2468,6 +2761,9 @@ function openAddDebtDialog(){
 function closeAddDebtDialog(){
   document.getElementById('addDebtDialog').style.display = 'none';
   document.body.style.overflow = '';
+  // Reset button state để lần sau dùng lại được ngay
+  var btn = document.getElementById('adConfirmBtn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '📝 LƯU CÔNG NỢ'; }
 }
 
 function onAdTotalInput(el){
@@ -2593,6 +2889,491 @@ async function confirmAddDebt(){
 
 function escapeJs(s){return String(s||'').replace(/[\\']/g,'\\$&');}
 function escapeId(s){return String(s||'').replace(/[^a-z0-9]/gi,'_');}
+
+
+// ╔════════════════════════════════════════════════════════════╗
+// ║  SUPER-TABS HANDLER (Công nợ / Chi phí)                     ║
+// ╚════════════════════════════════════════════════════════════╝
+var currentSuperTab = 'debt';
+
+
+function setBanTab(tab){
+  document.querySelectorAll('.ban-subtab').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-bantab')===tab);
+  });
+  document.querySelectorAll('.ban-panel').forEach(function(p){p.classList.remove('active');});
+  var panel = document.getElementById(tab==='sale' ? 'banPanelSale' : 'banPanelReturn');
+  if (panel) panel.classList.add('active');
+  if (tab === 'return') loadReturnData();
+}
+
+function setSuperTab(stab){
+  currentSuperTab = stab;
+  document.querySelectorAll('.super-tab').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-stab')===stab);
+  });
+  document.querySelectorAll('.super-panel').forEach(function(p){p.classList.remove('active');});
+  var panelId = stab==='debt' ? 'superPanelDebt' : 'superPanelExpense';
+  var panel = document.getElementById(panelId);
+  if (panel) panel.classList.add('active');
+  if (stab==='expense') loadExpenseData();
+  else if (stab==='return') loadReturnData();
+}
+
+// ╔════════════════════════════════════════════════════════════╗
+// ║  CHI PHÍ - Operating Expenses Module                        ║
+// ╚════════════════════════════════════════════════════════════╝
+
+var expensesData = [];
+var expFilter = 'all';
+var currentExpType = 'phu_kien'; // dialog state
+
+async function loadExpenseData(force){
+  if (force) { window._expCachedAt = 0; } // force flush cache
+  if (!force && window._expCachedAt && Date.now() - window._expCachedAt < 60000) return;
+  var loading = document.getElementById('expLoading');
+  if (loading) loading.style.display = 'block';
+  try {
+    var r = await fetch(SUPA_URL+'/rest/v1/expenses?select=*&order=ngay.desc&limit=500', {
+      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY }
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    expensesData = await r.json();
+    window._expCachedAt = Date.now();
+    renderExpenseView();
+  } catch(ex){
+    console.error('Load expense fail:', ex);
+    if (loading) loading.innerHTML = '<div style="color:var(--danger);padding:14px">Lỗi tải chi phí: '+ex.message+'<br><br><button onclick="loadExpenseData(true)" style="background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:12px;cursor:pointer">↻ Thử lại</button></div>';
+  } finally {
+    if (loading) loading.style.display = 'none';
+  }
+}
+
+function setExpFilter(type){
+  expFilter = type;
+  document.querySelectorAll('.debt-subtab[data-exp-type]').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-exp-type')===type);
+  });
+  renderExpenseView();
+}
+
+function renderExpenseView(){
+  var listEl = document.getElementById('expList');
+  if (!listEl) return;
+  var elTotalAll = document.getElementById('expTotalAll');
+  var elTotalCount = document.getElementById('expTotalCount');
+  var elTotalMonth = document.getElementById('expTotalMonth');
+  var elMonthCount = document.getElementById('expMonthCount');
+  if (!elTotalAll) return;
+  
+  var totalAll = expensesData.reduce(function(s,x){return s+(parseFloat(x.tong_tien)||0);},0);
+  var now = new Date();
+  var thisMonth = expensesData.filter(function(x){
+    if (!x.ngay) return false;
+    var d = new Date(x.ngay);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  var totalMonth = thisMonth.reduce(function(s,x){return s+(parseFloat(x.tong_tien)||0);},0);
+  
+  elTotalAll.textContent = Number(totalAll).toLocaleString('vi')+' đ';
+  elTotalCount.textContent = expensesData.length+' khoản';
+  elTotalMonth.textContent = Number(totalMonth).toLocaleString('vi')+' đ';
+  elMonthCount.textContent = thisMonth.length+' khoản';
+  
+  if (expensesData.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">Chưa có chi phí nào<br><br><button onclick="openAddExpenseDialog()" style="background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">+ Thêm chi phí đầu tiên</button></div>';
+    return;
+  }
+  
+  var search = (document.getElementById('expSearch').value||'').toLowerCase().trim();
+  var list = expensesData;
+  if (expFilter !== 'all') list = list.filter(function(x){return x.loai === expFilter;});
+  if (search) list = list.filter(function(x){
+    var hay = ((x.ten||'')+' '+(x.ghi_chu||'')+' '+(x.don_lien_quan||'')).toLowerCase();
+    return hay.indexOf(search) >= 0;
+  });
+  
+  if (list.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3)">Không tìm thấy chi phí</div>';
+    return;
+  }
+  
+  // Group theo tháng
+  var byMonth = {};
+  list.forEach(function(x){
+    if (!x.ngay) return;
+    var d = new Date(x.ngay);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var label = 'Tháng '+(d.getMonth()+1)+'/'+d.getFullYear();
+    if (!byMonth[key]) byMonth[key] = { label:label, items:[], total:0 };
+    byMonth[key].items.push(x);
+    byMonth[key].total += parseFloat(x.tong_tien)||0;
+  });
+  var groups = Object.keys(byMonth).sort().reverse().map(function(k){return byMonth[k];});
+  
+  var TYPE_LABELS = { phu_kien:'🔌 Phụ kiện', sua_chua:'🔧 Sửa chữa', khac:'📋 Khác', van_chuyen:'🚚 Vận chuyển' };
+  
+  listEl.innerHTML = groups.map(function(g){
+    return '<div class="debt-date-head"><span>'+g.label+' · '+g.items.length+' khoản</span><b>'+Number(g.total).toLocaleString('vi')+'đ</b></div>'
+      + g.items.map(function(x){
+        var typeLbl = TYPE_LABELS[x.loai] || x.loai;
+        var dateShort = formatDateShort(x.ngay);
+        return '<div class="exp-card">'
+          + '<div class="exp-card-head">'
+          +   '<div class="exp-card-name">'+escapeHtml(x.ten||'')+'</div>'
+          +   '<div class="exp-card-amt">-'+Number(x.tong_tien).toLocaleString('vi')+'đ</div>'
+          + '</div>'
+          + '<div class="exp-card-meta">'
+          +   '<span class="exp-card-type '+x.loai+'">'+typeLbl+'</span>'
+          +   '<span>📅 '+dateShort+'</span>'
+          +   (parseFloat(x.so_luong)>1 ? '<span>×'+x.so_luong+' = '+Number(x.don_gia).toLocaleString('vi')+'đ/c</span>' : '')
+          +   (x.don_lien_quan ? '<span style="font-family:monospace;font-size:10px;color:var(--text-2)">#'+escapeHtml(x.don_lien_quan)+'</span>' : '')
+          +   '<button class="exp-card-del" onclick="deleteExpense(\''+x.id+'\')" title="Xóa" style="margin-left:auto">×</button>'
+          + '</div>'
+          + (x.ghi_chu ? '<div class="exp-card-note">'+escapeHtml(x.ghi_chu)+'</div>' : '')
+          + '</div>';
+      }).join('');
+  }).join('');
+}
+
+// === ADD EXPENSE DIALOG ===
+function openAddExpenseDialog(){
+  document.getElementById('exTen').value = '';
+  document.getElementById('exSL').value = '1';
+  document.getElementById('exGia').value = '';
+  document.getElementById('exDon').value = '';
+  document.getElementById('exNote').value = '';
+  setExpType('phu_kien');
+  updateExTong();
+  // Reset confirm button
+  var confirmBtn = document.getElementById('exConfirmBtn');
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = '💸 LƯU CHI PHÍ'; }
+  document.getElementById('addExpenseDialog').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function(){document.getElementById('exTen').focus();},100);
+}
+
+function closeAddExpenseDialog(){
+  document.getElementById('addExpenseDialog').style.display = 'none';
+  document.body.style.overflow = '';
+  var btn = document.getElementById('exConfirmBtn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '💸 LƯU CHI PHÍ'; }
+}
+
+function setExpType(t){
+  currentExpType = t;
+  document.querySelectorAll('.exp-type-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-type')===t);
+  });
+}
+
+function onExSLInput(el){
+  var raw = el.value.replace(/[^\d]/g,'');
+  el.value = raw || '1';
+  updateExTong();
+}
+function onExGiaInput(el){
+  var raw = el.value.replace(/[^\d]/g,'');
+  el.value = raw ? Number(raw).toLocaleString('vi') : '';
+  updateExTong();
+}
+function getExNum(id){
+  var s = document.getElementById(id).value.replace(/[^\d]/g,'');
+  return s ? parseInt(s,10) : 0;
+}
+function updateExTong(){
+  var sl = getExNum('exSL') || 1;
+  var gia = getExNum('exGia');
+  var tong = sl * gia;
+  document.getElementById('exTong').textContent = Number(tong).toLocaleString('vi')+' đ';
+}
+
+async function confirmAddExpense(){
+  var ten = document.getElementById('exTen').value.trim();
+  if (!ten) { showToast({type:'warn',title:'Cần nhập tên/mô tả'}); document.getElementById('exTen').focus(); return; }
+  var sl = getExNum('exSL') || 1;
+  var gia = getExNum('exGia');
+  if (gia <= 0) { showToast({type:'warn',title:'Cần nhập đơn giá'}); document.getElementById('exGia').focus(); return; }
+  var note = document.getElementById('exNote').value.trim();
+  var don = document.getElementById('exDon').value.trim();
+  var btn = document.getElementById('exConfirmBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Đang lưu...';
+  try {
+    var record = {
+      loai: currentExpType,
+      ten: ten,
+      so_luong: sl,
+      don_gia: gia,
+      tong_tien: sl * gia,
+      ghi_chu: note || null,
+      don_lien_quan: don || null
+    };
+    var r = await fetch(SUPA_URL+'/rest/v1/expenses', {
+      method:'POST',
+      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+      body:JSON.stringify(record)
+    });
+    if (!r.ok) {
+      var errTxt = await r.text();
+      throw new Error('HTTP '+r.status+': '+errTxt);
+    }
+    showToast({type:'ok',title:'✓ Đã lưu chi phí',msg:ten+' · '+Number(record.tong_tien).toLocaleString('vi')+'đ'});
+    closeAddExpenseDialog();
+    loadExpenseData(true);
+  } catch(ex) {
+    console.error('Add expense fail:', ex);
+    showToast({type:'err',title:'Lỗi lưu',msg:ex.message});
+    btn.disabled = false;
+    btn.innerHTML = '💸 LƯU CHI PHÍ';
+  }
+}
+
+async function deleteExpense(id){
+  var x = expensesData.find(function(e){return e.id===id;});
+  if (!x) return;
+  if (!confirm('Xóa chi phí này?\n\n'+x.ten+'\n'+Number(x.tong_tien).toLocaleString('vi')+'đ')) return;
+  try {
+    var r = await fetch(SUPA_URL+'/rest/v1/expenses?id=eq.'+id, {
+      method:'DELETE',
+      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Prefer':'return=minimal' }
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    showToast({type:'ok',title:'✓ Đã xóa'});
+    loadExpenseData(true);
+  } catch(ex){
+    showToast({type:'err',title:'Lỗi xóa',msg:ex.message});
+  }
+}
+
+// ╔════════════════════════════════════════════════════════════╗
+// ║  HOÀN HÀNG (Returns/Refunds) Module                         ║
+// ╚════════════════════════════════════════════════════════════╝
+var returnsData = [];
+var retFilter = 'all';
+var currentRetType = 'wrong_sale';
+
+async function loadReturnData(force){
+  if (force) { window._retCachedAt = 0; }
+  if (!force && window._retCachedAt && Date.now() - window._retCachedAt < 60000) return;
+  var loading = document.getElementById('retLoading');
+  if (loading) loading.style.display = 'block';
+  try {
+    var r = await fetch(SUPA_URL+'/rest/v1/returns?select=*&order=ngay.desc&limit=500', {
+      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY }
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    returnsData = await r.json();
+    window._retCachedAt = Date.now();
+    renderReturnView();
+  } catch(ex){
+    console.error('Load returns fail:', ex);
+    if (loading) loading.innerHTML = '<div style="color:var(--danger);padding:14px">Lỗi tải hoàn hàng: '+ex.message+'<br><br><button onclick="loadReturnData(true)" style="background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:12px;cursor:pointer">↻ Thử lại</button><br><br><i style="font-size:11px">Có thể bố chưa tạo bảng <code>returns</code> trên Supabase. Xem instructions trong chat.</i></div>';
+  } finally {
+    if (loading) loading.style.display = 'none';
+  }
+}
+
+function setRetFilter(type){
+  retFilter = type;
+  document.querySelectorAll('.debt-subtab[data-ret-type]').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-ret-type')===type);
+  });
+  renderReturnView();
+}
+
+function renderReturnView(){
+  var listEl = document.getElementById('retList');
+  if (!listEl) return;
+  var elTotalAll = document.getElementById('retTotalAll');
+  var elTotalCount = document.getElementById('retTotalCount');
+  var elTotalMonth = document.getElementById('retTotalMonth');
+  var elMonthCount = document.getElementById('retMonthCount');
+  if (!elTotalAll) return;
+  
+  var totalAll = returnsData.reduce(function(s,x){return s+(parseFloat(x.refund_amount)||0);},0);
+  var now = new Date();
+  var thisMonth = returnsData.filter(function(x){
+    if (!x.ngay) return false;
+    var d = new Date(x.ngay);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  var totalMonth = thisMonth.reduce(function(s,x){return s+(parseFloat(x.refund_amount)||0);},0);
+  
+  elTotalAll.textContent = Number(totalAll).toLocaleString('vi')+' đ';
+  elTotalCount.textContent = returnsData.length+' lần';
+  elTotalMonth.textContent = Number(totalMonth).toLocaleString('vi')+' đ';
+  elMonthCount.textContent = thisMonth.length+' lần';
+  
+  if (returnsData.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">Chưa có hoàn hàng nào<br><br><button onclick="openAddReturnDialog()" style="background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">+ Ghi nhận hoàn đầu tiên</button></div>';
+    return;
+  }
+  
+  var search = (document.getElementById('retSearch').value||'').toLowerCase().trim();
+  var list = returnsData;
+  if (retFilter !== 'all') list = list.filter(function(x){return x.loai === retFilter;});
+  if (search) list = list.filter(function(x){
+    var hay = ((x.order_id||'')+' '+(x.khach||'')+' '+(x.sp||'')+' '+(x.ghi_chu||'')).toLowerCase();
+    return hay.indexOf(search) >= 0;
+  });
+  
+  if (list.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3)">Không tìm thấy hoàn hàng</div>';
+    return;
+  }
+  
+  var TYPE_LABELS = { wrong_sale:'⚠ Bán nhầm', customer_return:'↩ Khách trả', defective:'⚠ Lỗi SP' };
+  var TYPE_COLOR = { wrong_sale:{bg:'#fef3c7',color:'#92400e'}, customer_return:{bg:'#dbeafe',color:'#1e40af'}, defective:{bg:'#fee2e2',color:'#991b1b'} };
+  
+  listEl.innerHTML = list.map(function(x){
+    var typeLbl = TYPE_LABELS[x.loai] || x.loai;
+    var clr = TYPE_COLOR[x.loai] || {bg:'#e5e7eb',color:'#374151'};
+    var dateShort = formatDateShort(x.ngay);
+    return '<div class="exp-card" style="border-left:3px solid '+clr.color+'">'
+      + '<div class="exp-card-head">'
+      +   '<div class="exp-card-name">' + escapeHtml(x.sp || x.order_id) + '</div>'
+      +   '<div class="exp-card-amt" style="color:#dc2626">-' + Number(x.refund_amount||0).toLocaleString('vi') + 'đ</div>'
+      + '</div>'
+      + '<div class="exp-card-meta">'
+      +   '<span class="exp-card-type" style="background:'+clr.bg+';color:'+clr.color+'">' + typeLbl + '</span>'
+      +   '<span>📅 ' + dateShort + '</span>'
+      +   (x.order_id ? '<span style="font-family:monospace;font-size:10px;color:var(--text-2)">#' + escapeHtml(x.order_id) + '</span>' : '')
+      +   (x.khach ? '<span>👤 ' + escapeHtml(x.khach) + '</span>' : '')
+      +   (x.restock ? '<span style="background:var(--success-soft);color:var(--success);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">📦 Lại kho</span>' : '')
+      +   '<button class="exp-card-del" onclick="deleteReturn(\''+x.id+'\')" title="Xóa" style="margin-left:auto">×</button>'
+      + '</div>'
+      + (x.ghi_chu ? '<div class="exp-card-note">' + escapeHtml(x.ghi_chu) + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function openAddReturnDialog(){
+  document.getElementById('retOrderId').value = '';
+  document.getElementById('retSp').value = '';
+  document.getElementById('retKhach').value = '';
+  document.getElementById('retSL').value = '1';
+  document.getElementById('retRefund').value = '';
+  document.getElementById('retNote').value = '';
+  document.getElementById('retRestock').checked = true;
+  document.getElementById('retOrderInfo').style.display = 'none';
+  setRetType('wrong_sale');
+  var btn = document.getElementById('retConfirmBtn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '🔄 LƯU HOÀN HÀNG'; }
+  document.getElementById('addReturnDialog').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function(){document.getElementById('retOrderId').focus();},100);
+}
+
+function closeAddReturnDialog(){
+  document.getElementById('addReturnDialog').style.display = 'none';
+  document.body.style.overflow = '';
+  var btn = document.getElementById('rtConfirmBtn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '↩️ XÁC NHẬN HOÀN'; }
+}
+
+function setRetType(t){
+  currentRetType = t;
+  document.querySelectorAll('.exp-type-btn[data-ret-type]').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-ret-type')===t);
+  });
+}
+
+function onRetOrderInput(){
+  var oid = document.getElementById('retOrderId').value.trim();
+  if (!oid || typeof salesData === 'undefined' || !salesData) return;
+  // Tìm trong salesData để autofill
+  for (var i=0; i<salesData.length; i++) {
+    var s = salesData[i];
+    if (!s.items) continue;
+    for (var j=0; j<s.items.length; j++) {
+      var it = s.items[j];
+      if (String(it.orderId||'').trim() === oid) {
+        document.getElementById('retSp').value = it.sp || '';
+        document.getElementById('retKhach').value = s.khach || '';
+        document.getElementById('retRefund').value = Number(it.giaBan||0).toLocaleString('vi');
+        var info = document.getElementById('retOrderInfo');
+        info.innerHTML = '✓ Tìm thấy: <b>' + (it.sp||'') + '</b><br>Bán cho <b>' + s.khach + '</b> · ' + Number(it.giaBan||0).toLocaleString('vi') + 'đ · ' + formatDateShort(s.ngay);
+        info.style.display = 'block';
+        return;
+      }
+    }
+  }
+  document.getElementById('retOrderInfo').style.display = 'none';
+}
+
+function onRetRefundInput(el){
+  var raw = el.value.replace(/[^\d]/g,'');
+  el.value = raw ? Number(raw).toLocaleString('vi') : '';
+}
+
+async function confirmAddReturn(){
+  var oid = document.getElementById('retOrderId').value.trim();
+  if (!oid) { showToast({type:'warn',title:'Cần nhập Order ID'}); document.getElementById('retOrderId').focus(); return; }
+  var sp = document.getElementById('retSp').value.trim();
+  var khach = document.getElementById('retKhach').value.trim();
+  var sl = parseInt(document.getElementById('retSL').value)||1;
+  var refundStr = document.getElementById('retRefund').value.replace(/[^\d]/g,'');
+  var refund = refundStr ? parseInt(refundStr,10) : 0;
+  var restock = document.getElementById('retRestock').checked;
+  var note = document.getElementById('retNote').value.trim();
+  
+  var btn = document.getElementById('retConfirmBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Đang lưu...';
+  try {
+    var record = {
+      loai: currentRetType,
+      order_id: oid,
+      sp: sp || null,
+      khach: khach || null,
+      so_luong: sl,
+      refund_amount: refund,
+      restock: restock,
+      ghi_chu: note || null
+    };
+    var r = await fetch(SUPA_URL+'/rest/v1/returns', {
+      method:'POST',
+      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+      body:JSON.stringify(record)
+    });
+    if (!r.ok) {
+      var errTxt = await r.text();
+      throw new Error('HTTP '+r.status+': '+errTxt);
+    }
+    showToast({type:'ok',title:'✓ Đã ghi nhận hoàn',msg:oid+(refund>0?' · Hoàn '+Number(refund).toLocaleString('vi')+'đ':'')});
+    closeAddReturnDialog();
+    loadReturnData(true);
+  } catch(ex) {
+    console.error('Add return fail:', ex);
+    var msg = ex.message;
+    if (msg.indexOf('relation') >= 0 || msg.indexOf('does not exist') >= 0) {
+      msg = 'Bảng `returns` chưa tồn tại. Vui lòng chạy SQL setup.';
+    }
+    showToast({type:'err',title:'Lỗi lưu',msg:msg});
+    btn.disabled = false;
+    btn.innerHTML = '🔄 LƯU HOÀN HÀNG';
+  }
+}
+
+async function deleteReturn(id){
+  var x = returnsData.find(function(r){return r.id===id;});
+  if (!x) return;
+  if (!confirm('Xóa bản ghi hoàn hàng này?\n\n'+(x.sp||x.order_id)+'\nHoàn '+Number(x.refund_amount||0).toLocaleString('vi')+'đ')) return;
+  try {
+    var r = await fetch(SUPA_URL+'/rest/v1/returns?id=eq.'+id, {
+      method:'DELETE',
+      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Prefer':'return=minimal' }
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    showToast({type:'ok',title:'✓ Đã xóa'});
+    loadReturnData(true);
+  } catch(ex){
+    showToast({type:'err',title:'Lỗi xóa',msg:ex.message});
+  }
+}
+
+
 function formatDateShort(d){
   if (!d) return '';
   try { var dt=new Date(d); return dt.toLocaleDateString('vi',{day:'2-digit',month:'2-digit'}); }
@@ -3694,7 +4475,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.18.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.21.0</div>
 
 </body>
 </html>
