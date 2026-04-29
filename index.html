@@ -111,6 +111,20 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .hn{font-size:11px;color:var(--text-3);margin-top:2px}
 .htm{font-size:11px;color:var(--text-3);flex-shrink:0}
 
+/* ╔══ HIST SALE CARD (rich, per-session) ══╗ */
+.hist-sale-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;transition:border-color .15s}
+.hist-sale-card:hover{border-color:var(--primary)}
+.hist-sale-head{display:flex;align-items:center;gap:10px}
+.hist-sale-icon{width:34px;height:34px;border-radius:8px;background:var(--success-soft);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.hist-sale-main{flex:1;min-width:0}
+.hist-sale-khach{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-sale-meta{font-size:11px;color:var(--text-3);margin-top:1px}
+.hist-sale-total{font-size:14px;font-weight:700;color:var(--success);font-variant-numeric:tabular-nums;flex-shrink:0}
+.hist-sale-items{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:6px}
+.hist-sale-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;padding-left:4px;border-left:2px solid var(--border)}
+.hist-sale-sp{color:var(--text);font-weight:500;line-height:1.3;word-break:break-word}
+.hist-sale-oid{color:var(--text-3);font-family:ui-monospace,monospace;font-size:10px;opacity:.65;margin-top:1px;letter-spacing:.2px}
+
 .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:5px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -353,6 +367,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .debt-card-status.partial{background:var(--warning-soft);color:var(--warning)}
 .debt-card-status.unpaid{background:var(--danger-soft);color:var(--danger)}
 .debt-card-meta{display:flex;align-items:center;gap:14px;font-size:11px;color:var(--text-3);margin-bottom:8px;font-variant-numeric:tabular-nums}
+.debt-card-items{display:flex;flex-direction:column;gap:5px;margin-bottom:9px;padding:8px 10px;background:var(--surface-2);border-radius:7px}
+.debt-item-line{line-height:1.3}
+.debt-item-sp{font-size:12px;font-weight:500;color:var(--text);word-break:break-word}
+.debt-item-oid{font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace;opacity:.65;margin-top:1px}
 .debt-card-numbers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px;background:var(--surface-2);border-radius:6px;margin-bottom:8px}
 .debt-num{display:flex;flex-direction:column;gap:2px}
 .debt-num span{font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.3px}
@@ -2229,11 +2247,25 @@ async function confirmSubmitCart(){
       var d=await r.json();
       if (d.success) {
         success.push(it);
-        addH('ok',it.orderId,'Ban '+it.slBan+'×'+Number(it.giaBan).toLocaleString('vi')+'d');
+        // KHÔNG addH per-item — sẽ consolidate 1 entry cho cả session ở cuối
       } else {
         failed.push(Object.assign({},it,{error:d.error||'Loi'}));
       }
     } catch(ex){ failed.push(Object.assign({},it,{error:'Loi ket noi'})); }
+  }
+
+  // Lưu 1 entry tổng cho session bán này (rich meta)
+  if (success.length > 0) {
+    var totalDT = success.reduce(function(s,it){return s+(parseFloat(it.giaBan)||0);},0);
+    var saleMeta = {
+      type: 'sale',
+      khach: khach,
+      totalDT: totalDT,
+      items: success.map(function(it){
+        return { orderId: it.orderId, sp: it.sp || '', sl: it.slBan, gia: it.giaBan };
+      })
+    };
+    addH('ok', khach, 'Bán '+success.length+' đơn · '+Number(totalDT).toLocaleString('vi')+'đ', saleMeta);
   }
 
   // Step 2: lưu lên Supabase nếu có ít nhất 1 đơn thành công
@@ -2469,12 +2501,20 @@ function toggleCustomerDetail(khach){
     el.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Lịch sử '+sales.length+' đơn</div>'
       + sales.map(function(s){
         var owed = parseFloat(s.total_owed)||0;
-        var oids = (s.items||[]).map(function(it){return it.orderId;}).join(', ');
+        // SP làm chính, Order ID mờ ở dưới
+        var itemLines = (s.items||[]).map(function(it){
+          var spName = it.sp || '(không có tên SP)';
+          var oid = it.orderId || '';
+          return '<div style="margin-top:3px">'
+            + '<div style="font-size:11px;color:var(--text);font-weight:500;line-height:1.3">'+escapeHtml(spName)+'</div>'
+            + (oid ? '<div style="font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace;opacity:.65;margin-top:1px">#'+oid+'</div>' : '')
+            + '</div>';
+        }).join('');
         var statusBadge = owed>0 ? '<span style="color:var(--warning);font-weight:600">🔴 Nợ '+Number(owed).toLocaleString('vi')+'đ</span>' : '<span style="color:var(--success)">✓ Đủ</span>';
         return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:11px">'
           + '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--text-2);font-weight:500">'+formatDateShort(s.ngay)+'</span><b style="font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
-          + '<div style="color:var(--text-3);font-family:monospace;font-size:10px;margin-bottom:2px">'+oids+'</div>'
-          + '<div style="display:flex;justify-content:space-between"><span>'+statusBadge+'</span>'+(owed>0?'<button class="debt-action danger" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();markSalePaid(\''+s.id+'\')">Đã trả</button>':'')+'</div>'
+          + itemLines
+          + '<div style="display:flex;justify-content:space-between;margin-top:5px"><span>'+statusBadge+'</span>'+(owed>0?'<button class="debt-action danger" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();markSalePaid(\''+s.id+'\')">Đã trả</button>':'')+'</div>'
           + (s.ghi_chu?'<div style="color:var(--text-3);font-size:10px;margin-top:2px;font-style:italic">📝 '+escapeHtml(s.ghi_chu)+'</div>':'')
           + '</div>';
       }).join('');
@@ -2508,10 +2548,18 @@ function renderDebtByDate(listEl, search){
       + '<div class="debt-date-head"><span>'+formatDateLong(g.date)+' · '+g.sales.length+' đơn</span><b>'+Number(g.total).toLocaleString('vi')+'đ</b></div>'
       + g.sales.map(function(s){
         var owed = parseFloat(s.total_owed)||0;
+        var itemLines = (s.items||[]).map(function(it){
+          var spName = it.sp || '(không có tên SP)';
+          var oid = it.orderId || '';
+          return '<div class="debt-item-line">'
+            + '<div class="debt-item-sp">'+escapeHtml(spName)+'</div>'
+            + (oid ? '<div class="debt-item-oid">#'+oid+'</div>' : '')
+            + '</div>';
+        }).join('');
         return '<div class="debt-card '+(owed>0?'has-debt':'paid')+'">'
           + '<div class="debt-card-head"><div class="debt-card-name">'+escapeHtml(s.khach||'Khách lẻ')+'</div>'
           + (owed>0?'<span class="debt-card-status unpaid">Nợ '+Number(owed).toLocaleString('vi')+'đ</span>':'<span class="debt-card-status paid">✓ Đủ</span>')+'</div>'
-          + '<div class="debt-card-meta"><span>📦 '+(s.items||[]).length+' SP</span><span style="font-family:monospace;font-size:10px">'+(s.items||[]).map(function(it){return it.orderId;}).join(', ')+'</span></div>'
+          + '<div class="debt-card-items">'+itemLines+'</div>'
           + '<div class="debt-card-numbers">'
           +   '<div class="debt-num"><span>Tổng</span><b>'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
           +   '<div class="debt-num"><span>Đã trả</span><b class="paid">'+Number(s.total_paid).toLocaleString('vi')+'đ</b></div>'
@@ -4241,23 +4289,32 @@ function renderDash() {
 }
 
 // ===== LICH SU =====
-function addH(s,t,n){
+function addH(s,t,n,meta){
   var now=new Date();
-  hist.unshift({s:s,t:t,n:n,time:pad(now.getHours())+':'+pad(now.getMinutes())});
-  if(hist.length>30)hist.pop();
+  var entry = {
+    s:s,
+    t:t,
+    n:n,
+    time:pad(now.getHours())+':'+pad(now.getMinutes())+' '+pad(now.getDate())+'/'+pad(now.getMonth()+1)
+  };
+  if (meta) entry.meta = meta; // {khach, items, totalDT, type:'sale'}
+  hist.unshift(entry);
+  if(hist.length>50)hist.pop();
   try{localStorage.setItem('khoHist',JSON.stringify(hist));}catch(e){}
-  if(s==='ok') saveToSupa(s,t,n,hist[0].time);
+  if(s==='ok') saveToSupa(s,t,n,entry.time,meta);
   renderH();
 }
 // ===== SUPABASE =====
 var SUPA_SOURCE = 'index';
 
-async function saveToSupa(s,t,n,time){
+async function saveToSupa(s,t,n,time,meta){
   try{
+    var body = {trang_thai:s,noi_dung:t,ghi_chu:n,thoi_gian:time,nguon:SUPA_SOURCE};
+    if (meta) body.meta = JSON.stringify(meta);
     await fetch(SUPA_URL+'/rest/v1/lich_su',{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
-      body:JSON.stringify({trang_thai:s,noi_dung:t,ghi_chu:n,thoi_gian:time,nguon:SUPA_SOURCE})
+      body:JSON.stringify(body)
     });
   }catch(e){}
 }
@@ -4269,7 +4326,13 @@ async function loadFromSupa(){
     });
     var data=await r.json();
     if(Array.isArray(data)&&data.length){
-      hist=data.map(function(d){return{s:d.trang_thai,t:d.noi_dung,n:d.ghi_chu,time:d.thoi_gian};});
+      hist=data.map(function(d){
+        var entry = {s:d.trang_thai,t:d.noi_dung,n:d.ghi_chu,time:d.thoi_gian};
+        if (d.meta) {
+          try { entry.meta = typeof d.meta === 'string' ? JSON.parse(d.meta) : d.meta; } catch(e){}
+        }
+        return entry;
+      });
       try{localStorage.setItem('khoHist',JSON.stringify(hist));}catch(e){}
       renderH();
     }
@@ -4283,9 +4346,70 @@ function clearHist(){
 }
 function renderH(){
   var el=document.getElementById('hl');
-  if(!hist.length){el.innerHTML='<div style="font-size:13px;color:#90b8d8">Chua co lich su</div>';return;}
-  el.innerHTML=hist.map(function(h){
-    return '<div class="hi"><div class="dot '+h.s+'"></div><div class="hin"><div class="htr">'+h.t+'</div><div class="hn">'+h.n+'</div></div><div class="htm">'+h.time+'</div></div>';
+  if(!hist.length){el.innerHTML='<div style="font-size:13px;color:#90b8d8;text-align:center;padding:20px">Chưa có lịch sử</div>';return;}
+  
+  // Sort DESC by time string (đảm bảo mới ở trên, kể cả load từ Supabase)
+  // time format: "HH:MM DD/MM" → so sánh ngược tự nhiên không chuẩn,
+  // nên dùng index của entry trong hist (đã unshift = mới ở đầu)
+  // Filter chỉ giữ entries có status='ok' (bán/nhập thành công, không show err/warn)
+  var displayList = hist.filter(function(h){ return h.s === 'ok' || (h.meta && h.meta.type === 'sale'); });
+  
+  if (!displayList.length) {
+    el.innerHTML='<div style="font-size:13px;color:#90b8d8;text-align:center;padding:20px">Chưa có giao dịch thành công</div>';
+    return;
+  }
+  
+  el.innerHTML = displayList.map(function(h){
+    // ─── Sale entry với meta đầy đủ (NEW format) ───
+    if (h.meta && h.meta.type === 'sale') {
+      var m = h.meta;
+      var itemsList = '';
+      if (m.items && m.items.length) {
+        itemsList = m.items.map(function(it){
+          var spName = it.sp || '(không có tên SP)';
+          var oid = it.orderId || '';
+          return '<div class="hist-sale-item">'
+            + '<div style="flex:1;min-width:0">'
+            +   '<div class="hist-sale-sp">'+escapeHtml(spName)+'</div>'
+            +   (oid ? '<div class="hist-sale-oid">#'+escapeHtml(oid)+'</div>' : '')
+            + '</div>'
+            + '</div>';
+        }).join('');
+      }
+      var khach = m.khach || 'Khách lẻ';
+      var totalStr = Number(m.totalDT||0).toLocaleString('vi') + 'đ';
+      var nDon = (m.items && m.items.length) || 0;
+      return '<div class="hist-sale-card">'
+        + '<div class="hist-sale-head">'
+        +   '<div class="hist-sale-icon">💵</div>'
+        +   '<div class="hist-sale-main">'
+        +     '<div class="hist-sale-khach">'+escapeHtml(khach)+'</div>'
+        +     '<div class="hist-sale-meta">'+nDon+' đơn · '+escapeHtml(h.time||'')+'</div>'
+        +   '</div>'
+        +   '<div class="hist-sale-total">'+totalStr+'</div>'
+        + '</div>'
+        + (itemsList ? '<div class="hist-sale-items">'+itemsList+'</div>' : '')
+        + '</div>';
+    }
+    
+    // ─── OLD format (không có meta) — render gọn gàng ───
+    // h.t = nội dung (Order ID hoặc tên khách)
+    // h.n = ghi chú (vd "Nhap kho | 1,500,000 d")
+    var iconEmoji = '📥'; // default: nhập kho
+    var iconBg = 'var(--primary-soft)';
+    var iconCol = 'var(--primary)';
+    if ((h.n||'').toLowerCase().indexOf('ban') >= 0 || (h.n||'').toLowerCase().indexOf('bán') >= 0) {
+      iconEmoji = '💵'; iconBg = 'var(--success-soft)'; iconCol = 'var(--success)';
+    }
+    return '<div class="hist-sale-card">'
+      + '<div class="hist-sale-head">'
+      +   '<div class="hist-sale-icon" style="background:'+iconBg+';color:'+iconCol+'">'+iconEmoji+'</div>'
+      +   '<div class="hist-sale-main">'
+      +     '<div class="hist-sale-khach" style="font-size:13px">'+escapeHtml(h.t||'')+'</div>'
+      +     '<div class="hist-sale-meta">'+escapeHtml(h.n||'')+' · '+escapeHtml(h.time||'')+'</div>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
   }).join('');
 }
 
@@ -4475,7 +4599,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.21.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.22.0</div>
 
 </body>
 </html>
