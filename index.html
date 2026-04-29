@@ -2942,21 +2942,46 @@ async function markSaleUnpaid(saleId) {
   }
 }
 
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  PAYMENT DIALOG (v3.28.2) - Hiển thị TỔNG NỢ KHÁCH              ║
+// ║  Logic ledger: nợ là aggregate level, không per-sale             ║
+// ║  pdContext giờ là { khach, customerOwed, customerTotalDt, sales }║
+// ╚══════════════════════════════════════════════════════════════╝
 function openPaymentDialogForCustomer(khach){
   var c = customersCache.find(function(x){return x.khach===khach;});
   if (!c) return;
-  // Tìm sale gần nhất có nợ
-  var sale = c.sales.find(function(s){return parseFloat(s.total_owed||0) > 0;});
-  if (!sale) return;
-  openPaymentDialog(sale);
+  if ((c.totalOwed || 0) <= 0) {
+    showToast({type:'info', title:'Khách này không có nợ'});
+    return;
+  }
+  openPaymentDialog(c);
 }
 
-function openPaymentDialog(sale){
-  pdContext = sale;
-  var owed = parseFloat(sale.total_owed)||0;
-  document.getElementById('pdKhach').textContent = sale.khach;
+// Backwards-compat: nếu được gọi với sale object (từ markSalePaid cũ)
+// → tự lookup customer từ customersCache
+function openPaymentDialog(input){
+  var customer;
+  if (input && input.sales && Array.isArray(input.sales)) {
+    // input đã là customer object (preferred)
+    customer = input;
+  } else if (input && input.khach) {
+    // input là sale → lookup customer
+    customer = customersCache.find(function(c){return c.khach === input.khach;}) || {
+      khach: input.khach,
+      totalOwed: parseFloat(input.total_owed) || 0,
+      totalDT: parseFloat(input.total_dt) || 0,
+      sales: [input]
+    };
+  } else {
+    return;
+  }
+  
+  pdContext = customer; // store full customer object
+  var owed = parseFloat(customer.totalOwed) || 0;
+  
+  document.getElementById('pdKhach').textContent = customer.khach;
   document.getElementById('pdOwed').textContent = Number(owed).toLocaleString('vi')+' đ';
-  document.getElementById('pdAmount').value = Number(owed).toLocaleString('vi'); // default trả hết
+  document.getElementById('pdAmount').value = Number(owed).toLocaleString('vi'); // default trả hết tổng nợ
   updatePdRemain();
   document.getElementById('paymentDialog').style.display='flex';
   document.body.style.overflow='hidden';
@@ -2967,7 +2992,6 @@ function closePaymentDialog(){
   document.getElementById('paymentDialog').style.display='none';
   document.body.style.overflow='';
   pdContext=null;
-  // Reset button state
   var btns = document.querySelectorAll('#paymentDialog .kd-btn-confirm');
   btns.forEach(function(b){ b.disabled = false; });
 }
@@ -2980,14 +3004,16 @@ function onPdAmountInput(el){
 
 function setPdAmountFull(){
   if (!pdContext) return;
-  document.getElementById('pdAmount').value = Number(pdContext.total_owed).toLocaleString('vi');
+  // Trả hết = tổng nợ aggregate
+  var owed = parseFloat(pdContext.totalOwed || pdContext.total_owed) || 0;
+  document.getElementById('pdAmount').value = Number(owed).toLocaleString('vi');
   updatePdRemain();
 }
 
 function updatePdRemain(){
   if (!pdContext) return;
   var amt = parseInt(document.getElementById('pdAmount').value.replace(/[^\d]/g,'')||'0',10);
-  var owed = parseFloat(pdContext.total_owed)||0;
+  var owed = parseFloat(pdContext.totalOwed || pdContext.total_owed) || 0;
   var remain = Math.max(0, owed - amt);
   document.getElementById('pdRemain').textContent = Number(remain).toLocaleString('vi')+' đ';
   document.getElementById('pdRemain').style.color = remain>0 ? 'var(--warning)' : 'var(--success)';
@@ -3095,21 +3121,16 @@ async function confirmPayment(){
     showToast({type:'warn',title:'Cần nhập số tiền'});
     return;
   }
-  // Tính nợ tổng của khách (từ aggregate, không từ sale cụ thể)
-  // Sale immutable - chỉ log payment event
-  var customer = customersCache.find(function(c){return c.khach === pdContext.khach;});
-  var owed = customer ? (customer.totalOwed||0) : (parseFloat(pdContext.total_owed)||0);
+  // pdContext giờ là customer object - lấy nợ tổng aggregate
+  var owed = parseFloat(pdContext.totalOwed || pdContext.total_owed) || 0;
   amt = Math.min(amt, owed);
-  if (amt <= 0) {
-    showToast({type:'warn',title:'Khách không còn nợ'});
-    return;
-  }
+  if (amt <= 0) { showToast({type:'warn',title:'Khách không còn nợ'}); return; }
   var newOwed = owed - amt;
   try {
-    // KHÔNG PATCH sale — chỉ log payment event vào audit_log
+    // KHÔNG PATCH sale — chỉ log payment event vào audit_log (cấp khách)
     await logPaymentEvent({
       type: 'payment',
-      saleId: pdContext.id,
+      saleId: null, // payment ở cấp khách, không gắn với sale cụ thể
       khach: pdContext.khach,
       amount: amt,
       remainingOwed: newOwed,
@@ -5306,7 +5327,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.28.1</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.28.2</div>
 
 </body>
 </html>
