@@ -1004,18 +1004,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
 </div>
 
-<!-- LICH SU -->
-<div class="hist">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <div class="ht" style="margin-bottom:0">Lich su</div>
-    <div style="display:flex;gap:6px">
-      <button onclick="loadFromSupa()" style="background:none;border:1px solid #BBDEFB;border-radius:6px;padding:3px 10px;font-size:11px;color:#2196F3;cursor:pointer">Tai</button>
-      <button onclick="clearHist()" style="background:none;border:1px solid #BBDEFB;border-radius:6px;padding:3px 10px;font-size:11px;color:#90b8d8;cursor:pointer">Xoa</button>
-    </div>
-  </div>
-  <div id="hl"><div style="font-size:13px;color:#90b8d8">Chua co lich su</div></div>
-</div>
-
 <!-- ╔══════════════ TAB CÔNG NỢ ══════════════╗ -->
 <div class="sec" id="tab-debt">
   <div style="margin:0 14px">
@@ -1032,7 +1020,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
     <!-- ═══ SUPER PANEL: CÔNG NỢ ═══ -->
     <div id="superPanelDebt" class="super-panel active">
-    <!-- Stat cards -->
+    <!-- ═══ 1. STAT CARDS (top) ═══ -->
     <div class="debt-stats" id="debtStats">
       <div class="debt-stat">
         <div class="debt-stat-lbl">Tổng đã bán</div>
@@ -1046,31 +1034,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       </div>
     </div>
 
-    <!-- Sub-tabs -->
-    <div class="debt-subtabs">
-      <button class="debt-subtab active" data-view="customer" onclick="setDebtView('customer')">Theo khách</button>
-      <button class="debt-subtab" data-view="date" onclick="setDebtView('date')">Theo ngày</button>
-      <button class="debt-subtab" data-view="owed" onclick="setDebtView('owed')">Còn nợ</button>
-      <button class="debt-add-btn" onclick="openAddDebtDialog()" title="Thêm công nợ thủ công">+ Thêm</button>
-      <button class="debt-refresh" onclick="loadDebtData(true)" title="Tải lại">↻</button>
-    </div>
-
-    <!-- Search box -->
-    <div class="debt-search">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="debtSearch" placeholder="Tìm khách, Order ID..." oninput="renderDebtView()">
-    </div>
-
-    <!-- Content -->
-    <div id="debtContent">
-
-      <div id="debtLoading" style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">
-        <span class="spin"></span> Đang tải lịch sử bán...
-      </div>
-      <div id="debtList" style="display:flex;flex-direction:column;gap:8px"></div>
-
-    <!-- CHARTS - hiện cuối (sau list khách) - thao tác chính lên đầu -->
-    <div class="debt-charts" id="debtCharts" style="display:none;margin-top:14px">
+    <!-- ═══ 2. CHARTS (TOP 5 + Aging) - tham khảo nhanh ═══ -->
+    <div class="debt-charts" id="debtCharts" style="display:none">
       <div class="debt-chart-card">
         <div class="debt-chart-title">
           🏆 TOP 5 KHÁCH NỢ NHIỀU
@@ -1086,6 +1051,37 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <div id="debtChartAgingList"></div>
       </div>
     </div>
+
+    <!-- ═══ 3. SUB-TABS + LIST KHÁCH (thao tác chính) ═══ -->
+    <div class="debt-subtabs">
+      <button class="debt-subtab active" data-view="customer" onclick="setDebtView('customer')">Theo khách</button>
+      <button class="debt-subtab" data-view="date" onclick="setDebtView('date')">Theo ngày</button>
+      <button class="debt-subtab" data-view="owed" onclick="setDebtView('owed')">Còn nợ</button>
+      <button class="debt-add-btn" onclick="openAddDebtDialog()" title="Thêm công nợ thủ công">+ Thêm</button>
+      <button class="debt-refresh" onclick="loadDebtData(true)" title="Tải lại">↻</button>
+    </div>
+
+    <div class="debt-search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="debtSearch" placeholder="Tìm khách, Order ID..." oninput="renderDebtView()">
+    </div>
+
+    <div id="debtContent">
+      <div id="debtLoading" style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">
+        <span class="spin"></span> Đang tải lịch sử bán...
+      </div>
+      <div id="debtList" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+    <!-- ═══ 4. LỊCH SỬ HOẠT ĐỘNG (cuối) - feed các payment events recent ═══ -->
+    <div class="debt-activity-section" style="margin-top:18px;padding-top:14px;border-top:2px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px">📋 Lịch sử hoạt động</div>
+        <button onclick="loadDebtActivity(true)" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:10px;color:var(--text-3);cursor:pointer;font-family:inherit">↻</button>
+      </div>
+      <div id="debtActivityList" style="display:flex;flex-direction:column;gap:6px">
+        <div style="text-align:center;font-size:11px;color:var(--text-3);padding:12px">Đang tải...</div>
+      </div>
     </div>
     </div><!-- /super-panel-debt -->
 
@@ -2443,6 +2439,7 @@ async function loadDebtData(force){
     rebuildCustomersCache();
     renderDebtView();
     updateDebtBadge();
+    loadDebtActivity(); // refresh activity feed cùng với debt data
     if (typeof renderDashFromData === 'function' && typeof dashLoaded !== 'undefined' && dashLoaded) {
       try { 
         if (typeof dAllData !== 'undefined' && dAllData && dAllData.length) renderDashFromData();
@@ -3006,7 +3003,7 @@ async function markCustomerUnpaid(khach){
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  PAYMENT DIALOG (v3.29.1) - Hiển thị TỔNG NỢ KHÁCH              ║
+// ║  PAYMENT DIALOG (v3.30.1) - Hiển thị TỔNG NỢ KHÁCH              ║
 // ║  Logic ledger: nợ là aggregate level, không per-sale             ║
 // ║  pdContext giờ là { khach, customerOwed, customerTotalDt, sales }║
 // ╚══════════════════════════════════════════════════════════════╝
@@ -3151,6 +3148,64 @@ async function fetchAuditLog(khach) {
 }
 
 // Backwards compat - fetchPaymentHistory giờ filter từ audit_log với action=payment-related
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  DEBT ACTIVITY FEED (v3.30.1) - hiện cuối tab Công nợ         ║
+// ║  Hiện 15 sự kiện gần nhất từ audit_log: sale, return,         ║
+// ║  payment, manual_debt, expense                                  ║
+// ╚══════════════════════════════════════════════════════════════╝
+async function loadDebtActivity(force){
+  var listEl = document.getElementById('debtActivityList');
+  if (!listEl) return;
+  if (force) listEl.innerHTML = '<div style="text-align:center;font-size:11px;color:var(--text-3);padding:12px">Đang tải...</div>';
+  try {
+    var actions = 'sale,return,payment,unpaid,bulk_payment_to_paid,bulk_payment_to_debt,manual_debt,expense';
+    var url = SUPA_URL + '/rest/v1/audit_log?action=in.(' + actions + ')&order=created_at.desc&limit=15';
+    var r = await fetch(url, { headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY } });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    var events = await r.json();
+    
+    if (!events.length) {
+      listEl.innerHTML = '<div style="text-align:center;font-size:11px;color:var(--text-3);padding:14px">Chưa có hoạt động nào</div>';
+      return;
+    }
+    
+    listEl.innerHTML = events.map(function(e){
+      var amt = parseFloat(e.amount) || 0;
+      var time = e.created_at ? new Date(e.created_at).toLocaleString('vi-VN', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : '';
+      var khach = e.khach || '—';
+      
+      // Icon + label + color theo action
+      var icon = '📦', label = e.action, color = 'var(--text-2)', amtColor = 'var(--text)';
+      if (e.action === 'sale') { icon = '💵'; label = 'Bán hàng'; color = 'var(--success)'; amtColor = 'var(--success)'; }
+      else if (e.action === 'return') { icon = '↩'; label = 'Hoàn hàng'; color = 'var(--warning)'; amtColor = 'var(--warning)'; }
+      else if (e.action === 'payment') { icon = '💰'; label = 'Khách trả'; color = 'var(--success)'; amtColor = 'var(--success)'; }
+      else if (e.action === 'unpaid') { icon = '↩'; label = 'Đổi sang nợ'; color = 'var(--warning)'; amtColor = 'var(--warning)'; }
+      else if (e.action === 'bulk_payment_to_paid') { icon = '⚡'; label = 'Bulk: trả đủ'; color = 'var(--success)'; amtColor = 'var(--success)'; }
+      else if (e.action === 'bulk_payment_to_debt') { icon = '⚡'; label = 'Bulk: chuyển nợ'; color = 'var(--warning)'; amtColor = 'var(--warning)'; }
+      else if (e.action === 'manual_debt') { icon = '📝'; label = 'Thêm nợ thủ công'; color = 'var(--primary)'; amtColor = 'var(--text)'; }
+      else if (e.action === 'expense') { icon = '💸'; label = 'Chi phí'; color = 'var(--danger)'; amtColor = 'var(--danger)'; }
+      
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:7px">'
+        + '<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:var(--surface-2);font-size:14px;flex-shrink:0">'+icon+'</div>'
+        + '<div style="flex:1;min-width:0">'
+        +   '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px">'
+        +     '<span style="font-size:12px;font-weight:600;color:'+color+'">'+label+'</span>'
+        +     '<span style="font-size:13px;font-weight:700;color:'+amtColor+';font-variant-numeric:tabular-nums">'+Number(amt).toLocaleString('vi')+'đ</span>'
+        +   '</div>'
+        +   '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:2px">'
+        +     '<span style="font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">'+escapeHtml(khach)+'</span>'
+        +     '<span style="font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;flex-shrink:0">'+time+'</span>'
+        +   '</div>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  } catch(ex) {
+    console.error('loadDebtActivity fail:', ex);
+    listEl.innerHTML = '<div style="text-align:center;font-size:11px;color:var(--danger);padding:12px">Lỗi tải lịch sử: ' + (ex.message||'') + '</div>';
+  }
+}
+
 async function fetchPaymentHistory(khach) {
   if (!khach) return [];
   try {
@@ -5430,7 +5485,19 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.29.1</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.30.1</div>
+
+<!-- LICH SU - hiện ở cuối trang (sau tất cả các tabs) -->
+<div class="hist" style="margin-top:24px;padding-top:16px;border-top:2px solid var(--border)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div class="ht" style="margin-bottom:0">📋 Lịch sử thao tác</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="loadFromSupa()" style="background:none;border:1px solid #BBDEFB;border-radius:6px;padding:3px 10px;font-size:11px;color:#2196F3;cursor:pointer">Tải</button>
+      <button onclick="clearHist()" style="background:none;border:1px solid #BBDEFB;border-radius:6px;padding:3px 10px;font-size:11px;color:#90b8d8;cursor:pointer">Xóa</button>
+    </div>
+  </div>
+  <div id="hl"><div style="font-size:13px;color:#90b8d8">Chưa có lịch sử</div></div>
+</div>
 
 </body>
 </html>
