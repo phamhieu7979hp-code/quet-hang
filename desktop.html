@@ -695,6 +695,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .btn-primary{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important}
 .btn-primary:hover{background:var(--primary-dark)!important}
 
+
+/* Debt item line - pro UX với giá per unit */
+.debt-item-line{padding:7px 0;border-bottom:1px dashed var(--border)}
+.debt-item-line:last-child{border-bottom:none}
+.debt-item-row1{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.debt-item-sp{flex:1;min-width:0;font-weight:500;color:var(--text);line-height:1.35;word-break:break-word;font-size:12px}
+.debt-item-price{flex-shrink:0;font-variant-numeric:tabular-nums;font-weight:700;color:var(--success);font-size:12px;letter-spacing:.2px}
+.debt-item-row2{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:3px;font-size:10px;color:var(--text-3)}
+.debt-item-oid{font-family:ui-monospace,monospace;opacity:.65;letter-spacing:.2px}
+.debt-item-qty{flex-shrink:0;background:var(--surface-2);padding:1px 6px;border-radius:3px;font-weight:600;color:var(--text-2)}
 </style>
 
 <link rel="apple-touch-icon" href="data:image/png;base64,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"/>
@@ -1374,7 +1384,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 </div>
 
 <script>
-var BASE='https://script.google.com/macros/s/AKfycbxTl5Nc993PT5fcxTs22dIde9WA6UOhBuKh3NxP6zZTUMtXXlvvM8OhVW8DXt4NA0zS/exec';
+var BASE='https://script.google.com/macros/s/AKfycbzLMYJWGQ4z3_Z4LJQ9iuLk6e7GTxgdqpX2gUb8loeDnarOacKMk2QF3ahfpuvnAvQ_/exec';
 var SUPA_URL='https://wpzyzgiokgvpfukzsfnz.supabase.co';
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwenl6Z2lva2d2cGZ1a3pzZm56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNzEyMDAsImV4cCI6MjA5Mjg0NzIwMH0.TcukbXJk6j4zPUWSmAyPuDNwVw-MxWuV0dpP11bgWTM';
 // Helper: lay gia tri CSS variable cho Chart.js (Chart.js khong tu resolve var(--xxx))
@@ -2347,6 +2357,15 @@ function setDebtView(v){
 function renderDebtView(){
   var listEl = document.getElementById('debtList');
   if (!listEl) return;
+  // Preserve scroll position để không bị "nhảy lên đầu" khi reload
+  var prevScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
+  // Preserve danh sách customer đang expand
+  var expandedKhach = [];
+  document.querySelectorAll('.debt-detail').forEach(function(el){
+    if (el.style.display !== 'none' && el.id) {
+      expandedKhach.push(el.id);
+    }
+  });
   // Defensive: tất cả debt UI elements có thể null nếu preload chạy trước render
   var elDT = document.getElementById('debtTotalDT');
   var elCount = document.getElementById('debtTotalCount');
@@ -2371,6 +2390,14 @@ function renderDebtView(){
   else if (debtView === 'owed') renderDebtOwed(listEl, search);
   // Render charts (chỉ khi có nợ + đang xem 'customer' hoặc 'owed')
   renderDebtCharts();
+  // Restore scroll + expanded customers
+  setTimeout(function(){
+    expandedKhach.forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'block';
+    });
+    window.scrollTo(0, prevScroll);
+  }, 0);
 }
 
 function renderDebtByCustomer(listEl, search){
@@ -2417,13 +2444,33 @@ function toggleCustomerDetail(khach){
     el.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Lịch sử '+sales.length+' đơn</div>'
       + sales.map(function(s){
         var owed = parseFloat(s.total_owed)||0;
-        var oids = (s.items||[]).map(function(it){return it.orderId;}).join(', ');
+        var itemLines = (s.items||[]).map(function(it){
+          var spName = it.sp || '(không có tên SP)';
+          var oid = it.orderId || '';
+          var price = parseFloat(it.giaBan) || 0;
+          var qty = parseInt(it.slBan) || 1;
+          return '<div class="debt-item-line">'
+            + '<div class="debt-item-row1">'
+            +   '<div class="debt-item-sp">'+escapeHtml(spName)+'</div>'
+            +   '<div class="debt-item-price">'+Number(price).toLocaleString('vi')+'đ</div>'
+            + '</div>'
+            + '<div class="debt-item-row2">'
+            +   '<span class="debt-item-oid">'+(oid ? '#'+escapeHtml(oid) : '')+'</span>'
+            +   (qty > 1 ? '<span class="debt-item-qty">× '+qty+'</span>' : '')
+            + '</div>'
+            + '</div>';
+        }).join('');
         var statusBadge = owed>0 ? '<span style="color:var(--warning);font-weight:600">🔴 Nợ '+Number(owed).toLocaleString('vi')+'đ</span>' : '<span style="color:var(--success)">✓ Đủ</span>';
-        return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:11px">'
-          + '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--text-2);font-weight:500">'+formatDateShort(s.ngay)+'</span><b style="font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
-          + '<div style="color:var(--text-3);font-family:monospace;font-size:10px;margin-bottom:2px">'+oids+'</div>'
-          + '<div style="display:flex;justify-content:space-between"><span>'+statusBadge+'</span>'+(owed>0?'<button class="debt-action danger" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();markSalePaid(\''+s.id+'\')">Đã trả</button>':'')+'</div>'
-          + (s.ghi_chu?'<div style="color:var(--text-3);font-size:10px;margin-top:2px;font-style:italic">📝 '+escapeHtml(s.ghi_chu)+'</div>':'')
+        return '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'
+          + '<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px"><span style="color:var(--text-2);font-weight:500">'+formatDateShort(s.ngay)+'</span><b style="font-variant-numeric:tabular-nums;color:var(--text)">Tổng '+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
+          + itemLines
+          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:6px;font-size:11px">'
+          +   '<span>'+statusBadge+'</span>'
+          +   (owed>0
+                ? '<button class="debt-action danger" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();markSalePaid(\''+s.id+'\')">💰 Đã trả</button>'
+                : '<button style="padding:3px 8px;font-size:10px;background:none;border:1px solid var(--border);color:var(--text-3);border-radius:4px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();markSaleUnpaid(\''+s.id+'\')">↩ Đổi sang nợ</button>')
+          + '</div>'
+          + (s.ghi_chu?'<div style="color:var(--text-3);font-size:10px;margin-top:4px;font-style:italic">📝 '+escapeHtml(s.ghi_chu)+'</div>':'')
           + '</div>';
       }).join('');
     el.style.display='block';
@@ -2462,10 +2509,26 @@ function renderDebtByDate(listEl, search){
       + '</div>'
       + g.sales.map(function(s){
         var owed = parseFloat(s.total_owed)||0;
+        var itemLines = (s.items||[]).map(function(it){
+          var spName = it.sp || '(không có tên SP)';
+          var oid = it.orderId || '';
+          var price = parseFloat(it.giaBan) || 0;
+          var qty = parseInt(it.slBan) || 1;
+          return '<div class="debt-item-line">'
+            + '<div class="debt-item-row1">'
+            +   '<div class="debt-item-sp">'+escapeHtml(spName)+'</div>'
+            +   '<div class="debt-item-price">'+Number(price).toLocaleString('vi')+'đ</div>'
+            + '</div>'
+            + '<div class="debt-item-row2">'
+            +   '<span class="debt-item-oid">'+(oid ? '#'+escapeHtml(oid) : '')+'</span>'
+            +   (qty > 1 ? '<span class="debt-item-qty">× '+qty+'</span>' : '')
+            + '</div>'
+            + '</div>';
+        }).join('');
         return '<div class="debt-card '+(owed>0?'has-debt':'paid')+'">'
           + '<div class="debt-card-head"><div class="debt-card-name">'+escapeHtml(s.khach||'Khách lẻ')+'</div>'
           + (owed>0?'<span class="debt-card-status unpaid">Nợ '+Number(owed).toLocaleString('vi')+'đ</span>':'<span class="debt-card-status paid">✓ Đủ</span>')+'</div>'
-          + '<div class="debt-card-meta"><span>📦 '+(s.items||[]).length+' SP</span><span style="font-family:monospace;font-size:10px">'+(s.items||[]).map(function(it){return it.orderId;}).join(', ')+'</span></div>'
+          + '<div class="debt-card-items">'+itemLines+'</div>'
           + '<div class="debt-card-numbers">'
           +   '<div class="debt-num"><span>Tổng</span><b>'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
           +   '<div class="debt-num"><span>Đã trả</span><b class="paid">'+Number(s.total_paid).toLocaleString('vi')+'đ</b></div>'
@@ -3293,20 +3356,140 @@ function renderReturnView(){
 }
 
 function openAddReturnDialog(){
+  // Reset all fields
   document.getElementById('retOrderId').value = '';
   document.getElementById('retSp').value = '';
   document.getElementById('retKhach').value = '';
   document.getElementById('retSL').value = '1';
   document.getElementById('retRefund').value = '';
-  document.getElementById('retNote').value = '';
-  document.getElementById('retRestock').checked = true;
-  document.getElementById('retOrderInfo').style.display = 'none';
+  if (document.getElementById('retNote')) document.getElementById('retNote').value = '';
+  if (document.getElementById('retRestock')) document.getElementById('retRestock').checked = true;
+  if (document.getElementById('retSelectedSaleId')) document.getElementById('retSelectedSaleId').value = '';
+  // Hide step 2 + step 3
+  if (document.getElementById('retOrderListWrap')) document.getElementById('retOrderListWrap').style.display = 'none';
+  if (document.getElementById('retSelectedDetail')) document.getElementById('retSelectedDetail').style.display = 'none';
+  if (document.getElementById('retKhachSuggest')) document.getElementById('retKhachSuggest').style.display = 'none';
   setRetType('wrong_sale');
   var btn = document.getElementById('retConfirmBtn');
   if (btn) { btn.disabled = false; btn.innerHTML = '🔄 LƯU HOÀN HÀNG'; }
   document.getElementById('addReturnDialog').style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  setTimeout(function(){document.getElementById('retOrderId').focus();},100);
+  setTimeout(function(){
+    var el = document.getElementById('retKhach');
+    if (el) el.focus();
+  },100);
+}
+
+// ─── Autocomplete Khách → load đơn ───
+function onRetKhachInput(){
+  var input = document.getElementById('retKhach');
+  var sug = document.getElementById('retKhachSuggest');
+  if (!input || !sug) return;
+  var q = input.value.trim().toLowerCase();
+  if (!q || typeof customersCache === 'undefined' || !customersCache.length) {
+    sug.style.display = 'none';
+    return;
+  }
+  var matched = customersCache.filter(function(c){
+    return c.khach.toLowerCase().indexOf(q) >= 0;
+  }).slice(0, 6);
+  if (!matched.length) {
+    sug.style.display = 'none';
+    return;
+  }
+  sug.innerHTML = matched.map(function(c){
+    var totalOwed = c.totalOwed || 0;
+    var meta = c.totalOrders + ' đơn' + (totalOwed > 0 ? ' · Nợ ' + Number(totalOwed).toLocaleString('vi') + 'đ' : '');
+    var safeName = c.khach.replace(/'/g,"\\'");
+    return '<div class="kd-suggest-item" onclick="pickRetCustomer(\'' + safeName + '\')">'
+      + '<div>' + escapeHtml(c.khach) + '</div>'
+      + '<div class="kd-suggest-meta">' + meta + '</div></div>';
+  }).join('');
+  sug.style.display = 'block';
+}
+
+function pickRetCustomer(name){
+  document.getElementById('retKhach').value = name;
+  document.getElementById('retKhachSuggest').style.display = 'none';
+  // Load đơn của khách đó
+  var customer = customersCache.find(function(c){ return c.khach === name; });
+  if (!customer) {
+    showToast({type:'warn', title:'Không tìm thấy data khách'});
+    return;
+  }
+  // Build list các items từ tất cả sales của khách này
+  var allItems = [];
+  customer.sales.forEach(function(sale){
+    if (sale.status === 'returned') return; // skip already returned
+    (sale.items||[]).forEach(function(it, itemIdx){
+      allItems.push({
+        saleId: sale.id,
+        saleNgay: sale.ngay,
+        itemIdx: itemIdx,
+        orderId: it.orderId || '',
+        sp: it.sp || '(không tên)',
+        giaBan: parseFloat(it.giaBan) || 0,
+        slBan: parseInt(it.slBan) || 1,
+        sheet: it.sheet || ''
+      });
+    });
+  });
+  
+  // Sort: gần nhất trước
+  allItems.sort(function(a,b){ return new Date(b.saleNgay) - new Date(a.saleNgay); });
+  
+  if (!allItems.length) {
+    showToast({type:'warn', title:'Khách này không có đơn nào để hoàn'});
+    return;
+  }
+  
+  // Render list
+  var listEl = document.getElementById('retOrderList');
+  listEl.innerHTML = allItems.map(function(item, i){
+    var dateStr = formatDateShort(item.saleNgay);
+    return '<div class="ret-item-card" onclick="pickRetItem(' + i + ')" data-idx="' + i + '">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">'
+      +   '<div style="font-weight:600;color:var(--text);font-size:13px;flex:1;min-width:0;word-break:break-word">'+escapeHtml(item.sp)+'</div>'
+      +   '<div style="font-size:13px;font-weight:700;color:var(--success);font-variant-numeric:tabular-nums;flex-shrink:0">'+Number(item.giaBan).toLocaleString('vi')+'đ</div>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3)">'
+      +   '<span style="font-family:ui-monospace,monospace">#'+escapeHtml(item.orderId)+'</span>'
+      +   '<span>📅 '+dateStr+'</span>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+  
+  // Lưu allItems vào window để pickRetItem dùng
+  window._retCurrentItems = allItems;
+  
+  // Show step 2
+  document.getElementById('retOrderListWrap').style.display = 'block';
+  document.getElementById('retSelectedDetail').style.display = 'none';
+}
+
+function pickRetItem(idx){
+  var item = window._retCurrentItems && window._retCurrentItems[idx];
+  if (!item) return;
+  
+  // Update UI - highlight selected card
+  document.querySelectorAll('.ret-item-card').forEach(function(el){
+    el.classList.toggle('selected', parseInt(el.getAttribute('data-idx'),10) === idx);
+  });
+  
+  // Auto-fill hidden fields
+  document.getElementById('retOrderId').value = item.orderId;
+  document.getElementById('retSp').value = item.sp;
+  document.getElementById('retSelectedSaleId').value = item.saleId;
+  document.getElementById('retSL').value = item.slBan;
+  document.getElementById('retRefund').value = Number(item.giaBan).toLocaleString('vi');
+  
+  // Show selected detail panel
+  document.getElementById('retSelectedSp').textContent = item.sp;
+  document.getElementById('retSelectedOid').textContent = '#' + item.orderId + ' · ' + Number(item.giaBan).toLocaleString('vi') + 'đ';
+  document.getElementById('retSelectedDetail').style.display = 'block';
+  
+  // Lưu sheet để confirmAddReturn dùng (cho backend unban)
+  window._retSelectedSheet = item.sheet;
 }
 
 function closeAddReturnDialog(){
@@ -3323,32 +3506,164 @@ function setRetType(t){
   });
 }
 
-function onRetOrderInput(){
-  var oid = document.getElementById('retOrderId').value.trim();
-  if (!oid || typeof salesData === 'undefined' || !salesData) return;
-  // Tìm trong salesData để autofill
-  for (var i=0; i<salesData.length; i++) {
-    var s = salesData[i];
-    if (!s.items) continue;
-    for (var j=0; j<s.items.length; j++) {
-      var it = s.items[j];
-      if (String(it.orderId||'').trim() === oid) {
-        document.getElementById('retSp').value = it.sp || '';
-        document.getElementById('retKhach').value = s.khach || '';
-        document.getElementById('retRefund').value = Number(it.giaBan||0).toLocaleString('vi');
-        var info = document.getElementById('retOrderInfo');
-        info.innerHTML = '✓ Tìm thấy: <b>' + (it.sp||'') + '</b><br>Bán cho <b>' + s.khach + '</b> · ' + Number(it.giaBan||0).toLocaleString('vi') + 'đ · ' + formatDateShort(s.ngay);
-        info.style.display = 'block';
-        return;
-      }
-    }
-  }
-  document.getElementById('retOrderInfo').style.display = 'none';
-}
-
 function onRetRefundInput(el){
   var raw = el.value.replace(/[^\d]/g,'');
   el.value = raw ? Number(raw).toLocaleString('vi') : '';
+}
+
+
+// ╔════════════════════════════════════════════════════════════╗
+// ║  APPLY RETURN TO SALE: tự động trừ công nợ khi hoàn hàng    ║
+// ║  Logic kế toán chuẩn:                                         ║
+// ║  - Refund trừ vào CÔNG NỢ trước (nếu khách đang nợ)          ║
+// ║  - Còn lại trừ vào ĐÃ TRẢ (refund tiền cho khách)            ║
+// ║  - Tổng đơn (total_dt) giảm theo refund                       ║
+// ║  - Nếu refund = total_dt → status='returned' (return hết đơn)║
+// ╚════════════════════════════════════════════════════════════╝
+
+async function applyReturnToSale(returnRecord) {
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  LOGIC ĐÚNG (v3.25):                                       ║
+  // ║  1. Tìm sale match Order ID (ưu tiên cùng khách)           ║
+  // ║  2. REMOVE item khỏi items[]                                ║
+  // ║  3. Recompute total_dt, total_paid, total_owed             ║
+  // ║  4. Nếu items[] rỗng → DELETE sale (biến mất hoàn toàn)    ║
+  // ║  5. Nếu còn items → PATCH sale với data mới                ║
+  // ╚══════════════════════════════════════════════════════════╝
+  if (!returnRecord) return null;
+  var refund = parseFloat(returnRecord.refund_amount) || 0;
+  var oid = String(returnRecord.order_id||'').trim();
+  var khach = String(returnRecord.khach||'').trim();
+  if (!oid) return null;
+  
+  // Fetch fresh data từ Supabase
+  var url;
+  if (khach) {
+    url = SUPA_URL + '/rest/v1/sales?khach=ilike.' + encodeURIComponent('%'+khach+'%') + '&order=ngay.desc&limit=200';
+  } else {
+    url = SUPA_URL + '/rest/v1/sales?select=*&order=ngay.desc&limit=500';
+  }
+  var freshSales;
+  try {
+    var rFresh = await fetch(url, {
+      headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY }
+    });
+    if (!rFresh.ok) throw new Error('HTTP '+rFresh.status);
+    freshSales = await rFresh.json();
+  } catch(e) {
+    console.error('applyReturnToSale fetch fail:', e);
+    return null;
+  }
+  
+  // Find sale + item index
+  var matchSale = null;
+  var matchItemIdx = -1;
+  for (var i = 0; i < freshSales.length; i++) {
+    var s = freshSales[i];
+    if (s.status === 'returned') continue;
+    var items = s.items || [];
+    var idx = -1;
+    for (var j = 0; j < items.length; j++) {
+      if (String(items[j].orderId||'').trim() === oid) { idx = j; break; }
+    }
+    if (idx >= 0) { matchSale = s; matchItemIdx = idx; break; }
+  }
+  
+  if (!matchSale) {
+    console.log('applyReturnToSale: no sale contains Order ID', oid);
+    return null;
+  }
+  
+  // Remove item + recompute
+  var oldItems = matchSale.items || [];
+  var removedItem = oldItems[matchItemIdx];
+  var newItems = oldItems.slice(0, matchItemIdx).concat(oldItems.slice(matchItemIdx+1));
+  
+  var deltaDt = parseFloat(removedItem.giaBan) || 0;
+  var oldDt = parseFloat(matchSale.total_dt) || 0;
+  var oldPaid = parseFloat(matchSale.total_paid) || 0;
+  var oldOwed = parseFloat(matchSale.total_owed) || 0;
+  
+  var newDt = Math.max(0, oldDt - deltaDt);
+  
+  // Refund logic: trừ NỢ trước (priority) → trừ ĐÃ TRẢ sau
+  var actualRefund = Math.min(refund, deltaDt);
+  var fromOwed = Math.min(actualRefund, oldOwed);
+  var fromPaid = Math.min(actualRefund - fromOwed, oldPaid);
+  var newOwed = oldOwed - fromOwed;
+  var newPaid = oldPaid - fromPaid;
+  
+  // Đảm bảo consistent: newPaid + newOwed <= newDt
+  if (newPaid + newOwed > newDt) {
+    var excess = (newPaid + newOwed) - newDt;
+    var cutOwed = Math.min(excess, newOwed);
+    newOwed -= cutOwed;
+    excess -= cutOwed;
+    if (excess > 0) newPaid = Math.max(0, newPaid - excess);
+  }
+  
+  // ══ Case 1: items[] rỗng → DELETE sale ══
+  if (newItems.length === 0 || newDt === 0) {
+    try {
+      var rDel = await fetch(SUPA_URL + '/rest/v1/sales?id=eq.' + matchSale.id, {
+        method: 'DELETE',
+        headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Prefer':'return=minimal' }
+      });
+      if (!rDel.ok) throw new Error('HTTP '+rDel.status);
+      return {
+        khach: matchSale.khach,
+        action: 'deleted',
+        refundedFromOwed: fromOwed,
+        refundedFromPaid: fromPaid,
+        item: removedItem,
+        sheet: removedItem.sheet || '',
+        deletedSaleId: matchSale.id
+      };
+    } catch(ex) {
+      console.error('Delete sale fail:', ex);
+      return null;
+    }
+  }
+  
+  // ══ Case 2: còn items → PATCH ══
+  var newStatus;
+  if (newOwed === 0 && newPaid > 0) newStatus = 'paid';
+  else if (newPaid > 0) newStatus = 'partial';
+  else newStatus = 'pending';
+  
+  try {
+    var rUp = await fetch(SUPA_URL + '/rest/v1/sales?id=eq.' + matchSale.id, {
+      method: 'PATCH',
+      headers:{
+        'apikey':SUPA_KEY,
+        'Authorization':'Bearer '+SUPA_KEY,
+        'Content-Type':'application/json',
+        'Prefer':'return=minimal'
+      },
+      body: JSON.stringify({
+        items: newItems,
+        total_dt: newDt,
+        total_paid: newPaid,
+        total_owed: newOwed,
+        status: newStatus,
+        paid_at: newOwed === 0 ? new Date().toISOString() : null
+      })
+    });
+    if (!rUp.ok) throw new Error('HTTP '+rUp.status);
+    return {
+      khach: matchSale.khach,
+      action: 'updated',
+      refundedFromOwed: fromOwed,
+      refundedFromPaid: fromPaid,
+      item: removedItem,
+      sheet: removedItem.sheet || '',
+      newOwed: newOwed,
+      saleId: matchSale.id
+    };
+  } catch(ex) {
+    console.error('Update sale fail:', ex);
+    return null;
+  }
 }
 
 async function confirmAddReturn(){
@@ -3385,9 +3700,48 @@ async function confirmAddReturn(){
       var errTxt = await r.text();
       throw new Error('HTTP '+r.status+': '+errTxt);
     }
-    showToast({type:'ok',title:'✓ Đã ghi nhận hoàn',msg:oid+(refund>0?' · Hoàn '+Number(refund).toLocaleString('vi')+'đ':'')});
+    
+    // Auto trừ công nợ + đồng bộ Supabase
+    var debtImpact = await applyReturnToSale(record);
+    
+    // Đồng bộ Sheet (Phase 2): undo bán hàng trên sheet
+    if (debtImpact && debtImpact.item && debtImpact.item.sheet && debtImpact.item.orderId) {
+      try {
+        var item = debtImpact.item;
+        var unbanUrl = BASE + '?action=unban'
+          + '&sheet=' + encodeURIComponent(item.sheet)
+          + '&orderId=' + encodeURIComponent(item.orderId)
+          + '&giaBan=' + (parseFloat(item.giaBan)||0)
+          + '&slBan=' + (parseInt(item.slBan)||1);
+        // Fire-and-forget: nếu backend chưa deploy, fail silent
+        fetch(unbanUrl).catch(function(e){ console.warn('unban backend not available:', e); });
+      } catch(e){ console.warn('unban call fail:', e); }
+    }
+    
+    var toastMsg = oid + (refund>0 ? ' · Hoàn '+Number(refund).toLocaleString('vi')+'đ' : '');
+    if (debtImpact) {
+      var debtMsg = '';
+      if (debtImpact.action === 'deleted') {
+        debtMsg = '🗑 Xóa đơn khỏi lịch sử';
+      } else {
+        if (debtImpact.refundedFromOwed > 0) {
+          debtMsg = '↓ Trừ nợ ' + Number(debtImpact.refundedFromOwed).toLocaleString('vi') + 'đ';
+        }
+        if (debtImpact.refundedFromPaid > 0) {
+          debtMsg += (debtMsg ? ' · ' : '') + '↓ Trả khách ' + Number(debtImpact.refundedFromPaid).toLocaleString('vi') + 'đ';
+        }
+      }
+      if (debtMsg) toastMsg += '\n' + (debtImpact.khach||'') + ': ' + debtMsg;
+      showToast({type:'ok',title:'✓ Đã ghi nhận hoàn',msg:toastMsg});
+    } else if (refund > 0) {
+      showToast({type:'warn',title:'⚠ Đã ghi nhận hoàn (không match đơn)',msg:'Order ID '+oid+' không tìm thấy trong sales — công nợ KHÔNG được trừ tự động'});
+    } else {
+      showToast({type:'ok',title:'✓ Đã ghi nhận hoàn',msg:toastMsg});
+    }
     closeAddReturnDialog();
     loadReturnData(true);
+    // Refresh công nợ vì đã update sales
+    if (typeof loadDebtData === 'function') loadDebtData(true);
   } catch(ex) {
     console.error('Add return fail:', ex);
     var msg = ex.message;
@@ -4594,7 +4948,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.23.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.25.5</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
@@ -4792,36 +5146,44 @@ setTimeout(function(){
         </div>
       </div>
       <div class="kd-field">
-        <label>Order ID <span class="kd-req">*</span></label>
-        <input type="text" id="retOrderId" placeholder="VD: 12-1442-5307" oninput="onRetOrderInput()">
-        <div id="retOrderInfo" style="display:none;margin-top:6px;padding:8px 10px;background:var(--surface-2);border-radius:6px;font-size:11px;color:var(--text-2)"></div>
-      </div>
-      <div class="kd-field">
-        <label>Tên sản phẩm</label>
-        <input type="text" id="retSp" placeholder="Tự động điền nếu Order ID có trong sales">
-      </div>
-      <div class="kd-field">
-        <label>Tên khách (nếu khách trả)</label>
-        <input type="text" id="retKhach" placeholder="Tự động điền nếu có">
-      </div>
-      <div class="kd-field" style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
-        <div>
-          <label>Số lượng</label>
-          <input type="text" id="retSL" value="1" inputmode="numeric">
-        </div>
-        <div>
-          <label>Tiền hoàn (VNĐ)</label>
-          <input type="text" id="retRefund" placeholder="0" oninput="onRetRefundInput(this)" inputmode="numeric">
+        <label>Khách hàng <span class="kd-req">*</span></label>
+        <div class="kd-autocomplete">
+          <input type="text" id="retKhach" placeholder="Gõ tên khách để tìm..." oninput="onRetKhachInput()" autocomplete="off">
+          <div class="kd-suggest" id="retKhachSuggest" style="display:none"></div>
         </div>
       </div>
-      <div class="kd-field" style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" id="retRestock" checked style="width:auto;margin:0">
-        <label for="retRestock" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Nhập lại kho (hàng còn dùng được)</label>
+      <div class="kd-field" id="retOrderListWrap" style="display:none">
+        <label>Chọn đơn cần hoàn <span class="kd-req">*</span></label>
+        <div id="retOrderList" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;background:var(--surface-2)"></div>
       </div>
-      <div class="kd-field">
-        <label>Ghi chú</label>
-        <textarea id="retNote" placeholder="VD: máy bị lỗi màn hình, khách yêu cầu refund..." rows="2"></textarea>
+      <div id="retSelectedDetail" style="display:none">
+        <div style="background:var(--primary-soft);border:1px solid var(--primary);border-radius:7px;padding:10px 12px;margin-bottom:10px;font-size:12px">
+          <div style="font-weight:600;color:var(--primary);margin-bottom:4px">✓ Đơn được chọn:</div>
+          <div id="retSelectedSp" style="color:var(--text);font-weight:500;line-height:1.4"></div>
+          <div id="retSelectedOid" style="color:var(--text-3);font-family:ui-monospace,monospace;font-size:11px;margin-top:2px"></div>
+        </div>
+        <div class="kd-field" style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+          <div>
+            <label>Số lượng</label>
+            <input type="text" id="retSL" value="1" inputmode="numeric">
+          </div>
+          <div>
+            <label>Tiền hoàn (VNĐ)</label>
+            <input type="text" id="retRefund" placeholder="0" oninput="onRetRefundInput(this)" inputmode="numeric">
+          </div>
+        </div>
+        <div class="kd-field" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="retRestock" checked style="width:auto;margin:0">
+          <label for="retRestock" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Nhập lại kho (hàng còn dùng được)</label>
+        </div>
+        <div class="kd-field">
+          <label>Ghi chú</label>
+          <textarea id="retNote" placeholder="VD: máy bị lỗi màn hình..." rows="2"></textarea>
+        </div>
       </div>
+      <input type="hidden" id="retOrderId">
+      <input type="hidden" id="retSp">
+      <input type="hidden" id="retSelectedSaleId">
     </div>
     <div class="kd-foot">
       <button class="kd-btn kd-btn-cancel" onclick="closeAddReturnDialog()">Hủy</button>
