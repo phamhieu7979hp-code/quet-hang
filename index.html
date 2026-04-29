@@ -2630,17 +2630,12 @@ async function toggleCustomerDetail(khach){
             + '</div>'
             + '</div>';
         }).join('');
-        var statusBadge = owed>0 ? '<span style="color:var(--warning);font-weight:600">🔴 Nợ '+Number(owed).toLocaleString('vi')+'đ</span>' : '<span style="color:var(--success)">✓ Đủ</span>';
+        // Logic mới: per-sale CHỈ hiện tổng đơn + items
+        // Status nợ là cấp KHÁCH, không per-sale (sale immutable)
         return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:11px">'
           + '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--text-2);font-weight:500">'+formatDateShort(s.ngay)+'</span><b style="font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
           + itemLines
-          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:6px">'
-          +   '<span>'+statusBadge+'</span>'
-          +   (owed>0
-                ? '<button class="debt-action danger" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();markSalePaid(\''+s.id+'\')">💰 Đã trả</button>'
-                : '<button style="padding:3px 8px;font-size:10px;background:none;border:1px solid var(--border);color:var(--text-3);border-radius:4px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();markSaleUnpaid(\''+s.id+'\')">↩ Đổi sang nợ</button>')
-          + '</div>'
-          + (s.ghi_chu?'<div style="color:var(--text-3);font-size:10px;margin-top:2px;font-style:italic">📝 '+escapeHtml(s.ghi_chu)+'</div>':'')
+          + (s.ghi_chu?'<div style="color:var(--text-3);font-size:10px;margin-top:4px;font-style:italic">📝 '+escapeHtml(s.ghi_chu)+'</div>':'')
           + '</div>';
       }).join('');
     
@@ -2737,18 +2732,13 @@ function renderDebtByDate(listEl, search){
             + '</div>'
             + '</div>';
         }).join('');
-        return '<div class="debt-card '+(owed>0?'has-debt':'paid')+'">'
+        // Logic mới: per-sale CHỈ hiện tổng đơn (sale immutable)
+        // Nợ tổng hiển thị ở cấp khách hàng (customer-level), không per-sale
+        return '<div class="debt-card">'
           + '<div class="debt-card-head"><div class="debt-card-name">'+escapeHtml(s.khach||'Khách lẻ')+'</div>'
-          + (owed>0?'<span class="debt-card-status unpaid">Nợ '+Number(owed).toLocaleString('vi')+'đ</span>':'<span class="debt-card-status paid">✓ Đủ</span>')+'</div>'
-          + '<div class="debt-card-items">'+itemLines+'</div>'
-          + '<div class="debt-card-numbers">'
-          +   '<div class="debt-num"><span>Tổng</span><b>'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
-          +   '<div class="debt-num"><span>Đã trả</span><b class="paid">'+Number(s.total_paid).toLocaleString('vi')+'đ</b></div>'
-          +   '<div class="debt-num"><span>Nợ</span><b'+(owed>0?' class="owed"':'')+'>'+Number(owed).toLocaleString('vi')+'đ</b></div>'
+          +   '<div style="font-weight:700;color:var(--text);font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</div>'
           + '</div>'
-          + (owed>0
-              ? '<div class="debt-card-actions"><button class="debt-action primary" onclick="markSalePaid(\''+s.id+'\')">💰 Ghi nhận trả tiền</button></div>'
-              : '<div class="debt-card-actions"><button class="debt-action" style="background:none;border:1px solid var(--border);color:var(--text-3);font-size:11px;padding:5px 10px" onclick="markSaleUnpaid(\''+s.id+'\')">↩ Đổi sang công nợ</button></div>')
+          + '<div class="debt-card-items">'+itemLines+'</div>'
           + '</div>';
       }).join('')
       + '</div>';
@@ -5316,7 +5306,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.28.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.28.1</div>
 
 </body>
 </html>
