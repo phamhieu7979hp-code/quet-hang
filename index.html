@@ -2408,19 +2408,28 @@ async function loadDebtData(force){
     // 2. Fetch payments từ audit_log (events thanh toán - tách riêng khỏi sales)
     window._paymentsByKhach = {};
     try {
-      var paymentActions = 'payment,unpaid,bulk_payment_to_paid,bulk_payment_to_debt';
-      var rPay = await fetch(SUPA_URL + '/rest/v1/audit_log?action=in.(' + paymentActions + ')&order=created_at.asc&limit=5000', {
+      // Lấy cả payment events VÀ payment_undo events
+      var actions = 'payment,unpaid,bulk_payment_to_paid,bulk_payment_to_debt,payment_undo';
+      var rPay = await fetch(SUPA_URL + '/rest/v1/audit_log?action=in.(' + actions + ')&order=created_at.asc&limit=5000', {
         headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY }
       });
       if (rPay.ok) {
-        var payments = await rPay.json();
-        payments.forEach(function(p){
+        var allEvents = await rPay.json();
+        // Tách ra danh sách entries đã bị undo
+        var undoneIds = {};
+        allEvents.forEach(function(e){
+          if (e.action === 'payment_undo' && e.meta && e.meta.undo_target_id) {
+            undoneIds[e.meta.undo_target_id] = true;
+          }
+        });
+        // Apply impact của TẤT CẢ events trừ những event đã bị undo
+        allEvents.forEach(function(p){
           if (!p.khach) return;
+          if (p.action === 'payment_undo') return; // skip undo entries (đã được dùng để filter ở trên)
+          if (undoneIds[p.id]) return; // skip events đã bị undo
           var k = p.khach;
           var amt = parseFloat(p.amount) || 0;
           if (!window._paymentsByKhach[k]) window._paymentsByKhach[k] = 0;
-          // 'payment' và 'bulk_payment_to_paid' = trả tiền (giảm nợ)
-          // 'unpaid' và 'bulk_payment_to_debt' = chuyển sang nợ (tăng nợ)
           if (p.action === 'payment' || p.action === 'bulk_payment_to_paid') {
             window._paymentsByKhach[k] += amt;
           } else {
@@ -2596,7 +2605,13 @@ function renderDebtByCustomer(listEl, search){
       +   '<div class="debt-num"><span>Đã trả</span><b class="paid">'+Number(c.totalPaid).toLocaleString('vi')+'đ</b></div>'
       +   '<div class="debt-num"><span>Còn nợ</span><b'+(hasDebt?' class="owed"':'')+'>'+Number(c.totalOwed).toLocaleString('vi')+'đ</b></div>'
       + '</div>'
-      + (hasDebt ? '<div class="debt-card-actions"><button class="debt-action primary" onclick="event.stopPropagation();openPaymentDialogForCustomer(\''+escapeJs(c.khach)+'\')">💰 Ghi nhận trả tiền</button></div>' : '')
+      + '<div class="debt-card-actions">'
+      + (hasDebt
+          ? '<button class="debt-action primary" onclick="event.stopPropagation();openPaymentDialogForCustomer(\''+escapeJs(c.khach)+'\')">💰 Ghi nhận trả tiền</button>'
+          : (parseFloat(c.totalPaid)>0
+              ? '<button class="debt-action" style="background:none;border:1px solid var(--border);color:var(--text-3);font-size:11px;padding:6px 12px" onclick="event.stopPropagation();markCustomerUnpaid(\''+escapeJs(c.khach)+'\')">↩ Đổi sang công nợ</button>'
+              : ''))
+      + '</div>'
       + '<div class="debt-detail" id="dt_'+escapeId(c.khach)+'" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"></div>'
       + '</div>';
   }).join('');
@@ -2659,8 +2674,14 @@ async function renderPaymentHistory(khach){
     return '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">💰 Lịch sử trả nợ (0)</div>'
       + '<div style="text-align:center;font-size:11px;color:var(--text-3);padding:8px">Chưa có lịch sử trả nợ</div>';
   }
-  var html = '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">💰 Lịch sử trả nợ ('+logs.length+')</div>';
-  html += logs.map(function(log){
+  // Filter out các entry đã bị undo
+  var activeLogs = logs.filter(function(l){ return !l.undone; });
+  if (!activeLogs.length) {
+    return '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">💰 Lịch sử trả nợ (0)</div>'
+      + '<div style="text-align:center;font-size:11px;color:var(--text-3);padding:8px">Chưa có lịch sử trả nợ</div>';
+  }
+  var html = '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">💰 Lịch sử trả nợ ('+activeLogs.length+')</div>';
+  html += activeLogs.map(function(log){
     var m = log._meta || {};
     var amt = parseFloat(m.amount) || 0;
     var rem = parseFloat(m.remaining_owed) || 0;
@@ -2671,12 +2692,17 @@ async function renderPaymentHistory(khach){
     else if (m.type === 'bulk_to_paid') { typeLabel = 'Bulk: trả đủ'; typeIcon = '⚡'; typeColor = 'var(--success)'; }
     else if (m.type === 'bulk_to_debt') { typeLabel = 'Bulk: chuyển nợ'; typeIcon = '⚡'; typeColor = 'var(--warning)'; }
     else { typeLabel = m.method === 'mark_paid' ? 'Đánh dấu trả đủ' : 'Trả tiền'; }
+    var safeKhach = (khach||'').replace(/'/g, "\\'");
+    var safeAction = (m.action||'payment').replace(/'/g, "\\'");
     return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:11px">'
       + '<div style="flex:1;min-width:0">'
       +   '<div style="color:'+typeColor+';font-weight:600">'+typeIcon+' '+typeLabel+'</div>'
       +   '<div style="color:var(--text-3);font-size:10px;margin-top:1px">'+escapeHtml(log.thoi_gian||'')+(rem > 0 ? ' · còn nợ '+Number(rem).toLocaleString('vi')+'đ' : '')+'</div>'
       + '</div>'
-      + '<div style="font-weight:700;color:'+typeColor+';font-variant-numeric:tabular-nums;flex-shrink:0">'+Number(amt).toLocaleString('vi')+'đ</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
+      +   '<div style="font-weight:700;color:'+typeColor+';font-variant-numeric:tabular-nums">'+Number(amt).toLocaleString('vi')+'đ</div>'
+      +   '<button onclick="event.stopPropagation();undoPaymentEntry(\''+log.id+'\',\''+safeKhach+'\','+amt+',\''+safeAction+'\')" title="Xóa lịch sử" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;padding:4px;line-height:1;border-radius:4px" onmouseover="this.style.background=\'var(--danger-soft)\';this.style.color=\'var(--danger)\'" onmouseout="this.style.background=\'none\';this.style.color=\'var(--text-3)\'">🗑</button>'
+      + '</div>'
       + '</div>';
   }).join('');
   return html;
@@ -2942,8 +2968,37 @@ async function markSaleUnpaid(saleId) {
   }
 }
 
+
+// Đổi tổng nợ khách "đã trả đủ" về lại trạng thái nợ (revert all payments)
+async function markCustomerUnpaid(khach){
+  var c = customersCache.find(function(x){return x.khach===khach;});
+  if (!c) return;
+  var totalDt = parseFloat(c.totalDT) || 0;
+  var totalPaid = parseFloat(c.totalPaid) || 0;
+  if (totalPaid <= 0) {
+    showToast({type:'info', title:'Khách chưa có thanh toán nào để revert'});
+    return;
+  }
+  if (!confirm('Đổi khách "'+khach+'" thành công nợ?\n\nTổng đã trả sẽ revert: '+Number(totalPaid).toLocaleString('vi')+'đ\nNợ sẽ tăng thành: '+Number(totalDt).toLocaleString('vi')+'đ\n\nXác nhận?')) return;
+  try {
+    // Log unpaid event với amount = tổng đã trả → cancel hết các payment trước
+    await logPaymentEvent({
+      type: 'unpaid',
+      saleId: null,
+      khach: khach,
+      amount: totalPaid,
+      remainingOwed: totalDt,
+      method: 'revert_customer'
+    });
+    showToast({type:'ok', title:'✓ Đã chuyển sang công nợ', msg:'Nợ tổng: '+Number(totalDt).toLocaleString('vi')+'đ'});
+    loadDebtData(true);
+  } catch(ex) {
+    showToast({type:'err', title:'Lỗi', msg: ex.message});
+  }
+}
+
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  PAYMENT DIALOG (v3.28.2) - Hiển thị TỔNG NỢ KHÁCH              ║
+// ║  PAYMENT DIALOG (v3.28.3) - Hiển thị TỔNG NỢ KHÁCH              ║
 // ║  Logic ledger: nợ là aggregate level, không per-sale             ║
 // ║  pdContext giờ là { khach, customerOwed, customerTotalDt, sales }║
 // ╚══════════════════════════════════════════════════════════════╝
@@ -3091,27 +3146,67 @@ async function fetchAuditLog(khach) {
 async function fetchPaymentHistory(khach) {
   if (!khach) return [];
   try {
-    var paymentActions = 'payment,unpaid,bulk_payment_to_paid,bulk_payment_to_debt';
-    var url = SUPA_URL + '/rest/v1/audit_log?khach=eq.' + encodeURIComponent(khach) + '&action=in.(' + paymentActions + ')&order=created_at.desc&limit=100';
+    // Lấy cả payment events VÀ payment_undo events để biết entry nào đã bị undo
+    var actions = 'payment,unpaid,bulk_payment_to_paid,bulk_payment_to_debt,payment_undo';
+    var url = SUPA_URL + '/rest/v1/audit_log?khach=eq.' + encodeURIComponent(khach) + '&action=in.(' + actions + ')&order=created_at.desc&limit=200';
     var r = await fetch(url, { headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY } });
     if (!r.ok) return [];
     var data = await r.json();
-    // Adapt format cho old renderPaymentHistory
-    return data.map(function(d){
-      return {
-        thoi_gian: d.created_at ? new Date(d.created_at).toLocaleString('vi-VN', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : '',
-        _meta: {
-          type: d.action === 'bulk_payment_to_paid' ? 'bulk_to_paid'
-              : d.action === 'bulk_payment_to_debt' ? 'bulk_to_debt'
-              : d.action === 'unpaid' ? 'unpaid'
-              : 'payment',
-          amount: d.amount,
-          remaining_owed: (d.meta && d.meta.remaining_owed) || 0,
-          method: d.method
-        }
-      };
+    
+    // Tách undone IDs
+    var undoneIds = {};
+    data.forEach(function(d){
+      if (d.action === 'payment_undo' && d.meta && d.meta.undo_target_id) {
+        undoneIds[d.meta.undo_target_id] = true;
+      }
     });
+    
+    // Filter: bỏ payment_undo entries + đánh dấu entries đã bị undo
+    return data
+      .filter(function(d){ return d.action !== 'payment_undo'; })
+      .map(function(d){
+        return {
+          id: d.id,
+          undone: !!undoneIds[d.id],
+          thoi_gian: d.created_at ? new Date(d.created_at).toLocaleString('vi-VN', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : '',
+          _meta: {
+            type: d.action === 'bulk_payment_to_paid' ? 'bulk_to_paid'
+                : d.action === 'bulk_payment_to_debt' ? 'bulk_to_debt'
+                : d.action === 'unpaid' ? 'unpaid'
+                : 'payment',
+            amount: d.amount,
+            remaining_owed: (d.meta && d.meta.remaining_owed) || 0,
+            method: d.method,
+            action: d.action
+          }
+        };
+      });
   } catch(e) { return []; }
+}
+
+// Undo 1 payment entry — INSERT compensating event (audit_log immutable)
+async function undoPaymentEntry(entryId, khach, amount, originalAction){
+  if (!confirm('Xóa lịch sử thao tác này?\n\nKhách: '+khach+'\nSố tiền: '+Number(amount).toLocaleString('vi')+'đ\n\nCông nợ sẽ revert lại trạng thái trước đó.\n\nXác nhận?')) return;
+  try {
+    // INSERT payment_undo entry — sẽ cancel impact của entry gốc
+    // Khi loadDebtData fetch lại, fetchPaymentHistory tự filter ra entries bị undo
+    // Còn aggregate trong loadDebtData cần tính ngược lại impact
+    await logAction({
+      action: 'payment_undo',
+      khach: khach,
+      amount: amount,
+      method: 'manual_undo',
+      description: 'Xóa lịch sử trả nợ · ' + Number(amount).toLocaleString('vi') + 'đ',
+      meta: {
+        undo_target_id: entryId,
+        original_action: originalAction
+      }
+    });
+    showToast({type:'ok', title:'✓ Đã xóa lịch sử', msg:'Công nợ đã revert'});
+    loadDebtData(true);
+  } catch(ex) {
+    showToast({type:'err', title:'Lỗi', msg: ex.message});
+  }
 }
 
 async function confirmPayment(){
@@ -5327,7 +5422,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.28.2</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.28.3</div>
 
 </body>
 </html>
