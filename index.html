@@ -1309,6 +1309,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <button class="kd-close" onclick="closeAddReturnDialog()">×</button>
     </div>
     <div class="kd-body">
+      <!-- ═══ STEP 1: Loại hoàn ═══ -->
       <div class="kd-field">
         <label>Loại hoàn <span class="kd-req">*</span></label>
         <div class="exp-type-row">
@@ -1326,37 +1327,53 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
           </button>
         </div>
       </div>
+      
+      <!-- ═══ STEP 2: Chọn KHÁCH (autocomplete) ═══ -->
       <div class="kd-field">
-        <label>Order ID <span class="kd-req">*</span></label>
-        <input type="text" id="retOrderId" placeholder="VD: 12-1442-5307" oninput="onRetOrderInput()">
-        <div id="retOrderInfo" style="display:none;margin-top:6px;padding:8px 10px;background:var(--surface-2);border-radius:6px;font-size:11px;color:var(--text-2)"></div>
-      </div>
-      <div class="kd-field">
-        <label>Tên sản phẩm</label>
-        <input type="text" id="retSp" placeholder="Tự động điền nếu Order ID có trong sales">
-      </div>
-      <div class="kd-field">
-        <label>Tên khách (nếu khách trả)</label>
-        <input type="text" id="retKhach" placeholder="Tự động điền nếu có">
-      </div>
-      <div class="kd-field" style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
-        <div>
-          <label>Số lượng</label>
-          <input type="text" id="retSL" value="1" inputmode="numeric">
-        </div>
-        <div>
-          <label>Tiền hoàn (VNĐ)</label>
-          <input type="text" id="retRefund" placeholder="0" oninput="onRetRefundInput(this)" inputmode="numeric">
+        <label>Khách hàng <span class="kd-req">*</span></label>
+        <div class="kd-autocomplete">
+          <input type="text" id="retKhach" placeholder="Gõ tên khách để tìm..." oninput="onRetKhachInput()" autocomplete="off">
+          <div class="kd-suggest" id="retKhachSuggest" style="display:none"></div>
         </div>
       </div>
-      <div class="kd-field" style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" id="retRestock" checked style="width:auto;margin:0">
-        <label for="retRestock" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Nhập lại kho (hàng còn dùng được)</label>
+      
+      <!-- ═══ STEP 3: List đơn của khách - hiện sau khi chọn khách ═══ -->
+      <div class="kd-field" id="retOrderListWrap" style="display:none">
+        <label>Chọn đơn cần hoàn <span class="kd-req">*</span></label>
+        <div id="retOrderList" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;background:var(--surface-2)"></div>
       </div>
-      <div class="kd-field">
-        <label>Ghi chú</label>
-        <textarea id="retNote" placeholder="VD: máy bị lỗi màn hình, khách yêu cầu refund..." rows="2"></textarea>
+      
+      <!-- ═══ STEP 4: Detail đơn đã chọn (auto-fill) ═══ -->
+      <div id="retSelectedDetail" style="display:none">
+        <div style="background:var(--primary-soft);border:1px solid var(--primary);border-radius:7px;padding:10px 12px;margin-bottom:10px;font-size:12px">
+          <div style="font-weight:600;color:var(--primary);margin-bottom:4px">✓ Đơn được chọn:</div>
+          <div id="retSelectedSp" style="color:var(--text);font-weight:500;line-height:1.4"></div>
+          <div id="retSelectedOid" style="color:var(--text-3);font-family:ui-monospace,monospace;font-size:11px;margin-top:2px"></div>
+        </div>
+        <div class="kd-field" style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+          <div>
+            <label>Số lượng</label>
+            <input type="text" id="retSL" value="1" inputmode="numeric">
+          </div>
+          <div>
+            <label>Tiền hoàn (VNĐ)</label>
+            <input type="text" id="retRefund" placeholder="0" oninput="onRetRefundInput(this)" inputmode="numeric">
+          </div>
+        </div>
+        <div class="kd-field" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="retRestock" checked style="width:auto;margin:0">
+          <label for="retRestock" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Nhập lại kho (hàng còn dùng được)</label>
+        </div>
+        <div class="kd-field">
+          <label>Ghi chú</label>
+          <textarea id="retNote" placeholder="VD: máy bị lỗi màn hình..." rows="2"></textarea>
+        </div>
       </div>
+      
+      <!-- Hidden fields for confirmAddReturn (populated when item selected) -->
+      <input type="hidden" id="retOrderId">
+      <input type="hidden" id="retSp">
+      <input type="hidden" id="retSelectedSaleId">
     </div>
     <div class="kd-foot">
       <button class="kd-btn kd-btn-cancel" onclick="closeAddReturnDialog()">Hủy</button>
@@ -3448,20 +3465,140 @@ function renderReturnView(){
 }
 
 function openAddReturnDialog(){
+  // Reset all fields
   document.getElementById('retOrderId').value = '';
   document.getElementById('retSp').value = '';
   document.getElementById('retKhach').value = '';
   document.getElementById('retSL').value = '1';
   document.getElementById('retRefund').value = '';
-  document.getElementById('retNote').value = '';
-  document.getElementById('retRestock').checked = true;
-  document.getElementById('retOrderInfo').style.display = 'none';
+  if (document.getElementById('retNote')) document.getElementById('retNote').value = '';
+  if (document.getElementById('retRestock')) document.getElementById('retRestock').checked = true;
+  if (document.getElementById('retSelectedSaleId')) document.getElementById('retSelectedSaleId').value = '';
+  // Hide step 2 + step 3
+  if (document.getElementById('retOrderListWrap')) document.getElementById('retOrderListWrap').style.display = 'none';
+  if (document.getElementById('retSelectedDetail')) document.getElementById('retSelectedDetail').style.display = 'none';
+  if (document.getElementById('retKhachSuggest')) document.getElementById('retKhachSuggest').style.display = 'none';
   setRetType('wrong_sale');
   var btn = document.getElementById('retConfirmBtn');
   if (btn) { btn.disabled = false; btn.innerHTML = '🔄 LƯU HOÀN HÀNG'; }
   document.getElementById('addReturnDialog').style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  setTimeout(function(){document.getElementById('retOrderId').focus();},100);
+  setTimeout(function(){
+    var el = document.getElementById('retKhach');
+    if (el) el.focus();
+  },100);
+}
+
+// ─── Autocomplete Khách → load đơn ───
+function onRetKhachInput(){
+  var input = document.getElementById('retKhach');
+  var sug = document.getElementById('retKhachSuggest');
+  if (!input || !sug) return;
+  var q = input.value.trim().toLowerCase();
+  if (!q || typeof customersCache === 'undefined' || !customersCache.length) {
+    sug.style.display = 'none';
+    return;
+  }
+  var matched = customersCache.filter(function(c){
+    return c.khach.toLowerCase().indexOf(q) >= 0;
+  }).slice(0, 6);
+  if (!matched.length) {
+    sug.style.display = 'none';
+    return;
+  }
+  sug.innerHTML = matched.map(function(c){
+    var totalOwed = c.totalOwed || 0;
+    var meta = c.totalOrders + ' đơn' + (totalOwed > 0 ? ' · Nợ ' + Number(totalOwed).toLocaleString('vi') + 'đ' : '');
+    var safeName = c.khach.replace(/'/g,"\\'");
+    return '<div class="kd-suggest-item" onclick="pickRetCustomer(\'' + safeName + '\')">'
+      + '<div>' + escapeHtml(c.khach) + '</div>'
+      + '<div class="kd-suggest-meta">' + meta + '</div></div>';
+  }).join('');
+  sug.style.display = 'block';
+}
+
+function pickRetCustomer(name){
+  document.getElementById('retKhach').value = name;
+  document.getElementById('retKhachSuggest').style.display = 'none';
+  // Load đơn của khách đó
+  var customer = customersCache.find(function(c){ return c.khach === name; });
+  if (!customer) {
+    showToast({type:'warn', title:'Không tìm thấy data khách'});
+    return;
+  }
+  // Build list các items từ tất cả sales của khách này
+  var allItems = [];
+  customer.sales.forEach(function(sale){
+    if (sale.status === 'returned') return; // skip already returned
+    (sale.items||[]).forEach(function(it, itemIdx){
+      allItems.push({
+        saleId: sale.id,
+        saleNgay: sale.ngay,
+        itemIdx: itemIdx,
+        orderId: it.orderId || '',
+        sp: it.sp || '(không tên)',
+        giaBan: parseFloat(it.giaBan) || 0,
+        slBan: parseInt(it.slBan) || 1,
+        sheet: it.sheet || ''
+      });
+    });
+  });
+  
+  // Sort: gần nhất trước
+  allItems.sort(function(a,b){ return new Date(b.saleNgay) - new Date(a.saleNgay); });
+  
+  if (!allItems.length) {
+    showToast({type:'warn', title:'Khách này không có đơn nào để hoàn'});
+    return;
+  }
+  
+  // Render list
+  var listEl = document.getElementById('retOrderList');
+  listEl.innerHTML = allItems.map(function(item, i){
+    var dateStr = formatDateShort(item.saleNgay);
+    return '<div class="ret-item-card" onclick="pickRetItem(' + i + ')" data-idx="' + i + '">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">'
+      +   '<div style="font-weight:600;color:var(--text);font-size:13px;flex:1;min-width:0;word-break:break-word">'+escapeHtml(item.sp)+'</div>'
+      +   '<div style="font-size:13px;font-weight:700;color:var(--success);font-variant-numeric:tabular-nums;flex-shrink:0">'+Number(item.giaBan).toLocaleString('vi')+'đ</div>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3)">'
+      +   '<span style="font-family:ui-monospace,monospace">#'+escapeHtml(item.orderId)+'</span>'
+      +   '<span>📅 '+dateStr+'</span>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+  
+  // Lưu allItems vào window để pickRetItem dùng
+  window._retCurrentItems = allItems;
+  
+  // Show step 2
+  document.getElementById('retOrderListWrap').style.display = 'block';
+  document.getElementById('retSelectedDetail').style.display = 'none';
+}
+
+function pickRetItem(idx){
+  var item = window._retCurrentItems && window._retCurrentItems[idx];
+  if (!item) return;
+  
+  // Update UI - highlight selected card
+  document.querySelectorAll('.ret-item-card').forEach(function(el){
+    el.classList.toggle('selected', parseInt(el.getAttribute('data-idx'),10) === idx);
+  });
+  
+  // Auto-fill hidden fields
+  document.getElementById('retOrderId').value = item.orderId;
+  document.getElementById('retSp').value = item.sp;
+  document.getElementById('retSelectedSaleId').value = item.saleId;
+  document.getElementById('retSL').value = item.slBan;
+  document.getElementById('retRefund').value = Number(item.giaBan).toLocaleString('vi');
+  
+  // Show selected detail panel
+  document.getElementById('retSelectedSp').textContent = item.sp;
+  document.getElementById('retSelectedOid').textContent = '#' + item.orderId + ' · ' + Number(item.giaBan).toLocaleString('vi') + 'đ';
+  document.getElementById('retSelectedDetail').style.display = 'block';
+  
+  // Lưu sheet để confirmAddReturn dùng (cho backend unban)
+  window._retSelectedSheet = item.sheet;
 }
 
 function closeAddReturnDialog(){
@@ -3476,29 +3613,6 @@ function setRetType(t){
   document.querySelectorAll('.exp-type-btn[data-ret-type]').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-ret-type')===t);
   });
-}
-
-function onRetOrderInput(){
-  var oid = document.getElementById('retOrderId').value.trim();
-  if (!oid || typeof salesData === 'undefined' || !salesData) return;
-  // Tìm trong salesData để autofill
-  for (var i=0; i<salesData.length; i++) {
-    var s = salesData[i];
-    if (!s.items) continue;
-    for (var j=0; j<s.items.length; j++) {
-      var it = s.items[j];
-      if (String(it.orderId||'').trim() === oid) {
-        document.getElementById('retSp').value = it.sp || '';
-        document.getElementById('retKhach').value = s.khach || '';
-        document.getElementById('retRefund').value = Number(it.giaBan||0).toLocaleString('vi');
-        var info = document.getElementById('retOrderInfo');
-        info.innerHTML = '✓ Tìm thấy: <b>' + (it.sp||'') + '</b><br>Bán cho <b>' + s.khach + '</b> · ' + Number(it.giaBan||0).toLocaleString('vi') + 'đ · ' + formatDateShort(s.ngay);
-        info.style.display = 'block';
-        return;
-      }
-    }
-  }
-  document.getElementById('retOrderInfo').style.display = 'none';
 }
 
 function onRetRefundInput(el){
@@ -4944,7 +5058,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.25.2</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.25.3</div>
 
 </body>
 </html>
