@@ -554,6 +554,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .debt-action.danger:hover{background:var(--danger);color:#fff}
 .debt-date-head{padding:10px 4px 6px;font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;display:flex;justify-content:space-between;align-items:center}
 .debt-date-head b{font-size:12px;color:var(--primary);font-variant-numeric:tabular-nums}
+/* Bulk toggle buttons trong date header */
+.debt-date-toggle{display:flex;gap:4px;margin:0 8px}
+.debt-toggle-btn{display:inline-flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:3px 7px;font-size:10px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:inherit;transition:all .15s;letter-spacing:0;text-transform:none}
+.debt-toggle-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
+.debt-toggle-btn.toggle-debt:hover{border-color:var(--warning);color:var(--warning);background:var(--warning-soft)}
+.debt-toggle-btn.toggle-paid:hover{border-color:var(--success);color:var(--success);background:var(--success-soft)}
+
 
 /* Dialogs - Desktop center */
 .koktrack-dialog{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -2441,8 +2448,18 @@ function renderDebtByDate(listEl, search){
   var groups = Object.values(byDate).sort(function(a,b){return b.date.localeCompare(a.date);});
   if (!groups.length) { listEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-3)">Không có dữ liệu</div>'; return; }
   listEl.innerHTML = groups.map(function(g){
+    // Đếm số đơn đã trả vs còn nợ trong ngày
+    var paidCount = g.sales.filter(function(s){return (parseFloat(s.total_owed)||0) === 0;}).length;
+    var unpaidCount = g.sales.length - paidCount;
+    // Nút toggle: chỉ hiện khi có đơn cùng loại (tránh redundant)
+    var toggleBtns = '';
+    if (paidCount > 0) toggleBtns += '<button class="debt-toggle-btn toggle-debt" onclick="bulkToggleDayDebt(\''+g.date+'\',\'to_debt\')" title="Chuyển '+paidCount+' đơn đã trả thành công nợ">→💰 Nợ</button>';
+    if (unpaidCount > 0) toggleBtns += '<button class="debt-toggle-btn toggle-paid" onclick="bulkToggleDayDebt(\''+g.date+'\',\'to_paid\')" title="Đánh dấu '+unpaidCount+' đơn nợ thành đã trả">→✓ Đủ</button>';
     return '<div class="debt-date-group">'
-      + '<div class="debt-date-head"><span>'+formatDateLong(g.date)+' · '+g.sales.length+' đơn</span><b>'+Number(g.total).toLocaleString('vi')+'đ</b></div>'
+      + '<div class="debt-date-head"><span>'+formatDateLong(g.date)+' · '+g.sales.length+' đơn</span>'
+      +   '<div class="debt-date-toggle">'+toggleBtns+'</div>'
+      +   '<b>'+Number(g.total).toLocaleString('vi')+'đ</b>'
+      + '</div>'
       + g.sales.map(function(s){
         var owed = parseFloat(s.total_owed)||0;
         return '<div class="debt-card '+(owed>0?'has-debt':'paid')+'">'
@@ -2454,7 +2471,9 @@ function renderDebtByDate(listEl, search){
           +   '<div class="debt-num"><span>Đã trả</span><b class="paid">'+Number(s.total_paid).toLocaleString('vi')+'đ</b></div>'
           +   '<div class="debt-num"><span>Nợ</span><b'+(owed>0?' class="owed"':'')+'>'+Number(owed).toLocaleString('vi')+'đ</b></div>'
           + '</div>'
-          + (owed>0?'<div class="debt-card-actions"><button class="debt-action primary" onclick="markSalePaid(\''+s.id+'\')">💰 Đánh dấu trả đủ</button></div>':'')
+          + (owed>0
+              ? '<div class="debt-card-actions"><button class="debt-action primary" onclick="markSalePaid(\''+s.id+'\')">💰 Đánh dấu trả đủ</button></div>'
+              : '<div class="debt-card-actions"><button class="debt-action" style="background:none;border:1px solid var(--border);color:var(--text-3);font-size:11px;padding:5px 10px" onclick="markSaleUnpaid(\''+s.id+'\')">↩ Đổi sang công nợ</button></div>')
           + '</div>';
       }).join('')
       + '</div>';
@@ -2561,6 +2580,113 @@ function formatShortMoney(n){
   if (n >= 1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'') + 'tr';
   if (n >= 1000) return (n/1000).toFixed(0) + 'k';
   return String(n);
+}
+
+
+
+// ╔════════════════════════════════════════════════════════════╗
+// ║  BULK TOGGLE: chuyển đổi tất cả đơn 1 ngày                  ║
+// ║  mode='to_debt': đã trả → công nợ                            ║
+// ║  mode='to_paid': công nợ → đã trả                            ║
+// ╚════════════════════════════════════════════════════════════╝
+async function bulkToggleDayDebt(date, mode) {
+  var sales;
+  if (mode === 'to_debt') {
+    // Chỉ chuyển những đơn ĐÃ TRẢ (owed === 0) thành nợ
+    sales = salesData.filter(function(s){
+      return (s.ngay||'').slice(0,10) === date && (parseFloat(s.total_owed)||0) === 0 && (parseFloat(s.total_dt)||0) > 0;
+    });
+  } else {
+    // Chỉ chuyển những đơn CÒN NỢ (owed > 0) thành đã trả
+    sales = salesData.filter(function(s){
+      return (s.ngay||'').slice(0,10) === date && (parseFloat(s.total_owed)||0) > 0;
+    });
+  }
+  if (!sales.length) {
+    showToast({type:'info', title:'Không có đơn nào phù hợp'});
+    return;
+  }
+  
+  var modeLabel = mode === 'to_debt' ? 'CHUYỂN SANG CÔNG NỢ' : 'ĐÁNH DẤU ĐÃ TRẢ ĐỦ';
+  var totalAmt = sales.reduce(function(s,x){return s+(parseFloat(x.total_dt)||0);},0);
+  var dateStr = (typeof formatDateLong === 'function') ? formatDateLong(date) : date;
+  var msg = '⚠ ' + modeLabel + '\n\n'
+    + 'Ngày: ' + dateStr + '\n'
+    + 'Số đơn: ' + sales.length + '\n'
+    + 'Tổng tiền: ' + Number(totalAmt).toLocaleString('vi') + 'đ\n\n'
+    + 'Xác nhận?';
+  if (!confirm(msg)) return;
+  
+  try {
+    // Batch update Supabase
+    await Promise.all(sales.map(function(s){
+      var body;
+      if (mode === 'to_debt') {
+        body = {
+          total_paid: 0,
+          total_owed: parseFloat(s.total_dt) || 0,
+          status: 'pending',
+          paid_at: null
+        };
+      } else {
+        body = {
+          total_paid: parseFloat(s.total_dt) || 0,
+          total_owed: 0,
+          status: 'paid',
+          paid_at: new Date().toISOString()
+        };
+      }
+      return fetch(SUPA_URL + '/rest/v1/sales?id=eq.' + s.id, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': 'Bearer ' + SUPA_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(body)
+      });
+    }));
+    
+    showToast({
+      type: 'ok',
+      title: '✓ Đã chuyển ' + sales.length + ' đơn',
+      msg: mode === 'to_debt' ? 'Sang công nợ' : 'Đánh dấu đã trả đủ'
+    });
+    loadDebtData(true);
+  } catch(ex) {
+    console.error('bulkToggleDayDebt fail:', ex);
+    showToast({type:'err', title:'Lỗi', msg: ex.message});
+  }
+}
+
+// Toggle 1 đơn từ "đã trả" → "công nợ"
+async function markSaleUnpaid(saleId) {
+  var s = salesData.find(function(x){return x.id===saleId;});
+  if (!s) return;
+  if (!confirm('Chuyển đơn này thành CÔNG NỢ?\n\nKhách: ' + (s.khach||'') + '\nTổng: ' + Number(s.total_dt).toLocaleString('vi') + 'đ')) return;
+  try {
+    var r = await fetch(SUPA_URL + '/rest/v1/sales?id=eq.' + saleId, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        total_paid: 0,
+        total_owed: parseFloat(s.total_dt) || 0,
+        status: 'pending',
+        paid_at: null
+      })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    showToast({type:'ok', title:'✓ Đã chuyển sang công nợ'});
+    loadDebtData(true);
+  } catch(ex) {
+    showToast({type:'err', title:'Lỗi', msg: ex.message});
+  }
 }
 
 function openPaymentDialogForCustomer(khach){
@@ -4468,7 +4594,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.22.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.23.0</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
