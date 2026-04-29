@@ -752,7 +752,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 #histBox.in-sale-tab{display:none !important}
 
 /* ╔══════════════════════════════════════════════════════════╗
-   ║  TAB BÁN HÀNG FULL-WIDTH (POS Pro pattern v3.30.2)         ║
+   ║  TAB BÁN HÀNG FULL-WIDTH (POS Pro pattern v3.30.3)         ║
    ║  Khi vào tab "Bán hàng" → expand panel-left 100%           ║
    ║  Hide panel-right (histBox cũ đã chuyển sang activity)      ║
    ╚══════════════════════════════════════════════════════════╝ */
@@ -2984,7 +2984,7 @@ async function markCustomerUnpaid(khach){
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  PAYMENT DIALOG (v3.30.2) - Hiển thị TỔNG NỢ KHÁCH              ║
+// ║  PAYMENT DIALOG (v3.30.3) - Hiển thị TỔNG NỢ KHÁCH              ║
 // ║  Logic ledger: nợ là aggregate level, không per-sale             ║
 // ╚══════════════════════════════════════════════════════════════╝
 function openPaymentDialogForCustomer(khach){
@@ -4424,7 +4424,7 @@ function buildTrackFilterPills(){
   // Status: ordered
   dimensionOptions.status = ['scam','shipping','delivered','shop','error']
     .filter(function(s){return counts.status[s];})
-    .map(function(s){return {value:s, label:STATUS_LABELS[s], count:counts.status[s]};});
+    .map(function(s){return {value:s, label:(typeof STATUS_LABELS!=='undefined' ? STATUS_LABELS[s] : s), count:counts.status[s]};});
   // Sheet: alphabetical
   dimensionOptions.sheet = Object.keys(counts.sheet).sort()
     .map(function(s){return {value:s, label:s, count:counts.sheet[s]};});
@@ -4470,7 +4470,7 @@ function updateDimensionButtons(){
 
 // Lookup label for a value in a dimension
 function getOptionLabel(dim, value){
-  if (dim === 'status') return STATUS_LABELS[value] || value;
+  if (dim === 'status') return (typeof STATUS_LABELS!=='undefined' ? STATUS_LABELS[value] : null) || value;
   if (dim === 'account') return value.replace('kok.comp_92','kok').replace('mi_844318','mi');
   return value;
 }
@@ -4860,12 +4860,13 @@ document.addEventListener('click', function(e){
 
 function renderTrackTable(){
   var tbody=document.getElementById('trackTableBody');
+  if (!tbody) return; // guard: tab tracking chưa active
   if(!trackResults.length){
     tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:12px">Chưa có dữ liệu</td></tr>';
-    document.getElementById('trackFilterBar').style.display = 'none';
+    var tfb = document.getElementById('trackFilterBar'); if (tfb) tfb.style.display = 'none';
     var fbr=document.getElementById('filterBarRow'); if(fbr) fbr.style.display='none';
     if(typeof closeAllFilterPanels==='function') closeAllFilterPanels();
-    document.getElementById('trackCountFilter').style.display = 'none';
+    var tcf = document.getElementById('trackCountFilter'); if (tcf) tcf.style.display = 'none';
     return;
   }
   // Build filter pills nếu chưa
@@ -4874,8 +4875,8 @@ function renderTrackTable(){
   var filtered = filterTrackResults();
   // Update counter
   var hasFilter = (trackFilters.status||[]).length || (trackFilters.sheet||[]).length || (trackFilters.account||[]).length || trackFilters.search;
-  document.getElementById('trackCountFilter').style.display = hasFilter ? 'inline' : 'none';
-  document.getElementById('trackVisibleN').textContent = filtered.length;
+  var tcf2 = document.getElementById('trackCountFilter'); if (tcf2) tcf2.style.display = hasFilter ? 'inline' : 'none';
+  var tvn = document.getElementById('trackVisibleN'); if (tvn) tvn.textContent = filtered.length;
   // Empty filter result
   if (!filtered.length) {
     tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-3)"><div style="font-size:12px;margin-bottom:6px">Không có đơn nào khớp với filter hiện tại</div><button onclick="resetTrackFilters()" style="background:var(--primary);color:#fff;border:none;padding:5px 14px;border-radius:5px;font-size:11px;cursor:pointer">↻ Reset filter</button></td></tr>';
@@ -5502,7 +5503,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.30.2</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.30.3</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
