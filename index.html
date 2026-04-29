@@ -1064,8 +1064,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <!-- Content -->
     <div id="debtContent">
 
-    <!-- CHARTS - chỉ hiện khi có data + có công nợ -->
-    <div class="debt-charts" id="debtCharts" style="display:none">
+      <div id="debtLoading" style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">
+        <span class="spin"></span> Đang tải lịch sử bán...
+      </div>
+      <div id="debtList" style="display:flex;flex-direction:column;gap:8px"></div>
+
+    <!-- CHARTS - hiện cuối (sau list khách) - thao tác chính lên đầu -->
+    <div class="debt-charts" id="debtCharts" style="display:none;margin-top:14px">
       <div class="debt-chart-card">
         <div class="debt-chart-title">
           🏆 TOP 5 KHÁCH NỢ NHIỀU
@@ -1081,11 +1086,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <div id="debtChartAgingList"></div>
       </div>
     </div>
-
-      <div id="debtLoading" style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">
-        <span class="spin"></span> Đang tải lịch sử bán...
-      </div>
-      <div id="debtList" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
     </div><!-- /super-panel-debt -->
 
@@ -2645,11 +2645,15 @@ async function toggleCustomerDetail(khach){
             + '</div>'
             + '</div>';
         }).join('');
-        // Logic mới: per-sale CHỈ hiện tổng đơn + items
-        // Status nợ là cấp KHÁCH, không per-sale (sale immutable)
+        // Per-sale: tổng + items + nút quick toggle (như bản cũ)
         return '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:11px">'
           + '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--text-2);font-weight:500">'+formatDateShort(s.ngay)+'</span><b style="font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</b></div>'
           + itemLines
+          + '<div style="display:flex;justify-content:flex-end;margin-top:5px">'
+          +   (parseFloat(s.total_owed) > 0
+                ? '<button class="debt-action danger" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();markSalePaid(\''+s.id+'\')">💰 Đã trả</button>'
+                : '<button style="padding:3px 8px;font-size:10px;background:none;border:1px solid var(--border);color:var(--text-3);border-radius:4px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();markSaleUnpaid(\''+s.id+'\')">↩ Đổi sang nợ</button>')
+          + '</div>'
           + (s.ghi_chu?'<div style="color:var(--text-3);font-size:10px;margin-top:4px;font-style:italic">📝 '+escapeHtml(s.ghi_chu)+'</div>':'')
           + '</div>';
       }).join('');
@@ -2758,13 +2762,17 @@ function renderDebtByDate(listEl, search){
             + '</div>'
             + '</div>';
         }).join('');
-        // Logic mới: per-sale CHỈ hiện tổng đơn (sale immutable)
-        // Nợ tổng hiển thị ở cấp khách hàng (customer-level), không per-sale
+        // Per-sale: hiện tổng + nút quick toggle (như bản cũ - cho phép sửa nhanh khi nhập nhầm)
         return '<div class="debt-card">'
           + '<div class="debt-card-head"><div class="debt-card-name">'+escapeHtml(s.khach||'Khách lẻ')+'</div>'
           +   '<div style="font-weight:700;color:var(--text);font-variant-numeric:tabular-nums">'+Number(s.total_dt).toLocaleString('vi')+'đ</div>'
           + '</div>'
           + '<div class="debt-card-items">'+itemLines+'</div>'
+          + '<div class="debt-card-actions" style="margin-top:8px">'
+          +   (parseFloat(s.total_owed) > 0
+                ? '<button class="debt-action primary" onclick="markSalePaid(\''+s.id+'\')">💰 Đánh dấu trả đủ</button>'
+                : '<button class="debt-action" style="background:none;border:1px solid var(--border);color:var(--text-3);font-size:11px;padding:5px 10px" onclick="markSaleUnpaid(\''+s.id+'\')">↩ Đổi sang nợ</button>')
+          + '</div>'
           + '</div>';
       }).join('')
       + '</div>';
@@ -2998,7 +3006,7 @@ async function markCustomerUnpaid(khach){
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  PAYMENT DIALOG (v3.28.3) - Hiển thị TỔNG NỢ KHÁCH              ║
+// ║  PAYMENT DIALOG (v3.29.1) - Hiển thị TỔNG NỢ KHÁCH              ║
 // ║  Logic ledger: nợ là aggregate level, không per-sale             ║
 // ║  pdContext giờ là { khach, customerOwed, customerTotalDt, sales }║
 // ╚══════════════════════════════════════════════════════════════╝
@@ -5422,7 +5430,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.28.3</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.29.1</div>
 
 </body>
 </html>
