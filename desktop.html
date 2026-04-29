@@ -375,12 +375,86 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 
 /* ╔══ BAN SUB-TABS (Bán mới / Hoàn hàng) ══╗ */
-.ban-subtabs{display:flex;gap:4px;margin-bottom:12px;padding:3px;background:var(--surface-2);border-radius:9px}
-.ban-subtab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;background:none;border:none;border-radius:6px;color:var(--text-3);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
-.ban-subtab.active{background:var(--surface);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.ban-subtab span:first-child{font-size:14px;line-height:1}
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  TAB BÁN HÀNG - Desktop UX/UI Pro 2025                    ║
+   ║  Pattern: Square POS / Lightspeed / Shopify Admin         ║
+   ║  Spacing: 8px grid system (Material Design)                ║
+   ║  Hierarchy: Card-based grouping (Linear/Stripe)            ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* Sub-tabs (Bán/Hoàn) - PRO pill style */
+.ban-subtabs{display:flex;gap:4px;margin-bottom:16px;padding:4px;background:var(--surface-2);border-radius:10px;width:fit-content}
+.ban-subtab{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;background:none;border:none;border-radius:7px;color:var(--text-3);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;min-width:140px}
+.ban-subtab.active{background:var(--surface);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04)}
+.ban-subtab span:first-child{font-size:15px;line-height:1}
 .ban-panel{display:none}
 .ban-panel.active{display:block;animation:fadeSlide .18s ease-out}
+
+/* Split layout: LEFT (form) + RIGHT (cart sticky) */
+.ban-split{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px;align-items:start}
+.ban-split-left{min-width:0}
+.ban-split-right{position:sticky;top:16px;align-self:flex-start;max-height:calc(100vh - 96px)}
+
+/* LEFT card - Form đơn hàng */
+.ban-form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.ban-form-title{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ban-form-title-icon{font-size:14px}
+.ban-form-section{margin-bottom:16px}
+.ban-form-section:last-child{margin-bottom:0}
+.ban-form-section-divider{margin:20px -20px;border:0;border-top:1px solid var(--border)}
+
+/* Field label pro */
+.ban-field-label{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.ban-field-label-icon{font-size:13px;opacity:.7}
+.ban-field-helper{font-size:11px;color:var(--text-3);margin-top:4px}
+
+/* Input + button row pro - đồng đều height 40px */
+.ban-input-row{display:flex;gap:8px;align-items:stretch}
+.ban-input-row input{flex:1;height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);transition:all .15s;font-family:inherit;color:var(--text)}
+.ban-input-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(21,101,192,.08)}
+.ban-input-row .btn{height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:6px}
+.ban-input-row .btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
+.ban-input-row .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.ban-input-row .btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark);color:#fff}
+
+/* Single full-width input */
+.ban-input-full{width:100%;height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);font-family:inherit;color:var(--text);transition:all .15s;box-sizing:border-box}
+.ban-input-full:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(21,101,192,.08)}
+
+/* Result info card (hiện sau khi quét) */
+.ban-info-card{background:var(--primary-soft);border:1px solid var(--primary);border-radius:10px;padding:14px 16px;margin-top:8px}
+.ban-info-card-title{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+
+/* Cart panel pro - 420px wide */
+.cart-panel-pro{margin-top:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);overflow:hidden;display:flex;flex-direction:column}
+.cart-panel-pro .cart-head{padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cart-panel-pro .cart-title{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.4px}
+.cart-panel-pro .cart-title span:first-child{font-size:16px}
+.cart-panel-pro .cart-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;background:var(--primary);color:#fff;border-radius:11px;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+.cart-panel-pro .cart-clear{height:28px;padding:0 10px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-3);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.cart-panel-pro .cart-clear:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-soft)}
+.cart-panel-pro .cart-list{padding:10px;flex:1;min-height:200px;max-height:50vh;overflow-y:auto}
+.cart-panel-pro .cart-foot{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface-2)}
+.cart-panel-pro .cart-stats{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.cart-panel-pro .cart-stat{display:flex;justify-content:space-between;font-size:13px}
+.cart-panel-pro .cart-stat span{color:var(--text-3);font-weight:500}
+.cart-panel-pro .cart-stat b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+.cart-panel-pro .cart-stat .cart-lai{color:var(--success)}
+.cart-panel-pro .cart-submit{width:100%;height:46px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;letter-spacing:.4px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(21,101,192,.25);transition:all .15s}
+.cart-panel-pro .cart-submit:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(21,101,192,.35)}
+.cart-panel-pro .cart-submit:active{transform:translateY(0)}
+
+/* Empty state pro */
+.cart-panel-pro .empty-state{padding:40px 20px;text-align:center;color:var(--text-3)}
+.cart-panel-pro .empty-icon{width:48px;height:48px;margin:0 auto 12px;opacity:.4;color:var(--text-3)}
+.cart-panel-pro .empty-title{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:4px}
+.cart-panel-pro .empty-tip{font-size:11px;color:var(--text-3);line-height:1.5}
+
+/* Responsive: collapse to 1-col on narrow screens */
+@media (max-width: 1180px){
+  .ban-split{grid-template-columns:1fr;gap:16px}
+  .ban-split-right{position:static;max-height:none}
+}
 
 /* ╔══ SUPER-TABS (Công nợ / Chi phí) ══╗ */
 .super-tabs{display:flex;gap:6px;margin-bottom:14px;padding:4px;background:var(--surface-2);border-radius:9px}
@@ -413,23 +487,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* ╔══════════════════════════════════════════════════╗
    ║  BAN HANG - 2-COL SPLIT LAYOUT (Square POS pattern)║
    ╚══════════════════════════════════════════════════╝ */
-.ban-split{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
-.ban-split-left{min-width:0}
-.ban-split-right{position:sticky;top:14px;align-self:flex-start;max-height:calc(100vh - 80px);overflow-y:auto;border-radius:10px}
-.ban-split-right .cart-panel{background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.04);overflow:hidden}
-.ban-split-right .cart-head{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px}
-.ban-split-right .cart-foot{background:var(--surface);border-top:1px solid var(--border);padding:14px 16px}
-
-.cart-panel-pro{margin-top:0;background:linear-gradient(180deg,var(--surface) 0%,#fafbfd 100%);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden}
-.cart-panel-pro .cart-head{padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--border)}
-.cart-panel-pro .cart-list{padding:8px;min-height:180px;max-height:55vh;overflow-y:auto}
-.cart-panel-pro .cart-foot{padding:12px 14px;border-top:1px solid var(--border);background:var(--surface)}
-
-/* Responsive: collapse to 1-col on narrow screens */
-@media (max-width: 1100px){
-  .ban-split{grid-template-columns:1fr}
-  .ban-split-right{position:static;max-height:none}
-}
+/* Removed duplicate - see above pro layout */
 
 /* ╔══ TRACKING SCAM WARNING ══╗ */
 .scam-warn{background:#dc2626 !important;color:#fff !important;animation:scamPulse 2s ease-in-out infinite}
@@ -750,31 +808,55 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <!-- ═══ PANEL: BÁN HÀNG ═══ -->
         <div id="banPanelSale" class="ban-panel active">
         <div class="ban-split">
-          <!-- LEFT: Input + form -->
+          <!-- LEFT: Form đơn hàng (card frame pro) -->
           <div class="ban-split-left">
-            <div class="hint">Quét nhiều đơn liên tiếp — bấm BÁN để chốt thành hóa đơn</div>
-            <div class="field">
-              <div class="field-lbl">Order ID</div>
-              <div class="irow">
-                <input type="text" id="inpBan" placeholder="Quet hoặc nhập Order ID...">
-                <button class="btn btn-sm" onclick="openCam('ban')">Cam</button>
-                <button class="btn btn-sm" onclick="doBan()">OK</button>
+            <div class="ban-form-card">
+              <div class="ban-form-title">
+                <span class="ban-form-title-icon">📥</span>
+                <span>Quét đơn hàng</span>
               </div>
-            </div>
-            <div class="pibox" id="pi">
-              <div class="field">
-                <div class="field-lbl">Gia ban (VND)</div>
-                <input class="inp-full" type="text" id="giaBan" placeholder="0" oninput="fmt(this)" inputmode="numeric">
+
+              <!-- Section 1: Order ID input -->
+              <div class="ban-form-section">
+                <div class="ban-field-label">
+                  <span class="ban-field-label-icon">🔍</span>
+                  <span>Order ID</span>
+                </div>
+                <div class="ban-input-row">
+                  <input type="text" id="inpBan" placeholder="Quét hoặc nhập Order ID...">
+                  <button class="btn" onclick="openCam('ban')">📷 Cam</button>
+                  <button class="btn btn-primary" onclick="doBan()">Tìm</button>
+                </div>
+                <div class="ban-field-helper">Quét nhiều đơn liên tiếp — bấm BÁN để chốt thành hóa đơn</div>
               </div>
-              <div class="field">
-                <div class="field-lbl">So luong ban — <span id="slTonHint" style="color:var(--warning)">ton: ?</span></div>
-                <div class="irow">
-                  <input type="number" id="slBan" value="1" min="1">
-                  <button class="btn btn-sm btn-primary" onclick="addToBanCart()">+ Thêm vào giỏ</button>
+
+              <hr class="ban-form-section-divider">
+
+              <!-- Section 2: Giá bán + SL (hiện sau khi quét) -->
+              <div class="ban-form-section pibox" id="pi">
+                <div class="ban-form-section">
+                  <div class="ban-field-label">
+                    <span class="ban-field-label-icon">💰</span>
+                    <span>Giá bán (VND)</span>
+                  </div>
+                  <input class="ban-input-full" type="text" id="giaBan" placeholder="0" oninput="fmt(this)" inputmode="numeric">
+                </div>
+
+                <div class="ban-form-section" style="margin-bottom:0">
+                  <div class="ban-field-label">
+                    <span class="ban-field-label-icon">📊</span>
+                    <span>Số lượng bán — <span id="slTonHint" style="color:var(--warning);font-weight:600;margin-left:auto">tồn: ?</span></span>
+                  </div>
+                  <div class="ban-input-row">
+                    <input type="number" id="slBan" value="1" min="1" style="max-width:120px">
+                    <button class="btn btn-primary" style="flex:1" onclick="addToBanCart()">+ Thêm vào giỏ</button>
+                  </div>
                 </div>
               </div>
+
+              <!-- Section 3: Result info card -->
+              <div class="res" id="resBan" style="margin-top:16px"><div class="res-title" id="rtBan"></div><div class="res-body" id="rbBan"></div></div>
             </div>
-            <div class="res" id="resBan"><div class="res-title" id="rtBan"></div><div class="res-body" id="rbBan"></div></div>
           </div>
 
           <!-- RIGHT: Cart sticky (Square POS / Shopify Admin pattern) -->
@@ -782,23 +864,24 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
             <div class="cart-panel cart-panel-pro" id="banCartPanel">
               <div class="cart-head">
                 <div class="cart-title">
-                  <span>🛒 Giỏ hàng</span>
+                  <span>🛒</span>
+                  <span>Giỏ hàng</span>
                   <span class="cart-count" id="banCartCount">0</span>
                 </div>
                 <button class="cart-clear" id="banCartClear" onclick="clearBanCart()" style="display:none">Xóa giỏ</button>
               </div>
               <div class="cart-list" id="banCartList">
-                <div class="empty-state" style="padding:32px 16px">
+                <div class="empty-state">
                   <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
                   <div class="empty-title">Giỏ trống</div>
-                  <div class="empty-tip">Quét đơn hàng để bắt đầu</div>
+                  <div class="empty-tip">Quét đơn hàng để bắt đầu<br>Có thể thêm nhiều đơn cùng 1 lượt bán</div>
                 </div>
               </div>
               <div class="cart-foot" id="banCartFoot" style="display:none">
                 <div class="cart-stats">
-                  <div class="cart-stat"><span>Doanh thu</span><b id="banCartDT">0 d</b></div>
-                  <div class="cart-stat"><span>Vốn nhập</span><b id="banCartVon">0 d</b></div>
-                  <div class="cart-stat"><span>Lãi</span><b id="banCartLai" class="cart-lai">0 d</b></div>
+                  <div class="cart-stat"><span>Doanh thu</span><b id="banCartDT">0 đ</b></div>
+                  <div class="cart-stat"><span>Vốn nhập</span><b id="banCartVon">0 đ</b></div>
+                  <div class="cart-stat"><span>Lãi gộp</span><b id="banCartLai" class="cart-lai">0 đ</b></div>
                 </div>
                 <button class="cart-submit" id="banCartSubmit" onclick="submitBanCart()">
                   <span class="cart-submit-icon">💵</span>
@@ -4385,7 +4468,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.21.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.22.0</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
