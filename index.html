@@ -1859,20 +1859,46 @@ function inTem(oid,sp) {
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
     // TEXT AREA bên phải QR
     var textX=qrSize+14, textW=W-textX-4;
-    // SP name: top, 13px bold, max 3 dòng
+    // ═══ SP NAME with SMART-FIT ═══
+    // Auto shrink font (12→9px) để fit FULL tên SP, truncate "..." nếu quá dài
+    var oidH = 16; // chừa cho Order ID
+    var topY = 14; // y bắt đầu SP name
+    var availH = H - topY - oidH - 2;
     if(sp){
-      ctx.fillStyle='#000'; ctx.font='bold 13px Arial'; ctx.textAlign='left';
-      var words=sp.split(' '),line='',lines=[];
-      for(var i=0;i<words.length;i++){
-        var test=line+(line?' ':'')+words[i];
-        if(ctx.measureText(test).width>textW){if(line)lines.push(line);line=words[i];}
-        else line=test;
+      var bestFs = 9, bestLines = [];
+      // Try fontsize từ to → nhỏ, dùng fontsize lớn nhất mà fit
+      for (var fs = 12; fs >= 9; fs--) {
+        ctx.font = 'bold ' + fs + 'px Arial';
+        var lh = fs + 1; // line-height = font + 1
+        var maxLines = Math.floor(availH / lh);
+        var words = sp.split(' '), line='', lines=[];
+        for (var i=0; i<words.length; i++){
+          var test = line + (line?' ':'') + words[i];
+          if (ctx.measureText(test).width > textW){
+            if(line) lines.push(line); line = words[i];
+          } else line = test;
+        }
+        if(line) lines.push(line);
+        if (lines.length <= maxLines){
+          bestFs = fs; bestLines = lines;
+          break; // fit OK, chọn font này
+        }
+        bestFs = fs; bestLines = lines.slice(0, maxLines); // remember last attempt
       }
-      if(line)lines.push(line);
-      lines=lines.slice(0,3);
-      lines.forEach(function(l,i){ctx.fillText(l, textX, 22+i*16);});
+      // Truncate dòng cuối với "..." nếu vẫn overflow
+      ctx.font = 'bold ' + bestFs + 'px Arial';
+      var lh2 = bestFs + 1;
+      var maxLines2 = Math.floor(availH / lh2);
+      if (bestLines.length > maxLines2) {
+        bestLines = bestLines.slice(0, maxLines2);
+        var last = bestLines[maxLines2-1];
+        while (ctx.measureText(last + '…').width > textW && last.length > 1) last = last.slice(0,-1);
+        bestLines[maxLines2-1] = last + '…';
+      }
+      ctx.fillStyle='#000'; ctx.textAlign='left';
+      bestLines.forEach(function(l, i){ ctx.fillText(l, textX, topY + (i+1)*lh2); });
     }
-    // Order ID: bottom right, 12px monospace
+    // Order ID: bottom, 12px monospace
     ctx.fillStyle='#000'; ctx.font='bold 12px monospace'; ctx.textAlign='left';
     ctx.fillText(oid.length>14?oid.substring(0,14):oid, textX, H-12);
     var dataUrl=canvas.toDataURL('image/png');
@@ -1937,13 +1963,43 @@ function doNhap(){
 document.getElementById('inpNhap').addEventListener('keydown',function(e){if(e.key==='Enter')doNhap();});
 document.getElementById('phiShip').addEventListener('keydown',function(e){if(e.key==='Enter')confirmNhap();});
 
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  TIMEZONE VN HELPER - tự detect sheet tháng hiện tại theo VN  ║
+// ║  Sang tháng mới → tự dùng sheet T<month> mới, không hardcode   ║
+// ╚══════════════════════════════════════════════════════════════╝
+function getCurrentMonthSheetVN() {
+  try {
+    // Dùng Intl API với timezone Asia/Ho_Chi_Minh - chuẩn 100%
+    var month = parseInt(new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      month: 'numeric'
+    }).format(new Date()));
+    return 'T' + month;
+  } catch (e) {
+    // Fallback nếu Intl fail (browser quá cũ): dùng UTC offset thủ công
+    var now = new Date();
+    var vnTime = new Date(now.getTime() + (now.getTimezoneOffset() + 420) * 60000);
+    return 'T' + (vnTime.getMonth() + 1);
+  }
+}
+
+// Build sheets param cho backend search tracking - bao gồm tháng hiện tại + 2026 + tháng trước
+function buildSheetsParam() {
+  var curr = getCurrentMonthSheetVN();
+  var monthNum = parseInt(curr.slice(1));
+  var prev = monthNum > 1 ? 'T' + (monthNum - 1) : 'T12';
+  // Format: 'T<curr>,2026,T<prev>' - search 3 sheet phổ biến nhất
+  return curr + ',2026,' + prev;
+}
+
 async function findTracking(t) {
   // Auto-normalize: FedEx barcode dài → 12 số cuối; UPS giữ nguyên
   t = normalizeTracking(t);
   var now=new Date(), ng=now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
   showRes('resNhap','warn','<span class="spin"></span>Dang tim...','Tracking: <b>'+t+'</b>');
   try {
-    var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&checkOnly=1');
+    var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets='+buildSheetsParam()+'&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&checkOnly=1');
     var d=await r.json();
     if (d.found) {
       nT=t; nInfo=d; nNg=ng; curOid=d.orderId||''; curSp=d.sp||'';
@@ -1979,7 +2035,7 @@ async function confirmNhap() {
   var t=nT,d=nInfo,ng=nNg; nT=null;nInfo=null;nNg=null;
   try {
     var slVe=parseInt(document.getElementById('slVe').value)||1;
-    var url=BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps+'&slVe='+slVe;
+    var url=BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets='+buildSheetsParam()+'&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps+'&slVe='+slVe;
     if (note) url += '&note='+encodeURIComponent(note);
     var r=await fetch(url);
     var res=await r.json();
@@ -3017,7 +3073,7 @@ async function markCustomerUnpaid(khach){
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  PAYMENT DIALOG (v3.30.3) - Hiển thị TỔNG NỢ KHÁCH              ║
+// ║  PAYMENT DIALOG (v3.32.0) - Hiển thị TỔNG NỢ KHÁCH              ║
 // ║  Logic ledger: nợ là aggregate level, không per-sale             ║
 // ║  pdContext giờ là { khach, customerOwed, customerTotalDt, sales }║
 // ╚══════════════════════════════════════════════════════════════╝
@@ -3164,7 +3220,7 @@ async function fetchAuditLog(khach) {
 // Backwards compat - fetchPaymentHistory giờ filter từ audit_log với action=payment-related
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  DEBT ACTIVITY FEED (v3.30.3) - hiện cuối tab Công nợ         ║
+// ║  DEBT ACTIVITY FEED (v3.32.0) - hiện cuối tab Công nợ         ║
 // ║  Hiện 15 sự kiện gần nhất từ audit_log: sale, return,         ║
 // ║  payment, manual_debt, expense                                  ║
 // ╚══════════════════════════════════════════════════════════════╝
@@ -5502,7 +5558,7 @@ setTimeout(function(){
   showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.30.3</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.32.0</div>
 
 <!-- LICH SU - hiện ở cuối trang (sau tất cả các tabs) -->
 <div class="hist" style="margin-top:24px;padding-top:16px;border-top:2px solid var(--border)">
