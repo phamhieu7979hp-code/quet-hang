@@ -1838,54 +1838,39 @@ document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.
 
 function inTem(oid,sp) {
   if (!oid){ alert('Chua co Order ID!'); return; }
-  // ╔═══════════════════════════════════════════════════════════╗
-  // ║  TEM 40mm × 30mm — chuẩn industry (203 DPI Xprinter)        ║
-  // ║  Layout: QR vuông trái + (Tên SP smart-fit + Order ID) phải ║
-  // ║  Resolution 2× (640×480 px) → print sắc nét                 ║
-  // ╚═══════════════════════════════════════════════════════════╝
-  var W=640, H=480;          // 40mm × 30mm @ 16DPMM (2× của 8DPMM Xprinter chuẩn)
-  var PAD=12;                // padding chung
-  var QR=380;                // QR 380×380 (chiếm gần full chiều cao 480-PAD*2)
+  // ╔═══════════════════════════════════════════════════════════════╗
+  // ║  TEM 40mm × 30mm — chuẩn THERMAL PRINTER industry             ║
+  // ║  Nguyên tắc: chữ đen thuần trên trắng, KHÔNG inverse box       ║
+  // ║  (vùng đen lớn → nhiệt nhiều → nhoè/lem)                       ║
+  // ║                                                                  ║
+  // ║  Layout 3-stack dọc:                                            ║
+  // ║    [Top]    Tên SP (smart-fit, căn giữa)                        ║
+  // ║    [Middle] QR code (căn giữa)                                  ║
+  // ║    [Bot]    Order ID (chữ đen monospace, smart-fit)             ║
+  // ╚═══════════════════════════════════════════════════════════════╝
+  var W=640, H=480;          // 40×30mm @ 16DPMM
+  var PAD=16;
+  var TOP=90, BOT=64;        // chiều cao 2 vùng top/bot
+  var MID=H-TOP-BOT;          // vùng giữa cho QR
   
   var canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
   var ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
   
   try{
-    // ─── QR Code ───
-    var qrCanvas=document.createElement('canvas');
-    new QRious({
-      element:qrCanvas,
-      value:oid,
-      size:QR,
-      level:'M',
-      background:'white',
-      foreground:'black',
-      padding:0
-    });
-    var qrX=PAD, qrY=Math.floor((H-QR)/2);  // căn giữa chiều cao
-    ctx.drawImage(qrCanvas, qrX, qrY, QR, QR);
-    
-    // ─── Text area bên phải ───
-    var textX = PAD + QR + 16;
-    var textW = W - textX - PAD;       // ~ 220px
-    var topPad = 16;
-    var oidBoxH = 56;                  // chừa cho Order ID box ở đáy
-    var brandH = 22;                   // chừa cho brand ở đáy
-    var availH = H - topPad - oidBoxH - brandH - 8;
-    
-    // ─── SP NAME with SMART-FIT ───
-    // Auto shrink font (28→18px) + line-break theo từ
+    // ═══ TOP: SP NAME (smart-fit, max 2 dòng, ellipsis) ═══
     if(sp){
+      var availW = W - PAD*2;
+      var availH = TOP - PAD - 4;
       var bestFs=18, bestLines=[];
       for (var fs=28; fs>=18; fs-=2){
         ctx.font='bold '+fs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
-        var lh = fs+3;
+        var lh = fs+4;
         var maxLines = Math.floor(availH/lh);
         var words = sp.split(' '), line='', lines=[];
         for (var i=0;i<words.length;i++){
           var test = line + (line?' ':'') + words[i];
-          if (ctx.measureText(test).width > textW){
+          if (ctx.measureText(test).width > availW){
             if(line) lines.push(line); line = words[i];
           } else line = test;
         }
@@ -1897,49 +1882,47 @@ function inTem(oid,sp) {
         bestFs = fs; bestLines = lines.slice(0, maxLines);
       }
       ctx.font='bold '+bestFs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
-      var lh2 = bestFs+3;
+      var lh2 = bestFs+4;
       var maxLines2 = Math.floor(availH/lh2);
       if (bestLines.length > maxLines2){
         bestLines = bestLines.slice(0, maxLines2);
         var last = bestLines[maxLines2-1];
-        while (ctx.measureText(last+'…').width > textW && last.length > 1) last = last.slice(0,-1);
+        while (ctx.measureText(last+'…').width > availW && last.length > 1) last = last.slice(0,-1);
         bestLines[maxLines2-1] = last + '…';
       }
-      ctx.fillStyle='#000'; ctx.textAlign='left';
-      bestLines.forEach(function(l,i){ ctx.fillText(l, textX, topPad + (i+1)*lh2); });
+      ctx.fillStyle='#000';
+      ctx.textAlign='center';
+      var startY = PAD + bestFs;
+      bestLines.forEach(function(l,i){ ctx.fillText(l, W/2, startY + i*lh2); });
     }
     
-    // ─── ORDER ID BOX (bottom highlight) ───
-    var oidBoxY = H - brandH - oidBoxH - 4;
-    ctx.fillStyle='#000';
-    ctx.fillRect(textX, oidBoxY, textW, oidBoxH);
+    // ═══ MIDDLE: QR Code (căn giữa cả 2 chiều) ═══
+    var qrSize = Math.min(MID - 16, 320);  // hơi nhỏ hơn vùng để có spacing
+    var qrX = Math.floor((W - qrSize) / 2);
+    var qrY = TOP + Math.floor((MID - qrSize) / 2);
+    var qrCanvas=document.createElement('canvas');
+    new QRious({
+      element:qrCanvas, value:oid, size:qrSize, level:'M',
+      background:'white', foreground:'black', padding:0
+    });
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
     
-    // OID text - smart fit font
+    // ═══ BOTTOM: ORDER ID (chữ đen monospace, KHÔNG khung) ═══
     var oidStr = String(oid);
-    var oidFs=24;
-    while (oidFs>=14){
+    var oidFs = 36;
+    while (oidFs >= 18){
       ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
-      if (ctx.measureText(oidStr).width <= textW - 16) break;
+      if (ctx.measureText(oidStr).width <= W - PAD*2) break;
       oidFs -= 2;
     }
-    ctx.fillStyle='#fff';
+    ctx.fillStyle='#000';
     ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
-    ctx.fillText(oidStr, textX + textW/2, oidBoxY + oidBoxH/2);
+    ctx.fillText(oidStr, W/2, H - BOT/2);
     ctx.textBaseline='alphabetic';
     
-    // ─── BRAND/DATE FOOTER ───
-    var d = new Date();
-    var dateStr = d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
-    ctx.fillStyle='#666';
-    ctx.font='600 14px -apple-system, "SF Pro Text", Arial, sans-serif';
-    ctx.textAlign='left';
-    ctx.fillText(dateStr, textX, H-6);
-    ctx.textAlign='right';
-    ctx.fillText('KOKTRACK', textX + textW, H-6);
-    
-    // ─── Output ───
+    // ═══ Output ═══
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('temPreview').src=dataUrl;
     document.getElementById('temPopupOid').textContent=oid;
