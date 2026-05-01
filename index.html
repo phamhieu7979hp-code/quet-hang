@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>KokTrack v3.33</title>
+<title>KokTrack v3.34</title>
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
@@ -1839,29 +1839,39 @@ document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.
 
 function inTem(oid,sp) {
   if (!oid){ alert('Chua co Order ID!'); return; }
-  // ╔══════════════════════════════════════════════════════════════╗
-  // ║  TEM 40mm × 30mm — chuẩn thermal industry (v3.33)             ║
-  // ║  Layout 3-stack vertical: SP top + QR middle + OID bottom      ║
-  // ║  SHIFT_X dịch nội dung sang phải để bù lệch trái khi in        ║
-  // ╚══════════════════════════════════════════════════════════════╝
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  TEM 40mm × 30mm — chuẩn thermal (v3.34) — LAYOUT 3 VÙNG CỨNG   ║
+  // ║                                                                    ║
+  // ║  Resolution: 640×480 px (16 DPMM = 2× chuẩn 8 DPMM Xprinter 203)  ║
+  // ║                                                                    ║
+  // ║  ┌──────────────────────────────────────┐                         ║
+  // ║  │  TOP_H = 128 (~26.7%)  → SP NAME      │                         ║
+  // ║  ├──────────────────────────────────────┤                         ║
+  // ║  │  MID_H = 272 (~56.7%)  → QR CODE      │                         ║
+  // ║  ├──────────────────────────────────────┤                         ║
+  // ║  │  BOT_H = 80  (~16.7%)  → ORDER ID     │                         ║
+  // ║  └──────────────────────────────────────┘                         ║
+  // ║                                                                    ║
+  // ║  Mỗi vùng: nội dung căn giữa cả 2 chiều (KHÔNG bị dồn lên/xuống)  ║
+  // ║  KHÔNG dùng SHIFT_X — căn giữa horizontal đối xứng tự nhiên        ║
+  // ╚══════════════════════════════════════════════════════════════════╝
   var W=640, H=480;
-  var PAD=16;
-  var SHIFT_X=14;             // dịch toàn bộ nội dung canvas sang phải (~0.9mm) — fix lệch trái
-  var BOT=60;
-  var TOP_MAX=200;
-  var QR_MIN=220;
+  var PAD=20;
+  var TOP_H=128;
+  var MID_H=272;
+  var BOT_H=80;        // tổng = 480 = H ✓
 
   var canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
   var ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
 
   try{
-    // ═══ TOP: SP NAME — smart shrink fit FULL ═══
-    var actualTop = PAD;
+    // ═══ TOP (y 0 → 128): SP NAME smart-shrink + căn giữa V ═══
     if(sp){
       var availW = W - PAD*2;
+      var availH = TOP_H - PAD;
       var spFs = 12, spLines = [];
-      for (var fs=28; fs>=10; fs--){
+      for (var fs=26; fs>=10; fs--){
         ctx.font='bold '+fs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
         var lh = fs+4;
         var words = sp.split(' '), line='', lines=[];
@@ -1872,12 +1882,12 @@ function inTem(oid,sp) {
           } else line = test;
         }
         if(line) lines.push(line);
-        var neededH = lines.length * lh + PAD;
-        if (neededH <= TOP_MAX){ spFs = fs; spLines = lines; break; }
+        var neededH = lines.length * lh;
+        if (neededH <= availH){ spFs = fs; spLines = lines; break; }
         spFs = fs; spLines = lines;
       }
-      var lh = spFs + 4;
-      var maxLines = Math.floor((TOP_MAX - PAD) / lh);
+      var lh2 = spFs + 4;
+      var maxLines = Math.floor(availH / lh2);
       if (spLines.length > maxLines){
         spLines = spLines.slice(0, maxLines);
         var last = spLines[maxLines-1];
@@ -1887,20 +1897,17 @@ function inTem(oid,sp) {
       ctx.font='bold '+spFs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
       ctx.fillStyle='#000';
       ctx.textAlign='center';
-      var startY = PAD + spFs;
-      spLines.forEach(function(l,i){ ctx.fillText(l, W/2 + SHIFT_X, startY + i*lh); });
-      actualTop = startY + (spLines.length-1)*lh + 8;
+      ctx.textBaseline='middle';
+      var blockH = spLines.length * lh2;
+      var topCenterY = TOP_H/2 - blockH/2 + lh2/2;
+      spLines.forEach(function(l,i){ ctx.fillText(l, W/2, topCenterY + i*lh2); });
+      ctx.textBaseline='alphabetic';
     }
 
-    // ═══ MIDDLE: QR Code — căn giữa với SHIFT_X ═══
-    var midStart = actualTop;
-    var midEnd = H - BOT;
-    var midH = midEnd - midStart;
-    var qrSize = Math.min(midH - 8, W - PAD*2, 360);
-    if (qrSize < QR_MIN) qrSize = QR_MIN;
-    var qrX = Math.floor((W - qrSize) / 2) + SHIFT_X;
-    var qrY = midStart + Math.max(4, Math.floor((midH - qrSize) / 2));
-
+    // ═══ MIDDLE (y 128 → 400): QR CODE căn giữa cả 2 chiều ═══
+    var qrSize = Math.min(MID_H - 16, W - PAD*2, 256);
+    var qrX = Math.floor((W - qrSize) / 2);
+    var qrY = TOP_H + Math.floor((MID_H - qrSize) / 2);
     var qrCanvas=document.createElement('canvas');
     new QRious({
       element:qrCanvas, value:oid, size:qrSize, level:'M',
@@ -1908,10 +1915,10 @@ function inTem(oid,sp) {
     });
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
 
-    // ═══ BOTTOM: ORDER ID — chữ đen monospace ═══
+    // ═══ BOT (y 400 → 480): ORDER ID căn giữa cả 2 chiều, không khung ═══
     var oidStr = String(oid);
-    var oidFs = 32;
-    while (oidFs >= 16){
+    var oidFs = 30;
+    while (oidFs >= 14){
       ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
       if (ctx.measureText(oidStr).width <= W - PAD*2) break;
       oidFs -= 2;
@@ -1920,10 +1927,10 @@ function inTem(oid,sp) {
     ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
-    ctx.fillText(oidStr, W/2 + SHIFT_X, H - BOT/2);
+    ctx.fillText(oidStr, W/2, TOP_H + MID_H + BOT_H/2);
     ctx.textBaseline='alphabetic';
 
-    // ═══ Output ═══
+    // ═══ OUTPUT ═══
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('temPreview').src=dataUrl;
     document.getElementById('temPopupOid').textContent=oid;
@@ -5607,10 +5614,10 @@ function showDashSkeleton(){
 
 // Welcome toast
 setTimeout(function(){
-  showToast({type:'info', title:'KokTrack v3.33 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
+  showToast({type:'info', title:'KokTrack v3.34 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.33.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.34.0</div>
 
 <!-- LICH SU - hiện ở cuối trang (sau tất cả các tabs) -->
 <div class="hist" style="margin-top:24px;padding-top:16px;border-top:2px solid var(--border)">
