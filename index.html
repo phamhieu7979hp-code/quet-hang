@@ -1444,8 +1444,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div style="font-size:13px;font-weight:700;color:var(--text)">Xem truoc tem</div>
     <img id="temPreview" style="width:100%;border:1px solid #eee;border-radius:8px">
     <div id="temPopupOid" style="font-family:monospace;font-size:11px;color:#666;word-break:break-all;text-align:center"></div>
-    <button onclick="printTem40x30()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1565c0,#0d47a1);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer">🖨️ In 40×30mm (chuẩn)</button>
-    <button onclick="shareOrDownloadTem()" style="width:100%;padding:11px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer">Chia se / Tai PNG</button>
+    <button onclick="shareOrDownloadTem()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1565c0,#0d47a1);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer">📄 Chia sẻ / In tem</button>
     <button onclick="document.getElementById('temPopup').classList.remove('show')" style="width:100%;padding:10px;background:#eee;border:none;border-radius:12px;font-size:14px;color:#555;cursor:pointer">Dong</button>
   </div>
 </div>
@@ -1841,28 +1840,27 @@ document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.
 function inTem(oid,sp) {
   if (!oid){ alert('Chua co Order ID!'); return; }
   // ╔══════════════════════════════════════════════════════════════╗
-  // ║  TEM 40mm × 30mm — chuẩn thermal industry                    ║
-  // ║  SP NAME: dynamic TOP, shrink font đến lúc FIT TRỌN VẸN       ║
-  // ║  → KHÔNG bao giờ cụt tên (trừ trường hợp cực dài fs=10 vẫn dư)║
+  // ║  TEM 40mm × 30mm — chuẩn thermal industry (v3.33)             ║
+  // ║  Layout 3-stack vertical: SP top + QR middle + OID bottom      ║
+  // ║  SHIFT_X dịch nội dung sang phải để bù lệch trái khi in        ║
   // ╚══════════════════════════════════════════════════════════════╝
-  var W=640, H=480;          
+  var W=640, H=480;
   var PAD=16;
-  var BOT=60;                 // Order ID region
-  var TOP_MAX=200;            // SP có thể chiếm tới 200px (~12.5mm)
-  var QR_MIN=220;             // QR ít nhất 220×220 để scan tốt
-  
+  var SHIFT_X=14;             // dịch toàn bộ nội dung canvas sang phải (~0.9mm) — fix lệch trái
+  var BOT=60;
+  var TOP_MAX=200;
+  var QR_MIN=220;
+
   var canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
   var ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  
+
   try{
-    // ═══ TOP: SP NAME — smart shrink để fit FULL ═══
+    // ═══ TOP: SP NAME — smart shrink fit FULL ═══
     var actualTop = PAD;
     if(sp){
       var availW = W - PAD*2;
       var spFs = 12, spLines = [];
-      
-      // Loop từ font lớn → nhỏ, dừng khi LẦN ĐẦU fit toàn bộ tên
       for (var fs=28; fs>=10; fs--){
         ctx.font='bold '+fs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
         var lh = fs+4;
@@ -1874,16 +1872,10 @@ function inTem(oid,sp) {
           } else line = test;
         }
         if(line) lines.push(line);
-        
         var neededH = lines.length * lh + PAD;
-        if (neededH <= TOP_MAX){
-          spFs = fs; spLines = lines;
-          break; // FIT ✓ — dùng size này
-        }
-        spFs = fs; spLines = lines; // fallback
+        if (neededH <= TOP_MAX){ spFs = fs; spLines = lines; break; }
+        spFs = fs; spLines = lines;
       }
-      
-      // Nếu fs=10 vẫn không fit (tên cực dài) — truncate dòng cuối với …
       var lh = spFs + 4;
       var maxLines = Math.floor((TOP_MAX - PAD) / lh);
       if (spLines.length > maxLines){
@@ -1892,34 +1884,31 @@ function inTem(oid,sp) {
         while (ctx.measureText(last+'…').width > availW && last.length > 1) last = last.slice(0,-1);
         spLines[maxLines-1] = last + '…';
       }
-      
-      // Render
       ctx.font='bold '+spFs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
       ctx.fillStyle='#000';
       ctx.textAlign='center';
       var startY = PAD + spFs;
-      spLines.forEach(function(l,i){ ctx.fillText(l, W/2, startY + i*lh); });
-      
+      spLines.forEach(function(l,i){ ctx.fillText(l, W/2 + SHIFT_X, startY + i*lh); });
       actualTop = startY + (spLines.length-1)*lh + 8;
     }
-    
-    // ═══ MIDDLE: QR Code — căn giữa vùng còn lại ═══
+
+    // ═══ MIDDLE: QR Code — căn giữa với SHIFT_X ═══
     var midStart = actualTop;
     var midEnd = H - BOT;
     var midH = midEnd - midStart;
     var qrSize = Math.min(midH - 8, W - PAD*2, 360);
-    if (qrSize < QR_MIN) qrSize = QR_MIN; // bảo vệ tối thiểu để scan
-    var qrX = Math.floor((W - qrSize) / 2);
+    if (qrSize < QR_MIN) qrSize = QR_MIN;
+    var qrX = Math.floor((W - qrSize) / 2) + SHIFT_X;
     var qrY = midStart + Math.max(4, Math.floor((midH - qrSize) / 2));
-    
+
     var qrCanvas=document.createElement('canvas');
     new QRious({
       element:qrCanvas, value:oid, size:qrSize, level:'M',
       background:'white', foreground:'black', padding:0
     });
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-    
-    // ═══ BOTTOM: ORDER ID — chữ đen monospace, không khung ═══
+
+    // ═══ BOTTOM: ORDER ID — chữ đen monospace ═══
     var oidStr = String(oid);
     var oidFs = 32;
     while (oidFs >= 16){
@@ -1931,15 +1920,15 @@ function inTem(oid,sp) {
     ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
-    ctx.fillText(oidStr, W/2, H - BOT/2);
+    ctx.fillText(oidStr, W/2 + SHIFT_X, H - BOT/2);
     ctx.textBaseline='alphabetic';
-    
+
     // ═══ Output ═══
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('temPreview').src=dataUrl;
     document.getElementById('temPopupOid').textContent=oid;
     document.getElementById('temPopup').classList.add('show');
-    window._temDataUrl = dataUrl;  // để xuất PDF
+    window._temDataUrl = dataUrl;
     canvas.toBlob(function(pngBlob){ window._temBlob=pngBlob; window._temOid=oid; },'image/png');
   }catch(e){ alert('Loi tao QR: '+e.message); }
 }
@@ -1982,26 +1971,7 @@ function shareOrDownloadTem() {
   }
 }
 
-// In trực tiếp với @page 40×30mm — mở window mới có CSS chuẩn để máy in nhận đúng paper size
-function printTem40x30() {
-  var pngBlob = window._temBlob, oid = window._temOid;
-  if (!pngBlob) return;
-  var url = URL.createObjectURL(pngBlob);
-  var html = ''+
-    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tem '+oid+'</title>'+
-    '<style>'+
-    '@page { size: 40mm 30mm; margin: 0; }'+
-    '@media print { html, body { width: 40mm; height: 30mm; margin: 0; padding: 0; } }'+
-    'html, body { margin: 0; padding: 0; background: #fff; }'+
-    'img { display: block; width: 40mm; height: 30mm; object-fit: contain; }'+
-    '</style></head><body>'+
-    '<img src="'+url+'" onload="setTimeout(function(){window.print(); window.close();}, 200);">'+
-    '</body></html>';
-  var w = window.open('', '_blank', 'width=400,height=300');
-  if (!w) { alert('Trình duyệt block popup. Cho phép popup rồi thử lại.'); return; }
-  w.document.open(); w.document.write(html); w.document.close();
-  document.getElementById('temPopup').classList.remove('show');
-}
+// (đã bỏ printTem40x30 — chỉ giữ flow share PDF qua app)
 
 // ===== NHAP KHO =====
 /* ╔════════════════════════════════════════════════════════╗
@@ -5637,10 +5607,10 @@ function showDashSkeleton(){
 
 // Welcome toast
 setTimeout(function(){
-  showToast({type:'info', title:'KokTrack v3.6 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
+  showToast({type:'info', title:'KokTrack v3.33 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.32.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.33.0</div>
 
 <!-- LICH SU - hiện ở cuối trang (sau tất cả các tabs) -->
 <div class="hist" style="margin-top:24px;padding-top:16px;border-top:2px solid var(--border)">
