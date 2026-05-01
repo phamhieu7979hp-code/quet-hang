@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>KokTrack</title>
+<title>KokTrack v3.33</title>
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
@@ -1838,41 +1838,52 @@ document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.
 
 function inTem(oid,sp) {
   if (!oid){ alert('Chua co Order ID!'); return; }
-  // Tem 35×22mm NGANG: QR vuông bên TRÁI (full chiều cao) + Text bên PHẢI
-  var W=330,H=208;
+  // ╔═══════════════════════════════════════════════════════════╗
+  // ║  TEM 40mm × 30mm — chuẩn industry (203 DPI Xprinter)        ║
+  // ║  Layout: QR vuông trái + (Tên SP smart-fit + Order ID) phải ║
+  // ║  Resolution 2× (640×480 px) → print sắc nét                 ║
+  // ╚═══════════════════════════════════════════════════════════╝
+  var W=640, H=480;          // 40mm × 30mm @ 16DPMM (2× của 8DPMM Xprinter chuẩn)
+  var PAD=12;                // padding chung
+  var QR=380;                // QR 380×380 (chiếm gần full chiều cao 480-PAD*2)
+  
   var canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
   var ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  // Generate QR code 200×200 — fit chiều cao tem 22mm
+  
   try{
+    // ─── QR Code ───
     var qrCanvas=document.createElement('canvas');
     new QRious({
       element:qrCanvas,
       value:oid,
-      size:200,
+      size:QR,
       level:'M',
       background:'white',
       foreground:'black',
-      padding:2
+      padding:0
     });
-    var qrSize=200, qrX=4, qrY=4;
-    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-    // TEXT AREA bên phải QR
-    var textX=qrSize+14, textW=W-textX-4;
-    // ═══ SP NAME with SMART-FIT ═══
-    // Auto shrink font (12→9px) để fit FULL tên SP, truncate "..." nếu quá dài
-    var oidH = 16; // chừa cho Order ID
-    var topY = 14; // y bắt đầu SP name
-    var availH = H - topY - oidH - 2;
+    var qrX=PAD, qrY=Math.floor((H-QR)/2);  // căn giữa chiều cao
+    ctx.drawImage(qrCanvas, qrX, qrY, QR, QR);
+    
+    // ─── Text area bên phải ───
+    var textX = PAD + QR + 16;
+    var textW = W - textX - PAD;       // ~ 220px
+    var topPad = 16;
+    var oidBoxH = 56;                  // chừa cho Order ID box ở đáy
+    var brandH = 22;                   // chừa cho brand ở đáy
+    var availH = H - topPad - oidBoxH - brandH - 8;
+    
+    // ─── SP NAME with SMART-FIT ───
+    // Auto shrink font (28→18px) + line-break theo từ
     if(sp){
-      var bestFs = 9, bestLines = [];
-      // Try fontsize từ to → nhỏ, dùng fontsize lớn nhất mà fit
-      for (var fs = 12; fs >= 9; fs--) {
-        ctx.font = 'bold ' + fs + 'px Arial';
-        var lh = fs + 1; // line-height = font + 1
-        var maxLines = Math.floor(availH / lh);
+      var bestFs=18, bestLines=[];
+      for (var fs=28; fs>=18; fs-=2){
+        ctx.font='bold '+fs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
+        var lh = fs+3;
+        var maxLines = Math.floor(availH/lh);
         var words = sp.split(' '), line='', lines=[];
-        for (var i=0; i<words.length; i++){
+        for (var i=0;i<words.length;i++){
           var test = line + (line?' ':'') + words[i];
           if (ctx.measureText(test).width > textW){
             if(line) lines.push(line); line = words[i];
@@ -1881,26 +1892,54 @@ function inTem(oid,sp) {
         if(line) lines.push(line);
         if (lines.length <= maxLines){
           bestFs = fs; bestLines = lines;
-          break; // fit OK, chọn font này
+          break;
         }
-        bestFs = fs; bestLines = lines.slice(0, maxLines); // remember last attempt
+        bestFs = fs; bestLines = lines.slice(0, maxLines);
       }
-      // Truncate dòng cuối với "..." nếu vẫn overflow
-      ctx.font = 'bold ' + bestFs + 'px Arial';
-      var lh2 = bestFs + 1;
-      var maxLines2 = Math.floor(availH / lh2);
-      if (bestLines.length > maxLines2) {
+      ctx.font='bold '+bestFs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
+      var lh2 = bestFs+3;
+      var maxLines2 = Math.floor(availH/lh2);
+      if (bestLines.length > maxLines2){
         bestLines = bestLines.slice(0, maxLines2);
         var last = bestLines[maxLines2-1];
-        while (ctx.measureText(last + '…').width > textW && last.length > 1) last = last.slice(0,-1);
+        while (ctx.measureText(last+'…').width > textW && last.length > 1) last = last.slice(0,-1);
         bestLines[maxLines2-1] = last + '…';
       }
       ctx.fillStyle='#000'; ctx.textAlign='left';
-      bestLines.forEach(function(l, i){ ctx.fillText(l, textX, topY + (i+1)*lh2); });
+      bestLines.forEach(function(l,i){ ctx.fillText(l, textX, topPad + (i+1)*lh2); });
     }
-    // Order ID: bottom, 12px monospace
-    ctx.fillStyle='#000'; ctx.font='bold 12px monospace'; ctx.textAlign='left';
-    ctx.fillText(oid.length>14?oid.substring(0,14):oid, textX, H-12);
+    
+    // ─── ORDER ID BOX (bottom highlight) ───
+    var oidBoxY = H - brandH - oidBoxH - 4;
+    ctx.fillStyle='#000';
+    ctx.fillRect(textX, oidBoxY, textW, oidBoxH);
+    
+    // OID text - smart fit font
+    var oidStr = String(oid);
+    var oidFs=24;
+    while (oidFs>=14){
+      ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
+      if (ctx.measureText(oidStr).width <= textW - 16) break;
+      oidFs -= 2;
+    }
+    ctx.fillStyle='#fff';
+    ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(oidStr, textX + textW/2, oidBoxY + oidBoxH/2);
+    ctx.textBaseline='alphabetic';
+    
+    // ─── BRAND/DATE FOOTER ───
+    var d = new Date();
+    var dateStr = d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+    ctx.fillStyle='#666';
+    ctx.font='600 14px -apple-system, "SF Pro Text", Arial, sans-serif';
+    ctx.textAlign='left';
+    ctx.fillText(dateStr, textX, H-6);
+    ctx.textAlign='right';
+    ctx.fillText('KOKTRACK', textX + textW, H-6);
+    
+    // ─── Output ───
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('temPreview').src=dataUrl;
     document.getElementById('temPopupOid').textContent=oid;
