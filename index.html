@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -1443,7 +1444,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div style="font-size:13px;font-weight:700;color:var(--text)">Xem truoc tem</div>
     <img id="temPreview" style="width:100%;border:1px solid #eee;border-radius:8px">
     <div id="temPopupOid" style="font-family:monospace;font-size:11px;color:#666;word-break:break-all;text-align:center"></div>
-    <button onclick="shareOrDownloadTem()" style="width:100%;padding:13px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer">Chia se / In</button>
+    <button onclick="printTem40x30()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1565c0,#0d47a1);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer">🖨️ In 40×30mm (chuẩn)</button>
+    <button onclick="shareOrDownloadTem()" style="width:100%;padding:11px;background:linear-gradient(135deg,#FFB300,#FFA000);border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer">Chia se / Tai PNG</button>
     <button onclick="document.getElementById('temPopup').classList.remove('show')" style="width:100%;padding:10px;background:#eee;border:none;border-radius:12px;font-size:14px;color:#555;cursor:pointer">Dong</button>
   </div>
 </div>
@@ -1838,35 +1840,32 @@ document.getElementById('inpInTem').addEventListener('keydown',function(e){if(e.
 
 function inTem(oid,sp) {
   if (!oid){ alert('Chua co Order ID!'); return; }
-  // ╔═══════════════════════════════════════════════════════════════╗
-  // ║  TEM 40mm × 30mm — chuẩn THERMAL PRINTER industry             ║
-  // ║  Nguyên tắc: chữ đen thuần trên trắng, KHÔNG inverse box       ║
-  // ║  (vùng đen lớn → nhiệt nhiều → nhoè/lem)                       ║
-  // ║                                                                  ║
-  // ║  Layout 3-stack dọc:                                            ║
-  // ║    [Top]    Tên SP (smart-fit, căn giữa)                        ║
-  // ║    [Middle] QR code (căn giữa)                                  ║
-  // ║    [Bot]    Order ID (chữ đen monospace, smart-fit)             ║
-  // ╚═══════════════════════════════════════════════════════════════╝
-  var W=640, H=480;          // 40×30mm @ 16DPMM
+  // ╔══════════════════════════════════════════════════════════════╗
+  // ║  TEM 40mm × 30mm — chuẩn thermal industry                    ║
+  // ║  SP NAME: dynamic TOP, shrink font đến lúc FIT TRỌN VẸN       ║
+  // ║  → KHÔNG bao giờ cụt tên (trừ trường hợp cực dài fs=10 vẫn dư)║
+  // ╚══════════════════════════════════════════════════════════════╝
+  var W=640, H=480;          
   var PAD=16;
-  var TOP=90, BOT=64;        // chiều cao 2 vùng top/bot
-  var MID=H-TOP-BOT;          // vùng giữa cho QR
+  var BOT=60;                 // Order ID region
+  var TOP_MAX=200;            // SP có thể chiếm tới 200px (~12.5mm)
+  var QR_MIN=220;             // QR ít nhất 220×220 để scan tốt
   
   var canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
   var ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
   
   try{
-    // ═══ TOP: SP NAME (smart-fit, max 2 dòng, ellipsis) ═══
+    // ═══ TOP: SP NAME — smart shrink để fit FULL ═══
+    var actualTop = PAD;
     if(sp){
       var availW = W - PAD*2;
-      var availH = TOP - PAD - 4;
-      var bestFs=18, bestLines=[];
-      for (var fs=28; fs>=18; fs-=2){
+      var spFs = 12, spLines = [];
+      
+      // Loop từ font lớn → nhỏ, dừng khi LẦN ĐẦU fit toàn bộ tên
+      for (var fs=28; fs>=10; fs--){
         ctx.font='bold '+fs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
         var lh = fs+4;
-        var maxLines = Math.floor(availH/lh);
         var words = sp.split(' '), line='', lines=[];
         for (var i=0;i<words.length;i++){
           var test = line + (line?' ':'') + words[i];
@@ -1875,31 +1874,44 @@ function inTem(oid,sp) {
           } else line = test;
         }
         if(line) lines.push(line);
-        if (lines.length <= maxLines){
-          bestFs = fs; bestLines = lines;
-          break;
+        
+        var neededH = lines.length * lh + PAD;
+        if (neededH <= TOP_MAX){
+          spFs = fs; spLines = lines;
+          break; // FIT ✓ — dùng size này
         }
-        bestFs = fs; bestLines = lines.slice(0, maxLines);
+        spFs = fs; spLines = lines; // fallback
       }
-      ctx.font='bold '+bestFs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
-      var lh2 = bestFs+4;
-      var maxLines2 = Math.floor(availH/lh2);
-      if (bestLines.length > maxLines2){
-        bestLines = bestLines.slice(0, maxLines2);
-        var last = bestLines[maxLines2-1];
+      
+      // Nếu fs=10 vẫn không fit (tên cực dài) — truncate dòng cuối với …
+      var lh = spFs + 4;
+      var maxLines = Math.floor((TOP_MAX - PAD) / lh);
+      if (spLines.length > maxLines){
+        spLines = spLines.slice(0, maxLines);
+        var last = spLines[maxLines-1];
         while (ctx.measureText(last+'…').width > availW && last.length > 1) last = last.slice(0,-1);
-        bestLines[maxLines2-1] = last + '…';
+        spLines[maxLines-1] = last + '…';
       }
+      
+      // Render
+      ctx.font='bold '+spFs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
       ctx.fillStyle='#000';
       ctx.textAlign='center';
-      var startY = PAD + bestFs;
-      bestLines.forEach(function(l,i){ ctx.fillText(l, W/2, startY + i*lh2); });
+      var startY = PAD + spFs;
+      spLines.forEach(function(l,i){ ctx.fillText(l, W/2, startY + i*lh); });
+      
+      actualTop = startY + (spLines.length-1)*lh + 8;
     }
     
-    // ═══ MIDDLE: QR Code (căn giữa cả 2 chiều) ═══
-    var qrSize = Math.min(MID - 16, 320);  // hơi nhỏ hơn vùng để có spacing
+    // ═══ MIDDLE: QR Code — căn giữa vùng còn lại ═══
+    var midStart = actualTop;
+    var midEnd = H - BOT;
+    var midH = midEnd - midStart;
+    var qrSize = Math.min(midH - 8, W - PAD*2, 360);
+    if (qrSize < QR_MIN) qrSize = QR_MIN; // bảo vệ tối thiểu để scan
     var qrX = Math.floor((W - qrSize) / 2);
-    var qrY = TOP + Math.floor((MID - qrSize) / 2);
+    var qrY = midStart + Math.max(4, Math.floor((midH - qrSize) / 2));
+    
     var qrCanvas=document.createElement('canvas');
     new QRious({
       element:qrCanvas, value:oid, size:qrSize, level:'M',
@@ -1907,10 +1919,10 @@ function inTem(oid,sp) {
     });
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
     
-    // ═══ BOTTOM: ORDER ID (chữ đen monospace, KHÔNG khung) ═══
+    // ═══ BOTTOM: ORDER ID — chữ đen monospace, không khung ═══
     var oidStr = String(oid);
-    var oidFs = 36;
-    while (oidFs >= 18){
+    var oidFs = 32;
+    while (oidFs >= 16){
       ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
       if (ctx.measureText(oidStr).width <= W - PAD*2) break;
       oidFs -= 2;
@@ -1927,19 +1939,67 @@ function inTem(oid,sp) {
     document.getElementById('temPreview').src=dataUrl;
     document.getElementById('temPopupOid').textContent=oid;
     document.getElementById('temPopup').classList.add('show');
+    window._temDataUrl = dataUrl;  // để xuất PDF
     canvas.toBlob(function(pngBlob){ window._temBlob=pngBlob; window._temOid=oid; },'image/png');
   }catch(e){ alert('Loi tao QR: '+e.message); }
 }
 
 function shareOrDownloadTem() {
-  var pngBlob=window._temBlob, oid=window._temOid;
-  if (!pngBlob) return;
-  var file=new File([pngBlob],'tem_'+oid+'.png',{type:'image/png'});
-  if (navigator.share && navigator.canShare({files:[file]})) {
-    navigator.share({files:[file],title:'Tem '+oid}).catch(function(e){if(e.name!=='AbortError')alert('Lỗi: '+e.message);});
-  } else {
-    var a=document.createElement('a'); a.href=URL.createObjectURL(pngBlob); a.download='tem_'+oid+'.png'; a.click();
+  // Xuất PDF 40×30mm cho OpenLabel (sắc nét hơn PNG)
+  var pngBlob=window._temBlob, oid=window._temOid, dataUrl=window._temDataUrl;
+  if (!dataUrl) return;
+  
+  try {
+    var jsPDF = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDF) { alert('jsPDF chưa load!'); return; }
+    
+    // Page size: 40mm × 30mm landscape
+    var doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: [40, 30]
+    });
+    
+    // Embed PNG canvas vào toàn trang (fit 40×30mm)
+    doc.addImage(dataUrl, 'PNG', 0, 0, 40, 30);
+    
+    var pdfBlob = doc.output('blob');
+    var file = new File([pdfBlob], 'tem_'+oid+'.pdf', {type:'application/pdf'});
+    
+    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+      navigator.share({files:[file], title:'Tem '+oid}).catch(function(e){
+        if(e.name!=='AbortError') alert('Lỗi: '+e.message);
+      });
+    } else {
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(pdfBlob);
+      a.download='tem_'+oid+'.pdf';
+      a.click();
+    }
+    document.getElementById('temPopup').classList.remove('show');
+  } catch(e) {
+    alert('Lỗi tạo PDF: ' + e.message);
   }
+}
+
+// In trực tiếp với @page 40×30mm — mở window mới có CSS chuẩn để máy in nhận đúng paper size
+function printTem40x30() {
+  var pngBlob = window._temBlob, oid = window._temOid;
+  if (!pngBlob) return;
+  var url = URL.createObjectURL(pngBlob);
+  var html = ''+
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tem '+oid+'</title>'+
+    '<style>'+
+    '@page { size: 40mm 30mm; margin: 0; }'+
+    '@media print { html, body { width: 40mm; height: 30mm; margin: 0; padding: 0; } }'+
+    'html, body { margin: 0; padding: 0; background: #fff; }'+
+    'img { display: block; width: 40mm; height: 30mm; object-fit: contain; }'+
+    '</style></head><body>'+
+    '<img src="'+url+'" onload="setTimeout(function(){window.print(); window.close();}, 200);">'+
+    '</body></html>';
+  var w = window.open('', '_blank', 'width=400,height=300');
+  if (!w) { alert('Trình duyệt block popup. Cho phép popup rồi thử lại.'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
   document.getElementById('temPopup').classList.remove('show');
 }
 
