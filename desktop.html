@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -752,7 +753,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 #histBox.in-sale-tab{display:none !important}
 
 /* ╔══════════════════════════════════════════════════════════╗
-   ║  TAB BÁN HÀNG FULL-WIDTH (POS Pro pattern v3.30.3)         ║
+   ║  TAB BÁN HÀNG FULL-WIDTH (POS Pro pattern v3.32.0)         ║
    ║  Khi vào tab "Bán hàng" → expand panel-left 100%           ║
    ║  Hide panel-right (histBox cũ đã chuyển sang activity)      ║
    ╚══════════════════════════════════════════════════════════╝ */
@@ -1469,7 +1470,7 @@ body.tab-ban-active .activity-head{padding:14px 20px}
     <div style="font-size:13px;font-weight:700;color:var(--text)">Xem truoc tem</div>
     <img id="temPreview">
     <div class="tem-oid" id="temPopupOid"></div>
-    <button onclick="shareOrDownloadTem()" class="btn btn-block">In / Luu anh</button>
+    <button onclick="shareOrDownloadTem()" class="btn btn-block">📄 Chia sẻ / In tem</button>
     <button onclick="document.getElementById('temPopup').classList.remove('show')" class="btn btn-ghost btn-block">Dong</button>
   </div>
 </div>
@@ -1875,6 +1876,32 @@ function doNhap(){
   findTracking(det.tracking);
 }
 
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  TIMEZONE VN HELPER - tự detect sheet tháng hiện tại theo VN  ║
+// ║  Sang tháng mới → tự dùng sheet T<month> mới, không hardcode   ║
+// ╚══════════════════════════════════════════════════════════════╝
+function getCurrentMonthSheetVN() {
+  try {
+    var month = parseInt(new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      month: 'numeric'
+    }).format(new Date()));
+    return 'T' + month;
+  } catch (e) {
+    var now = new Date();
+    var vnTime = new Date(now.getTime() + (now.getTimezoneOffset() + 420) * 60000);
+    return 'T' + (vnTime.getMonth() + 1);
+  }
+}
+
+function buildSheetsParam() {
+  var curr = getCurrentMonthSheetVN();
+  var monthNum = parseInt(curr.slice(1));
+  var prev = monthNum > 1 ? 'T' + (monthNum - 1) : 'T12';
+  return curr + ',2026,' + prev;
+}
+
 async function findTracking(t){
   // Auto-normalize: FedEx barcode dài → 12 số cuối; UPS giữ nguyên
   t = normalizeTracking(t);
@@ -1882,7 +1909,7 @@ async function findTracking(t){
   showRes('resNhap','warn','<span class="spin"></span>Dang tim...','Tracking: <b>'+t+'</b>');
   setStatus('Đang tìm...', true);
   try{
-    var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&checkOnly=1');
+    var r=await fetch(BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets='+buildSheetsParam()+'&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&checkOnly=1');
     var d=await r.json();
     if(d.found){
       nT=t;nInfo=d;nNg=ng;curOid=d.orderId||'';curSp=d.sp||'';
@@ -1925,7 +1952,7 @@ async function confirmNhap(){
   if (noteEl) noteEl.value='';
   var t=nT,d=nInfo,ng=nNg;nT=null;nInfo=null;nNg=null;
   try{
-    var url=BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets=T12,2026,T4&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps+'&slVe='+slVe;
+    var url=BASE+'?action=updateTracking&tracking='+encodeURIComponent(t)+'&sheets='+buildSheetsParam()+'&delivered=Da+ve+kho&ngayGiao='+encodeURIComponent(ng)+'&phiShip='+ps+'&slVe='+slVe;
     if (note) url += '&note='+encodeURIComponent(note);
     var r=await fetch(url);
     var res=await r.json();
@@ -1965,48 +1992,123 @@ async function inTemManual(){
   }
 }
 
-function inTem(oid,sp){
-  if(!oid){alert('Chua co Order ID!');return;}
-  // Tem 35×22mm NGANG: QR vuông bên TRÁI + Text bên PHẢI
-  var W=330,H=208;
-  var canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+function inTem(oid,sp) {
+  if (!oid){ alert('Chua co Order ID!'); return; }
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  TEM 40mm × 30mm — chuẩn thermal (v3.34) — LAYOUT 3 VÙNG CỨNG   ║
+  // ║  Resolution: 640×480 px (16 DPMM)                                  ║
+  // ║  TOP=128 (SP) / MID=272 (QR 256) / BOT=80 (Order ID)              ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  var W=640, H=480;
+  var PAD=20;
+  var TOP_H=128;
+  var MID_H=272;
+  var BOT_H=80;
+
+  var canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
   var ctx=canvas.getContext('2d');
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
   try{
+    // ═══ TOP: SP NAME smart-shrink + căn giữa V ═══
+    if(sp){
+      var availW = W - PAD*2;
+      var availH = TOP_H - PAD;
+      var spFs = 12, spLines = [];
+      for (var fs=26; fs>=10; fs--){
+        ctx.font='bold '+fs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
+        var lh = fs+4;
+        var words = sp.split(' '), line='', lines=[];
+        for (var i=0;i<words.length;i++){
+          var test = line + (line?' ':'') + words[i];
+          if (ctx.measureText(test).width > availW){
+            if(line) lines.push(line); line = words[i];
+          } else line = test;
+        }
+        if(line) lines.push(line);
+        var neededH = lines.length * lh;
+        if (neededH <= availH){ spFs = fs; spLines = lines; break; }
+        spFs = fs; spLines = lines;
+      }
+      var lh2 = spFs + 4;
+      var maxLines = Math.floor(availH / lh2);
+      if (spLines.length > maxLines){
+        spLines = spLines.slice(0, maxLines);
+        var last = spLines[maxLines-1];
+        while (ctx.measureText(last+'…').width > availW && last.length > 1) last = last.slice(0,-1);
+        spLines[maxLines-1] = last + '…';
+      }
+      ctx.font='bold '+spFs+'px -apple-system, "SF Pro Text", Arial, sans-serif';
+      ctx.fillStyle='#000';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      var blockH = spLines.length * lh2;
+      var topCenterY = TOP_H/2 - blockH/2 + lh2/2;
+      spLines.forEach(function(l,i){ ctx.fillText(l, W/2, topCenterY + i*lh2); });
+      ctx.textBaseline='alphabetic';
+    }
+
+    // ═══ MIDDLE: QR Code 256x256 căn giữa cả 2 chiều ═══
+    var qrSize = Math.min(MID_H - 16, W - PAD*2, 256);
+    var qrX = Math.floor((W - qrSize) / 2);
+    var qrY = TOP_H + Math.floor((MID_H - qrSize) / 2);
     var qrCanvas=document.createElement('canvas');
     new QRious({
-      element:qrCanvas,
-      value:oid,
-      size:200,
-      level:'M',
-      background:'white',
-      foreground:'black',
-      padding:2
+      element:qrCanvas, value:oid, size:qrSize, level:'M',
+      background:'white', foreground:'black', padding:0
     });
-    var qrSize=200, qrX=4, qrY=4;
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-    var textX=qrSize+14, textW=W-textX-4;
-    if(sp){
-      ctx.fillStyle='#000';ctx.font='bold 13px Arial';ctx.textAlign='left';
-      var words=sp.split(' '),line='',lines=[];
-      for(var i=0;i<words.length;i++){var test=line+(line?' ':'')+words[i];if(ctx.measureText(test).width>textW){if(line)lines.push(line);line=words[i];}else line=test;}
-      if(line)lines.push(line);
-      lines.slice(0,3).forEach(function(l,i){ctx.fillText(l,textX,22+i*16);});
+
+    // ═══ BOT: ORDER ID căn giữa, không khung ═══
+    var oidStr = String(oid);
+    var oidFs = 30;
+    while (oidFs >= 14){
+      ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
+      if (ctx.measureText(oidStr).width <= W - PAD*2) break;
+      oidFs -= 2;
     }
-    ctx.fillStyle='#000';ctx.font='bold 12px monospace';ctx.textAlign='left';
-    ctx.fillText(oid.length>14?oid.substring(0,14):oid, textX, H-12);
+    ctx.fillStyle='#000';
+    ctx.font='bold '+oidFs+'px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(oidStr, W/2, TOP_H + MID_H + BOT_H/2);
+    ctx.textBaseline='alphabetic';
+
+    // ═══ OUTPUT ═══
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('temPreview').src=dataUrl;
     document.getElementById('temPopupOid').textContent=oid;
     document.getElementById('temPopup').classList.add('show');
-    canvas.toBlob(function(b){window._temBlob=b;window._temOid=oid;},'image/png');
-  }catch(e){alert('Loi tao QR: '+e.message);}
+    window._temDataUrl = dataUrl;
+    canvas.toBlob(function(pngBlob){ window._temBlob=pngBlob; window._temOid=oid; },'image/png');
+  }catch(e){ alert('Loi tao QR: '+e.message); }
 }
 
-function shareOrDownloadTem(){
-  var b=window._temBlob,oid=window._temOid;if(!b)return;
-  var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='tem_'+oid+'.png';a.click();
-  document.getElementById('temPopup').classList.remove('show');
+function shareOrDownloadTem() {
+  // Xuất PDF 40×30mm cho OpenLabel/in trực tiếp
+  var oid=window._temOid, dataUrl=window._temDataUrl;
+  if (!dataUrl) return;
+  try {
+    var jsPDF = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDF) { alert('jsPDF chưa load!'); return; }
+    var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [40, 30] });
+    doc.addImage(dataUrl, 'PNG', 0, 0, 40, 30);
+    var pdfBlob = doc.output('blob');
+    var file = new File([pdfBlob], 'tem_'+oid+'.pdf', {type:'application/pdf'});
+    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+      navigator.share({files:[file], title:'Tem '+oid}).catch(function(e){
+        if(e.name!=='AbortError') alert('Lỗi: '+e.message);
+      });
+    } else {
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(pdfBlob);
+      a.download='tem_'+oid+'.pdf';
+      a.click();
+    }
+    document.getElementById('temPopup').classList.remove('show');
+  } catch(e) {
+    alert('Lỗi tạo PDF: ' + e.message);
+  }
 }
 
 function normalizeOrderId(raw){
@@ -2984,7 +3086,7 @@ async function markCustomerUnpaid(khach){
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  PAYMENT DIALOG (v3.30.3) - Hiển thị TỔNG NỢ KHÁCH              ║
+// ║  PAYMENT DIALOG (v3.32.0) - Hiển thị TỔNG NỢ KHÁCH              ║
 // ║  Logic ledger: nợ là aggregate level, không per-sale             ║
 // ╚══════════════════════════════════════════════════════════════╝
 function openPaymentDialogForCustomer(khach){
@@ -5500,10 +5602,10 @@ document.addEventListener('keydown', function(e){
 
 // Welcome toast khi load
 setTimeout(function(){
-  showToast({type:'info', title:'KokTrack v3.6 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
+  showToast({type:'info', title:'KokTrack v3.34 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.30.3</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.34.0</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
