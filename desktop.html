@@ -2163,27 +2163,26 @@ var banCart = []; // [{orderId, sheet, row, sp, sl, slBan, giaNhap, giaBan, lai}
 
 function addToBanCart(){
   if(!cT||!cInfo){showToast({type:'err',title:'Chưa quét đơn nào'});return;}
-  var gb=raw('giaBan');
-  if(!gb){showToast({type:'warn',title:'Chưa nhập giá bán'});document.getElementById('giaBan').focus();return;}
+  // 🔒 v3.35: gb = ĐƠN GIÁ, backend tự nhân SL
+  var donGia=raw('giaBan');
+  if(!donGia){showToast({type:'warn',title:'Chưa nhập đơn giá'});document.getElementById('giaBan').focus();return;}
   var slBan=parseInt(document.getElementById('slBan').value)||1;
-  // Check duplicate
   var dup=banCart.findIndex(function(it){return it.orderId===cT;});
   if(dup>=0){
     showToast({type:'warn',title:'Đã có trong giỏ',msg:cT+' — Xóa trước nếu muốn đổi giá'});
     return;
   }
-  // Validate stock
   if(slBan>(cInfo.slTon||cInfo.sl||1)){
     showToast({type:'err',title:'Vượt số lượng tồn',msg:'Tồn: '+(cInfo.slTon||cInfo.sl||1)+', muốn bán: '+slBan});
     return;
   }
-  // Calc lai (USD or VND - giả định gb là VND)
   var giaNhap=cInfo.giaNhap||0;
-  var lai=gb-giaNhap*slBan;
+  var tongGia=donGia*slBan;
+  var lai=(donGia-giaNhap)*slBan;
   banCart.push({
     orderId:cT, sheet:cInfo.sheet, row:cInfo.row,
     sp:cInfo.sp||'', sl:cInfo.sl||1, slBan:slBan,
-    giaNhap:giaNhap, giaBan:gb, lai:lai
+    giaNhap:giaNhap, donGia:donGia, giaBan:tongGia, lai:lai
   });
   showToast({type:'ok',title:'+ Đã thêm vào giỏ',msg:cInfo.sp||cT});
   renderBanCart();
@@ -2404,7 +2403,7 @@ async function confirmSubmitCart(){
   for (var i=0;i<banCart.length;i++){
     var it=banCart[i];
     try{
-      var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(it.orderId)+'&giaBan='+it.giaBan+'&slBan='+it.slBan+'&sheet='+encodeURIComponent(it.sheet)+'&row='+it.row);
+      var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(it.orderId)+'&giaBan='+(it.donGia||it.giaBan)+'&slBan='+it.slBan+'&sheet='+encodeURIComponent(it.sheet)+'&row='+it.row);
       var d=await r.json();
       if (d.success) {
         success.push(it);
@@ -5111,15 +5110,36 @@ function destroyChart(c){if(c&&c.destroy){try{c.destroy();}catch(e){}}return nul
 function renderDash(){
   var data=dFilter==='all'?dAllData:dAllData.filter(function(r){return r.sheet===dFilter;});
   var daBan=data.filter(function(r){return r.daBan;});
-  var tonKho=data.filter(function(r){return !r.daBan;});
-  var lai=daBan.reduce(function(s,r){return s+(r.lai||0);},0);
-  var dt=daBan.reduce(function(s,r){return s+r.giaBan;},0);
-  var von=daBan.reduce(function(s,r){return s+r.giaNhap;},0);
-  var vonTon=tonKho.reduce(function(s,r){return s+r.giaNhap;},0);
+  var partial=data.filter(function(r){
+    var slDaBan=r.slDaBan!==undefined?r.slDaBan:0;
+    return !r.daBan && slDaBan>0;
+  });
+  var tonKho=data.filter(function(r){
+    var slDaBan=r.slDaBan!==undefined?r.slDaBan:0;
+    return !r.daBan && slDaBan===0;
+  });
+  partial.forEach(function(r){tonKho.push(r);});
+  var soldRows = daBan.concat(partial);
+  var lai=soldRows.reduce(function(s,r){return s+(r.lai||0);},0);
+  var dt=soldRows.reduce(function(s,r){return s+(r.giaBan||0);},0);
+  var von=soldRows.reduce(function(s,r){
+    var slDaBan=r.slDaBan!==undefined?r.slDaBan:(r.sl||1);
+    return s+r.giaNhap*slDaBan;
+  },0);
+  var vonTon=tonKho.reduce(function(s,r){
+    var slTon=r.slTon!==undefined?r.slTon:(r.sl||1);
+    return s+r.giaNhap*slTon;
+  },0);
   var daVeList=tonKho.filter(function(r){return r.daVe;});
   var chuaVeList=tonKho.filter(function(r){return !r.daVe;});
-  var vonDaVe=daVeList.reduce(function(s,r){return s+r.giaNhap;},0);
-  var vonChuaVe=chuaVeList.reduce(function(s,r){return s+r.giaNhap;},0);
+  var vonDaVe=daVeList.reduce(function(s,r){
+    var slTon=r.slTon!==undefined?r.slTon:(r.sl||1);
+    return s+r.giaNhap*slTon;
+  },0);
+  var vonChuaVe=chuaVeList.reduce(function(s,r){
+    var slTon=r.slTon!==undefined?r.slTon:(r.sl||1);
+    return s+r.giaNhap*slTon;
+  },0);
   var marginPct=von>0?Math.round(lai/von*1000)/10:0;
 
   // Page sub - filter context
@@ -5242,7 +5262,7 @@ function renderDash(){
   chuaVeList.sort(function(a,b){return b.giaNhap-a.giaNhap;});
   function renderGroup(title,cssCls,items){
     if(!items.length)return '';
-    var vonG=items.reduce(function(s,r){return s+r.giaNhap;},0);
+    var vonG=items.reduce(function(s,r){var slTon=r.slTon!==undefined?r.slTon:(r.sl||1);return s+r.giaNhap*slTon;},0);
     var h='<div class="dash-inv-grp '+cssCls+'">'+
       '<span>'+title+' ('+items.length+')</span>'+
       '<span class="dash-inv-grp-amt">'+fmtN(vonG)+' đ</span></div>';
@@ -5602,10 +5622,10 @@ document.addEventListener('keydown', function(e){
 
 // Welcome toast khi load
 setTimeout(function(){
-  showToast({type:'info', title:'KokTrack v3.34 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
+  showToast({type:'info', title:'KokTrack v3.36 đã sẵn sàng', msg:'Bấm ⌘K để mở command palette'});
 }, 500);
 </script>
-<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.34.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:10px;color:var(--text-3);font-family:monospace;z-index:1000">KokTrack v3.36.0</div>
 
 <!-- ╔══════════════ DIALOG KHÁCH HÀNG ══════════════╗ -->
 <div id="customerDialog" class="koktrack-dialog" style="display:none">
