@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>KokTrack v3.34</title>
+<title>KokTrack v3.36</title>
 <script src="https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.42/dist/dbr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
@@ -696,7 +696,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <button onclick="doBan()">Tim</button>
   </div>
   <div class="pi" id="pi">
-    <label>Gia ban (VND)</label>
+    <label>Đơn giá / 1 SP (VND)</label>
     <input type="text" id="giaBan" placeholder="0" oninput="fmt(this)" inputmode="numeric">
     <label>So luong ban (<span id="slTonHint" style="color:#2196F3">ton: ?</span>)</label>
     <input type="number" id="slBan" value="1" min="1">
@@ -2149,8 +2149,9 @@ var banCart=[];
 
 function addToBanCart(){
   if(!cT||!cInfo){showToast({type:'err',title:'Chưa quét đơn nào'});return;}
-  var gb=raw('giaBan');
-  if(!gb){showToast({type:'warn',title:'Chưa nhập giá bán'});document.getElementById('giaBan').focus();return;}
+  // 🔒 FIX v3.35: gb = ĐƠN GIÁ (giá 1 SP), backend tự nhân SL
+  var donGia=raw('giaBan');
+  if(!donGia){showToast({type:'warn',title:'Chưa nhập đơn giá'});document.getElementById('giaBan').focus();return;}
   var slBan=parseInt(document.getElementById('slBan').value)||1;
   var dup=banCart.findIndex(function(it){return it.orderId===cT;});
   if(dup>=0){showToast({type:'warn',title:'Đã có trong giỏ',msg:cT});return;}
@@ -2159,10 +2160,14 @@ function addToBanCart(){
     return;
   }
   var giaNhap=cInfo.giaNhap||0;
-  var lai=gb-giaNhap*slBan;
+  var tongGia=donGia*slBan;          // tổng tiền = đơn giá × SL
+  var lai=(donGia-giaNhap)*slBan;    // lãi đúng = (đơn giá - vốn) × SL
   banCart.push({
     orderId:cT,sheet:cInfo.sheet,row:cInfo.row,sp:cInfo.sp||'',
-    sl:cInfo.sl||1,slBan:slBan,giaNhap:giaNhap,giaBan:gb,lai:lai
+    sl:cInfo.sl||1,slBan:slBan,giaNhap:giaNhap,
+    donGia:donGia,                    // ĐƠN GIÁ (gửi backend)
+    giaBan:tongGia,                   // TỔNG = đơn giá × SL (hiển thị cart)
+    lai:lai
   });
   showToast({type:'ok',title:'+ Thêm vào giỏ',msg:cInfo.sp||cT});
   if(navigator.vibrate)navigator.vibrate(40);
@@ -2203,14 +2208,18 @@ function renderBanCart(){
   var html=banCart.map(function(it,i){
     var laiCls=it.lai>=0?'pos':'neg';
     var laiSign=it.lai>=0?'+':'';
-    var slTxt=it.slBan>1?' × '+it.slBan:'';
+    // Hiển thị "đơn giá × SL = tổng" cho rõ ràng khi SL > 1
+    var donGia=it.donGia||it.giaBan;
+    var priceLine = it.slBan>1
+      ? Number(donGia).toLocaleString('vi')+'d × '+it.slBan+' = '+Number(it.giaBan).toLocaleString('vi')+'d'
+      : Number(it.giaBan).toLocaleString('vi')+'d';
     return '<div class="cart-item">'+
       '<div class="cart-item-info">'+
-        '<div class="cart-item-sp">'+(it.sp||'(chưa có tên)')+slTxt+'</div>'+
+        '<div class="cart-item-sp">'+(it.sp||'(chưa có tên)')+'</div>'+
         '<div class="cart-item-meta"><span class="oid">'+it.orderId+'</span><span class="sheet">'+it.sheet+'</span></div>'+
       '</div>'+
       '<div class="cart-item-prices">'+
-        '<div class="cart-item-gia">'+Number(it.giaBan).toLocaleString('vi')+'d</div>'+
+        '<div class="cart-item-gia" style="font-size:'+(it.slBan>1?'10':'12')+'px">'+priceLine+'</div>'+
         '<div class="cart-item-lai '+laiCls+'">'+laiSign+Number(it.lai).toLocaleString('vi')+'d</div>'+
       '</div>'+
       '<button class="cart-item-x" onclick="removeBanCart('+i+')">×</button>'+
@@ -2392,7 +2401,7 @@ async function confirmSubmitCart(){
   for (var i=0;i<banCart.length;i++){
     var it=banCart[i];
     try{
-      var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(it.orderId)+'&giaBan='+it.giaBan+'&slBan='+it.slBan+'&sheet='+encodeURIComponent(it.sheet)+'&row='+it.row);
+      var r=await fetch(BASE+'?action=banHang&orderId='+encodeURIComponent(it.orderId)+'&giaBan='+(it.donGia||it.giaBan)+'&slBan='+it.slBan+'&sheet='+encodeURIComponent(it.sheet)+'&row='+it.row);
       var d=await r.json();
       if (d.success) {
         success.push(it);
@@ -5152,16 +5161,49 @@ function destroyChart(c){ if(c && c.destroy){ try{c.destroy();}catch(e){} } retu
 
 function renderDash() {
   var data=dFilter==='all'?dAllData:dAllData.filter(function(r){return r.sheet===dFilter;});
+  // 🔒 v3.36: phân biệt "đã bán hết" vs "đang bán dở" vs "chưa bán"
+  // - daBan = bán hết (slDaBan>=sl)
+  // - partial = đang bán dở (slDaBan>0 && slDaBan<sl) → vừa có doanh thu, vừa có tồn
+  // - tonKho = chưa bán cái nào
   var daBan=data.filter(function(r){return r.daBan;});
-  var tonKho=data.filter(function(r){return !r.daBan;});
-  var lai=daBan.reduce(function(s,r){return s+(r.lai||0);},0);
-  var dt=daBan.reduce(function(s,r){return s+r.giaBan;},0);
-  var von=daBan.reduce(function(s,r){return s+r.giaNhap;},0);
-  var vonTon=tonKho.reduce(function(s,r){return s+r.giaNhap;},0);
+  var partial=data.filter(function(r){
+    var slDaBan=r.slDaBan!==undefined?r.slDaBan:0;
+    return !r.daBan && slDaBan>0;
+  });
+  var tonKho=data.filter(function(r){
+    var slDaBan=r.slDaBan!==undefined?r.slDaBan:0;
+    return !r.daBan && slDaBan===0;
+  });
+  // Đơn partial cũng có tồn → push thêm vào tonKho để tính vonTon đúng
+  // (nhưng chỉ tính phần tồn = slTon, đã làm trong reduce vonTon ở dưới)
+  partial.forEach(function(r){tonKho.push(r);});
+  // 🔒 v3.36: Tính vốn ĐÚNG khi SL > 1
+  // - Vốn đơn đã bán = giaNhap × slDaBan (số đã bán thực tế)
+  // - Vốn tồn        = giaNhap × slTon (số chưa bán)
+  // - Đơn SL=1: slDaBan=1 nếu daBan, slTon=0/1 → công thức vẫn đúng
+  // Lãi & doanh thu cộng dồn cả đơn full + partial (vì cả 2 đều có giaBan>0)
+  var soldRows = daBan.concat(partial);
+  var lai=soldRows.reduce(function(s,r){return s+(r.lai||0);},0);
+  var dt=soldRows.reduce(function(s,r){return s+(r.giaBan||0);},0);
+  var von=soldRows.reduce(function(s,r){
+    var slDaBan=r.slDaBan!==undefined?r.slDaBan:(r.sl||1);
+    return s+r.giaNhap*slDaBan;
+  },0);
+  var vonTon=tonKho.reduce(function(s,r){
+    var slTon=r.slTon!==undefined?r.slTon:(r.sl||1);
+    return s+r.giaNhap*slTon;
+  },0);
   var daVeList=tonKho.filter(function(r){return r.daVe;});
   var chuaVeList=tonKho.filter(function(r){return !r.daVe;});
-  var vonDaVe=daVeList.reduce(function(s,r){return s+r.giaNhap;},0);
-  var vonChuaVe=chuaVeList.reduce(function(s,r){return s+r.giaNhap;},0);
+  // Vốn theo trạng thái về kho - cũng phải nhân SL tồn
+  var vonDaVe=daVeList.reduce(function(s,r){
+    var slTon=r.slTon!==undefined?r.slTon:(r.sl||1);
+    return s+r.giaNhap*slTon;
+  },0);
+  var vonChuaVe=chuaVeList.reduce(function(s,r){
+    var slTon=r.slTon!==undefined?r.slTon:(r.sl||1);
+    return s+r.giaNhap*slTon;
+  },0);
   var marginPct=von>0?Math.round(lai/von*1000)/10:0;
 
   // Page sub - filter context (link với sheet rõ ràng)
@@ -5173,7 +5215,7 @@ function renderDash() {
   var laiEl=document.getElementById('dLai');
   laiEl.textContent=(lai>=0?'+':'')+fmtN(lai)+' đ';
   laiEl.className='d-hero-num '+(lai>=0?'pos':'neg');
-  document.getElementById('dLaiSub').textContent=daBan.length+' đơn đã bán · Margin '+(marginPct>=0?'+':'')+marginPct+'%';
+  document.getElementById('dLaiSub').textContent=daBan.length+(partial.length>0?' đơn full + '+partial.length+' đơn 1 phần':' đơn đã bán')+' · Margin '+(marginPct>=0?'+':'')+marginPct+'%';
 
   // Secondary stats
   document.getElementById('dDT').textContent=fmtN(dt)+' đ';
@@ -5287,7 +5329,7 @@ function renderDash() {
   chuaVeList.sort(function(a,b){return b.giaNhap-a.giaNhap;});
   function renderGroup(title,cssCls,items){
     if(!items.length)return '';
-    var vonG=items.reduce(function(s,r){return s+r.giaNhap;},0);
+    var vonG=items.reduce(function(s,r){var slTon=r.slTon!==undefined?r.slTon:(r.sl||1);return s+r.giaNhap*slTon;},0);
     var h='<div class="d-inv-grp '+cssCls+'">'+
       '<span>'+title+' ('+items.length+')</span>'+
       '<span class="d-inv-grp-amt">'+fmtN(vonG)+' đ</span></div>';
@@ -5296,7 +5338,7 @@ function renderDash() {
         '<div style="flex:1;min-width:0">'+
         '<div class="d-inv-name">'+(r.sp||'Không rõ')+'</div>'+
         '<div class="d-inv-oid">'+(r.orderId||'')+'</div></div>'+
-        '<div class="d-inv-price">'+fmtN(r.giaNhap)+' đ</div></div>';
+        '<div class="d-inv-price">'+fmtN(r.giaNhap*((r.slTon!==undefined?r.slTon:(r.sl||1))))+' đ</div></div>';
     });
     return h+'<div style="height:14px"></div>';
   }
@@ -5614,10 +5656,10 @@ function showDashSkeleton(){
 
 // Welcome toast
 setTimeout(function(){
-  showToast({type:'info', title:'KokTrack v3.34 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
+  showToast({type:'info', title:'KokTrack v3.36 sẵn sàng', msg:'Bấm nút ⌘ góc dưới để tìm nhanh'});
 }, 600);
 </script>
-<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.34.0</div>
+<div style="text-align:center;padding:12px 0 4px;font-size:10px;color:var(--text-3);font-family:ui-monospace,monospace">KokTrack v3.36.0</div>
 
 <!-- LICH SU - hiện ở cuối trang (sau tất cả các tabs) -->
 <div class="hist" style="margin-top:24px;padding-top:16px;border-top:2px solid var(--border)">
